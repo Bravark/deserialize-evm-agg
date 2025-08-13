@@ -1,0 +1,54 @@
+{
+  "name": "deserialize-evm-agg",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bn.js": "^5.2.0",
+    "@types/node": "^24.0.12"
+  },
+  "private": "true",
+  "workspaces": [
+    "packages/*",
+    "providers/*",
+    "apps/*"
+  ],
+  "dependencies": {
+    "bn.js": "^5.2.2",
+    "decimal.js": "^10.6.0",
+    "deserialize-evm-server-sdk": "^1.2.0",
+    "dotenv": "^17.2.1",
+    "ethers": "^6.15.0",
+    "redis": "^5.6.1",
+    "web3": "^4.16.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:start:server": "npx ts-node apps/server/src/server.ts",
+    "dev:test:server": "npx ts-node apps/server/test.ts",
+    "dev:sample": "npx ts-node sample.ts",
+    "dev:quote": "npx ts-node quote.ts",
+    "dev:index-pool": "npx ts-node indexPool.ts",
+    "prebuild": "yarn install",
+    "build:cache": "yarn workspace @deserialize-evm-agg/cache build",
+    "build:graph": "yarn workspace @deserialize-evm-agg/graph build",
+    "build:swap-sdk": "yarn workspace @deserialize-evm-agg/swap-contract-sdk build",
+    "build:route-providers": "yarn workspace @deserialize-evm-agg/routes-providers build",
+    "build:server": "yarn workspace @deserialize-evm-agg/server build",
+    "build": "yarn run prebuild && yarn run build:cache && yarn run build:graph && yarn run build:swap-sdk && yarn run build:route-providers && yarn run build:server",
+    "start:server": "npx pm2 start apps/server/dist/server.js --name evm-server",
+    "start:all": "yarn run start:server",
+    "del:server": "npx pm2 del evm-server",
+    "del:all": "npx pm2 del evm-server",
+    "restart:server": "npx pm2 restart evm-server --update-env",
+    "restart:all": "npx pm2 restart evm-server --update-env",
+    "log:server": "npx pm2 logs evm-server",
+    "log:all": "npx pm2 logs evm-server",
+    "log:all:tail": "npx pm2 logs evm-server --raw",
+    "clean": "rm -rf packages/*/dist apps/*/dist",
+    "clean:build": "yarn run clean && yarn run build",
+    "ch": "git pull && yarn run build && yarn run restart:all",
+    "chl": "yarn run deploy && yarn run log:all",
+    "dev:all": "concurrently \"yarn run dev:start:server\""
+  }
+}

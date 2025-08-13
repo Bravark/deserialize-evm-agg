@@ -1,0 +1,22 @@
+{
+  "name": "@deserialize-evm-agg/swap-contract-sdk",
+  "version": "1.0.0",
+  "description": "Server side sdk to create a transaction to be signed and sent on the frontend",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "sudo rm -r dist ;  tsc -p tsconfig.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "eslint": "^9.31.0",
+    "tsup": "^8.5.0"
+  },
+  "module": "dist/index.js"
+}

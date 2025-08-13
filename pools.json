@@ -1,0 +1,313 @@
+{
+  "pools": [
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "3000",
+      "poolAddress": "0xD998a6A886C6c5408945aD1472fb43136d06e098",
+      "blockNumber": "172838"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "3000",
+      "poolAddress": "0x0A0EE9d9F13CB462bFaC5fB89692802502C3Ac60",
+      "blockNumber": "172914"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "fee": "3000",
+      "poolAddress": "0xB91deeDbc60F3507D5206Df4E051A11b74C6158E",
+      "blockNumber": "172964"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "500",
+      "poolAddress": "0x533924d0A37e6258C4cb7ccBc78de588757B63D2",
+      "blockNumber": "203830"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "500",
+      "poolAddress": "0xdBF90422670bd06b94753f9De1eE755723Dfb176",
+      "blockNumber": "209568"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "fee": "500",
+      "poolAddress": "0xc2eA833a3DaA247cc46bA53A28fC88A3B81Fa910",
+      "blockNumber": "213090"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "100",
+      "poolAddress": "0xE43d6ed185aa6967D93A1a7ED91abE80599ac230",
+      "blockNumber": "217255"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "fee": "10000",
+      "poolAddress": "0xdC862FF965062e785916B93d232be4f44103Ac05",
+      "blockNumber": "225267"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "fee": "100",
+      "poolAddress": "0x8986C50349972005bD4B9aEE58541CDd6a682aa2",
+      "blockNumber": "225276"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "10000",
+      "poolAddress": "0xA52A9a30C19DD85355dCA3bdA010466847D8aAb8",
+      "blockNumber": "225399"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "100",
+      "poolAddress": "0x41aC661190D05C1B68De4Ff9Ee482c3F4B7AB361",
+      "blockNumber": "225429"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "10000",
+      "poolAddress": "0x4c84a38dB0F36808C0CB27eB5d577b7de052B58c",
+      "blockNumber": "225513"
+    },
+    {
+      "token0": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "3000",
+      "poolAddress": "0x5F57078B338D16eECC86EA189b0543eD2aA45323",
+      "blockNumber": "2761616"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "3000",
+      "poolAddress": "0xC5e8D7DE62e009E9d4147aB48442010713D17473",
+      "blockNumber": "2762755"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "3000",
+      "poolAddress": "0x1FCA2aB4F1505d98A453369016d31EE8554cDfFf",
+      "blockNumber": "2763089"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "fee": "3000",
+      "poolAddress": "0xD63ab6b2931eF3d9408e2013b7Ca636b0D242a1e",
+      "blockNumber": "2763130"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "3000",
+      "poolAddress": "0xa4212991b742894D88eB7B4DD4f9c83aEFe0EE5D",
+      "blockNumber": "2763824"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "10000",
+      "poolAddress": "0x42d1110075c0B48109bDf235f9910817940c8c6B",
+      "blockNumber": "2763842"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "500",
+      "poolAddress": "0x53Ed7D547206b9ea74bBb9bD0e0c596199b68959",
+      "blockNumber": "2763852"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "100",
+      "poolAddress": "0x82202975A6228dd37dacceF9AD34251333A3f6F3",
+      "blockNumber": "2763863"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "fee": "3000",
+      "poolAddress": "0x05433c8D4D667d91ed2ccB4ab6D3f5c93a1bDe5C",
+      "blockNumber": "2764519"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "10000",
+      "poolAddress": "0x348D369B373E453563F5428657ed7286D45B3BfC",
+      "blockNumber": "2764787"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "500",
+      "poolAddress": "0xEDa7AaF0cb77AFa68a9a2a838fba7797F45e91D5",
+      "blockNumber": "2764806"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "fee": "100",
+      "poolAddress": "0x806C27a4d8424f1B8F90fb6298A0290247147032",
+      "blockNumber": "2764820"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "fee": "10000",
+      "poolAddress": "0xC161685Eb555788Bb7CddBB9bdE822150B58Cb03",
+      "blockNumber": "2766323"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "fee": "100",
+      "poolAddress": "0xfe1CE416aD9bB220124cFA6B3212a97B3BB9930F",
+      "blockNumber": "2766479"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "fee": "500",
+      "poolAddress": "0x3B4039cbfa702219B19E491C809353cD59b5f988",
+      "blockNumber": "2766571"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "500",
+      "poolAddress": "0xad330578d0cED5621605da66bc21aFB679838aC4",
+      "blockNumber": "2767109"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "10000",
+      "poolAddress": "0x95AD127206FD15f9995e92C857204C7e2c96ffC0",
+      "blockNumber": "2767200"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "100",
+      "poolAddress": "0x88dEDDb3Cc883b68e22D835D99C051EDF20db783",
+      "blockNumber": "2767218"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "3000",
+      "poolAddress": "0x29F63C149d4042178f738CE13336Ee24c1536344",
+      "blockNumber": "2768800"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "100",
+      "poolAddress": "0x14036923f34e217689adc6a6c9d6EB811588Caa8",
+      "blockNumber": "2772888"
+    },
+    {
+      "token0": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "500",
+      "poolAddress": "0xA648E986f230d7C23Dc32C85A2A03c9AEf946f6c",
+      "blockNumber": "2773005"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "500",
+      "poolAddress": "0x3bF3FEd84E412b90913a7B636a12593F92D0c285",
+      "blockNumber": "2773556"
+    },
+    {
+      "token0": "0x0fE9B43625fA7EdD663aDcEC0728DD635e4AbF7c",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "10000",
+      "poolAddress": "0xe8F87DA0FED52b85697aD193B80B2D0E4743b0b8",
+      "blockNumber": "2776797"
+    },
+    {
+      "token0": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "100",
+      "poolAddress": "0x952824E8CF796460804c6B0B51ec5eE78904E06D",
+      "blockNumber": "2787941"
+    },
+    {
+      "token0": "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
+      "token1": "0xba2aE6c8cddd628a087D7e43C1Ba9844c5Bf9638",
+      "fee": "10000",
+      "poolAddress": "0x88424eEDC4b194EfFA0ecA732Ee915Cd7eD2A35a",
+      "blockNumber": "2788104"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "fee": "100",
+      "poolAddress": "0xAE683bfd7B3f67d4F569a5aA8E9099F2b8b8bd0c",
+      "blockNumber": "2789008"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "fee": "500",
+      "poolAddress": "0xE102bD7007e31609e0f952Fe45b57Dfe021D7d55",
+      "blockNumber": "2804275"
+    },
+    {
+      "token0": "0x14d2F76020c1ECb29BcD673B51d8026C6836a66A",
+      "token1": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "fee": "10000",
+      "poolAddress": "0x9b5A7F1944a72a47f48B66726A7574D1A6e29b7C",
+      "blockNumber": "2807795"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0xA52a83908357ff6F9823655306Ba561dDe55C59a",
+      "fee": "100",
+      "poolAddress": "0x5785Dd03C29dC4022e9d98769Eeb81F4dd25Fec8",
+      "blockNumber": "3877668"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0xA52a83908357ff6F9823655306Ba561dDe55C59a",
+      "fee": "500",
+      "poolAddress": "0x60415D6f37cF20E2D9e8D34c0e1C89361D1A9595",
+      "blockNumber": "3877677"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0xA52a83908357ff6F9823655306Ba561dDe55C59a",
+      "fee": "3000",
+      "poolAddress": "0x6f70d16475Ea7ad82cd74D57A2815592B743493E",
+      "blockNumber": "3877683"
+    },
+    {
+      "token0": "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",
+      "token1": "0xA52a83908357ff6F9823655306Ba561dDe55C59a",
+      "fee": "10000",
+      "poolAddress": "0xe52705Ba77360BC82C5b8Fa8DBd930e4a29E6F58",
+      "blockNumber": "3877691"
+    }
+  ],
+  "lastBlockNumber": "3877691"
+}
