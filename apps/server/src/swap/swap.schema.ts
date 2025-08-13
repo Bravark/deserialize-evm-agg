@@ -19,7 +19,8 @@ export const SwapQuoteRequestSchema = z.object({
             })
             .optional(),
     }),
-}); //
+});
+
 
 export type SwapQuoteRequestType = z.infer<typeof SwapQuoteRequestSchema>;
 

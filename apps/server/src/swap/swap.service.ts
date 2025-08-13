@@ -42,7 +42,7 @@ export const swapQuoteService = async (params: SwapQuoteRequestType["body"]) => 
         // Get token price
         const tokenPrice = await RouteJsonRpcProvider.calculateRoutePrice(routes);
 
-
+        const dexConfig = RouteJsonRpcProvider.getDexConfig()
         return {
             tokenA: params.tokenA,
             tokenB: params.tokenB,
@@ -54,6 +54,7 @@ export const swapQuoteService = async (params: SwapQuoteRequestType["body"]) => 
             // feeRate: feeRate.toString(),
             routePlan: routes,
             dexId: params.dexId,
+            dexFactory: dexConfig.factoryAddress
         };
     }
     catch (error) {

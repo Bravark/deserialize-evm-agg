@@ -31,6 +31,9 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         this.dexConfig = ZeroGRoute.config
         this.calculator = new UniswapV3QuoteCalculator(ZeroGRoute.config, this.provider)
     }
+    getDexConfig = () => {
+        return ZeroGRoute.config
+    };
     getTransactionInstructionFromRoutePlan = async (
         amountFormattedToTokenDecimal: Decimal,
         routePlan: DeserializeRoutePlan<DexIdTypes>[],

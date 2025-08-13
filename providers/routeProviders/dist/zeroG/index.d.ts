@@ -12,6 +12,7 @@ export declare class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTyp
     calculator: UniswapV3QuoteCalculator;
     static config: DexConfig;
     constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>);
+    getDexConfig: () => DexConfig;
     getTransactionInstructionFromRoutePlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number) => Promise<{
         transactions: TransactionRequest[];
     }>;
