@@ -2,4 +2,9 @@ node_modules
 ./node_modules
 .env
 ./.env
+apps/server/dist
+providers/routeProviders/dist
+packages/cache/dist
+packages/graph/dist 
+
 

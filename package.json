@@ -36,7 +36,7 @@
     "build:route-providers": "yarn workspace @deserialize-evm-agg/routes-providers build",
     "build:server": "yarn workspace @deserialize-evm-agg/server build",
     "build": "yarn run prebuild && yarn run build:cache && yarn run build:graph && yarn run build:swap-sdk && yarn run build:route-providers && yarn run build:server",
-    "start:server": "npx pm2 start apps/server/dist/server.js --name evm-server",
+    "start:server": "npx pm2 start apps/server/dist/src/server.js --name evm-server",
     "start:all": "yarn run start:server",
     "del:server": "npx pm2 del evm-server",
     "del:all": "npx pm2 del evm-server",
