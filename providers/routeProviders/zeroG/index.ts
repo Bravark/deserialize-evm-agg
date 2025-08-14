@@ -79,13 +79,13 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         provider?: JsonRpcProvider
     ): Promise<TokenBiMap<PoolData>> => {
         //TODO: NO MEMORY CACHE FOR NOW
-        // const cachedData = await this.cache.getDexTokenIndexBiMapCache(
-        //     this.name,
-        //     this.formatPool
-        // );
-        // if (cachedData) {
-        //     return cachedData as TokenBiMap<PoolData>;
-        // }
+        const cachedData = await this.cache.getDexTokenIndexBiMapCache(
+            this.name,
+            this.formatPool
+        );
+        if (cachedData) {
+            return cachedData as TokenBiMap<PoolData>;
+        }
         console.log("No cached data found, getting a new one...");
         const tokenBiMap = await this.getNewTokenBiMap<PoolData>(
             provider || this.provider
@@ -125,17 +125,17 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         ignoreCache?: boolean
     ): Promise<Graph> => {
         //TODO: NO MEMORY CACHE FOR NOW
-        // if (!ignoreCache) {
-        //     const cachedData = await this.cache.getDexGraphCache(this.name);
-        //     if (cachedData) {
-        //         // console.log("Cache Exit....");
-        //         // if (!checkIfGraphIsEmpty(cachedData)) { //TODO: NO CHECK FOR NOW
+        if (!ignoreCache) {
+            const cachedData = await this.cache.getDexGraphCache(this.name);
+            if (cachedData) {
+                // console.log("Cache Exit....");
+                // if (!checkIfGraphIsEmpty(cachedData)) { //TODO: NO CHECK FOR NOW
 
-        //         return cachedData as Graph;
-        //         // }
-        //         console.log("Cached graph is  empty");
-        //     }
-        // }
+                return cachedData as Graph;
+                // }
+                console.log("Cached graph is  empty");
+            }
+        }
         let tokenBiMap;
         if (_tokenBiMap) {
             tokenBiMap = _tokenBiMap;

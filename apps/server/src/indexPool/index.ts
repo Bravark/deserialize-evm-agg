@@ -106,6 +106,7 @@ function updateGraphEdgeData(currentGraph: Graph, updatedGraph: Graph): Graph {
         resultGraph = structuredClone(currentGraph);
     } catch (error) {
         console.warn('structuredClone failed, using custom deep clone:', error);
+        console.log('currentGraph this is the graph that could not be parsed: ', currentGraph);
         try {
             // Fallback to JSON clone
             resultGraph = jsonDeepClone(currentGraph);

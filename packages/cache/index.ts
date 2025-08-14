@@ -106,11 +106,11 @@ export class DexCache<DexIdTypes> {
     dexId: DexIdTypes
   ): Promise<T | null> {
     // First check memory cache
-    const data = this.memoryCache.getNamespaceMemoryCache(namespace, dexId);
-    if (data) {
-      const res = typeof data === "string" ? JSON.parse(data) : data
-      return res as T;
-    }
+    // const data = this.memoryCache.getNamespaceMemoryCache(namespace, dexId);
+    // if (data) {
+    //   const res = typeof data === "string" ? JSON.parse(data) : data
+    //   return res as T;
+    // }
     return (await this.getStoreData<T>(dexId, namespace)) || null;
   }
 
@@ -208,12 +208,12 @@ export class DexCache<DexIdTypes> {
    */
   async getDexGraphCache(dexId: DexIdTypes): Promise<Graph | null> {
     // Check memory cache
-    const data = this.memoryCache.getNamespaceMemoryCache(DEX_CACHE_NAMESPACE.GRAPH, dexId) as Graph;
+    // const data = this.memoryCache.getNamespaceMemoryCache(DEX_CACHE_NAMESPACE.GRAPH, dexId) as Graph;
 
-    if (data) {
-      const formatted = typeof data === "string" ? JSON.parse(data) : data
-      return formatted;
-    }
+    // if (data) {
+    //   const formatted = typeof data === "string" ? JSON.parse(data) : data
+    //   return formatted;
+    // }
 
     // Not in memory, fetch from storage
     const storageData = await this.getStoreData<Graph>(dexId, DEX_CACHE_NAMESPACE.GRAPH);
