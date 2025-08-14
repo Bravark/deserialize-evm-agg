@@ -108,7 +108,7 @@ export declare class UniswapV3QuoteCalculator {
      * @param provider - blockchain connection
      * @returns Promise<PoolCreatedEvent[]> - Array of pool creation events
      */
-    getAllPoolsFromEvents: (factoryAddress: string, provider: JsonRpcProvider, fromBlockHeight: string, abi: any) => Promise<PoolCreatedEvent[]>;
+    getAllPoolsFromEvents: (factoryAddress: string, provider: JsonRpcProvider, fromBlockHeight: string | undefined, abi: any) => Promise<PoolCreatedEvent[]>;
     getAllPools(abi: any, fromBlock?: string): Promise<PoolData[]>;
     getConfig(): DexConfig;
     getProvider(): JsonRpcProvider;

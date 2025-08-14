@@ -78,13 +78,14 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
     getTokenBiMap = async <PoolData>(
         provider?: JsonRpcProvider
     ): Promise<TokenBiMap<PoolData>> => {
-        const cachedData = await this.cache.getDexTokenIndexBiMapCache(
-            this.name,
-            this.formatPool
-        );
-        if (cachedData) {
-            return cachedData as TokenBiMap<PoolData>;
-        }
+        //TODO: NO MEMORY CACHE FOR NOW
+        // const cachedData = await this.cache.getDexTokenIndexBiMapCache(
+        //     this.name,
+        //     this.formatPool
+        // );
+        // if (cachedData) {
+        //     return cachedData as TokenBiMap<PoolData>;
+        // }
         console.log("No cached data found, getting a new one...");
         const tokenBiMap = await this.getNewTokenBiMap<PoolData>(
             provider || this.provider
@@ -101,7 +102,7 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
     }> => {
         // Fetch token data
         const data = await this.calculator.getAllPools(this.dexConfig.abi)
-        console.log('data: ', data);
+        // console.log('data: ', data);
         const tokenBiMap = new ArrayBiMap<string>();
         const tokenPoolMap = new Map<string, string>();
         // Add tokens from the pool data
@@ -123,17 +124,18 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         _tokenBiMap?: TokenBiMap<PoolData>,
         ignoreCache?: boolean
     ): Promise<Graph> => {
-        if (!ignoreCache) {
-            const cachedData = await this.cache.getDexGraphCache(this.name);
-            if (cachedData) {
-                // console.log("Cache Exit....");
-                // if (!checkIfGraphIsEmpty(cachedData)) { //TODO: NO CHECK FOR NOW
+        //TODO: NO MEMORY CACHE FOR NOW
+        // if (!ignoreCache) {
+        //     const cachedData = await this.cache.getDexGraphCache(this.name);
+        //     if (cachedData) {
+        //         // console.log("Cache Exit....");
+        //         // if (!checkIfGraphIsEmpty(cachedData)) { //TODO: NO CHECK FOR NOW
 
-                return cachedData as Graph;
-                // }
-                console.log("Cached graph is  empty");
-            }
-        }
+        //         return cachedData as Graph;
+        //         // }
+        //         console.log("Cached graph is  empty");
+        //     }
+        // }
         let tokenBiMap;
         if (_tokenBiMap) {
             tokenBiMap = _tokenBiMap;
@@ -166,7 +168,7 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
             tokenIndexBiMap = tokenBiMap;
         }
         // Initialize graph
-        console.log('data: ', data);
+        // console.log('data: ', data);
         const graph: Graph = Array.from({ length: data.length }, () => []);
         // Set the concurrency limit (number of pools processed concurrently)
         const CONCURRENCY_LIMIT = 1;
@@ -323,7 +325,7 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
             // console.log('params.priceUsdc: ', e.edgeData.aToB);
 
 
-            console.log('key : ', params.key.key, 'keyRate: ', params.key.keyRate, "dollar value :", (params.key.key * params.key.keyRate), 'params.priceUsdc: ', params.priceUsdc, 'swapAmount: ', swapAmount);
+            // console.log('key : ', params.key.key, 'keyRate: ', params.key.keyRate, "dollar value :", (params.key.key * params.key.keyRate), 'params.priceUsdc: ', params.priceUsdc, 'swapAmount: ', swapAmount);
 
 
             //divide it by the decimal of the key and then multiply by the current token input decimal
@@ -333,7 +335,7 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
                 swapAmount * Math.pow(10, Math.abs(params.tokenFromDecimals));
             // console.log('swapAmount: ', swapAmount);
             // console.log('e.edgeData.pool: ', e.edgeData.pool);
-            console.log('e: ', e);
+            // console.log('e: ', e);
             const swapParams: ZeroDexQuoteParams = {
                 pool: this.formatPool(typeof e.edgeData.pool === "string" ? JSON.parse(e.edgeData.pool) : e.edgeData.pool),
                 aToB: e.edgeData.aToB,
@@ -365,21 +367,21 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
                 console.warn("Swap impact is NaN, returning 100");
                 return 100;
             }
-            console.log(
-                "_swapImpact: ", _swapImpact,
-                "from", e?.from,
-                "to", e?.to,
-                "from decimals", params.tokenFromDecimals,
-                "to decimals", params.tokenToDecimals,
-            );
+            // console.log(
+            //     "_swapImpact: ", _swapImpact,
+            //     "from", e?.from,
+            //     "to", e?.to,
+            //     "from decimals", params.tokenFromDecimals,
+            //     "to decimals", params.tokenToDecimals,
+            // );
 
-            console.log(
-                "amountBOut: =>", amountBOut.toNumber() / 10 ** 18,
-                "params.price: ", params.price,
-                "amountIn", amountIn.toNumber() / 10 ** 18,
-                "amountOutInTokenA: ", amountOutInTokenA.toNumber() / 10 ** 18,
-            );
-            console.log("======================================")
+            // console.log(
+            //     "amountBOut: =>", amountBOut.toNumber() / 10 ** 18,
+            //     "params.price: ", params.price,
+            //     "amountIn", amountIn.toNumber() / 10 ** 18,
+            //     "amountOutInTokenA: ", amountOutInTokenA.toNumber() / 10 ** 18,
+            // );
+            // console.log("======================================")
 
 
             return Math.max(0, _swapImpact);

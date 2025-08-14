@@ -32,7 +32,7 @@ export declare class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTyp
     getNewGraph: (tokenBiMap?: TokenBiMap<PoolData>, _provider?: JsonRpcProvider) => Promise<Graph>;
     getEdgeDataDirect: <T extends PoolData, R>(provider: JsonRpcProvider, data: T, r: boolean) => Promise<R | null>;
     getFunctionToMutateEdgeCost: () => FunctionToMutateTheEdgeCostType<any>;
-    getTokenPairEdgeData: (tokenA: string, tokenB: string) => Promise<Edge<EdgeData>>;
+    getTokenPairEdgeData: (tokenA: string, tokenB: string) => Promise<Edge<EdgeData> | null>;
     calculateRoutePrice: (route: DeserializeRoutePlan<DexIdTypes>[]) => Promise<number>;
     getTokenXAndYFromPool: (pool: PoolData) => {
         tokenX: string;

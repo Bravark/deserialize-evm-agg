@@ -85,6 +85,7 @@ export class DexCache<DexIdTypes> {
     data: unknown
   ): Promise<void> {
     // Save to memory cache
+    console.log('data to store in memory setStoreData: ', data[0]);
     this.memoryCache.setNamespaceMemoryCache(namespace, dexId, data);
 
     if (this.storageDestination === "FILE") {
@@ -107,7 +108,8 @@ export class DexCache<DexIdTypes> {
     // First check memory cache
     const data = this.memoryCache.getNamespaceMemoryCache(namespace, dexId);
     if (data) {
-      return data as T;
+      const res = typeof data === "string" ? JSON.parse(data) : data
+      return res as T;
     }
     return (await this.getStoreData<T>(dexId, namespace)) || null;
   }
@@ -121,6 +123,7 @@ export class DexCache<DexIdTypes> {
     data: unknown
   ): Promise<void> {
     // Save to memory cache
+    console.log('data to store in memory setDexNamespaceCache : ', data);
     this.memoryCache.setNamespaceMemoryCache(namespace, dexId, data);
     // Save to persistent storage
     await this.setStoreData(dexId, namespace, data);
@@ -137,9 +140,10 @@ export class DexCache<DexIdTypes> {
 
     // Check memory cache first
     const data = this.memoryCache.getNamespaceMemoryCache(namespace, dexId);
-    console.log('data: ', data);
+    console.log('data from memory: ', data);
     if (data) {
-      return data as TokenBiMap<T>;
+      const res = typeof data === "string" ? JSON.parse(data) : data
+      return res as TokenBiMap<T>;
     }
 
     // Not in memory, fetch from persistent storage
@@ -171,7 +175,9 @@ export class DexCache<DexIdTypes> {
     const namespace = DEX_CACHE_NAMESPACE.TOKEN_INDEX_BI_MAP;
 
     // Save to memory cache
+    console.log('data to store in setDexTokenIndexBiMapCache: ', data.tokenBiMap);
     this.memoryCache.setNamespaceMemoryCache(namespace, dexId, data);
+
 
     // Convert to a format suitable for storage
     const storageData: TokenIndexBiMapLocalCache<T> = {
@@ -263,7 +269,9 @@ export class DexCache<DexIdTypes> {
     ) as TokenDetailsLocalCacheMap<TokenDetailsGenerics> | null;
 
     if (data && data.has(mintAddress)) {
-      return data.get(mintAddress) || null;
+      const res = data.get(mintAddress) || null;
+
+      return typeof res == "string" ? JSON.parse(res) : res
     }
 
     // Not in memory, fetch from storage

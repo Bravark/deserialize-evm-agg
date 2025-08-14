@@ -341,46 +341,46 @@
 //     return { transaction: "" }
 // }
 
-// const updateCacheData = async () => {
+// // const updateCacheData = async () => {
 
-//     for (const routeJsonRpcProvider of ALL_ROUTES_PROVIDERS) {
-//         const route = new routeJsonRpcProvider(provider);
-//         // console.log('route: ', route);
+// //     for (const routeJsonRpcProvider of ALL_ROUTES_PROVIDERS) {
+// //         const route = new routeJsonRpcProvider(provider);
+// //         // console.log('route: ', route);
 
-//         const updatedTokenBiMap = await route.getTokenBiMap(provider);
-//         // console.log('updatedTokenBiMap: ', updatedTokenBiMap);
-//         // setDexTokenIndexBiMapCache(route.name, updatedTokenBiMap);
-//         // const currentGraph = await route.getGraph(provider);
-//         // console.log("currentGraph: ", route.name, currentGraph.length);
-//         const newGraph = await route.getGraph(provider);
-//         console.log("newGraph: ", route.name, newGraph);
-//         // const updatedGraph = updateGraphEdgeData(currentGraph, newGraph);
-//         // console.log("updatedGraph: ", route.name, updatedGraph.length);
-//         // const isGraphEmpty = checkIfGraphIsEmpty(updatedGraph);
-//         // console.log("isGraphEmpty: ", route.name, isGraphEmpty);
-//         // if (!isGraphEmpty) {
-//         //     setDexGraphCache(route.name, updatedGraph);
-//         // }
-//     }
+// //         const updatedTokenBiMap = await route.getTokenBiMap(provider);
+// //         // console.log('updatedTokenBiMap: ', updatedTokenBiMap);
+// //         // setDexTokenIndexBiMapCache(route.name, updatedTokenBiMap);
+// //         // const currentGraph = await route.getGraph(provider);
+// //         // console.log("currentGraph: ", route.name, currentGraph.length);
+// //         const newGraph = await route.getGraph(provider);
+// //         console.log("newGraph: ", route.name, newGraph);
+// //         // const updatedGraph = updateGraphEdgeData(currentGraph, newGraph);
+// //         // console.log("updatedGraph: ", route.name, updatedGraph.length);
+// //         // const isGraphEmpty = checkIfGraphIsEmpty(updatedGraph);
+// //         // console.log("isGraphEmpty: ", route.name, isGraphEmpty);
+// //         // if (!isGraphEmpty) {
+// //         //     setDexGraphCache(route.name, updatedGraph);
+// //         // }
+// //     }
 
 
-//     // //
-//     // // it is after that we will update the ALL
-//     // const allRoute = new AllRoute(connection);
-//     // const allUpdatedTokenBiMap = await allRoute.getNewTokenBiMap<any>(connection);
-//     // // console.log("allUpdatedTokenBiMap: ", allUpdatedTokenBiMap.tokenBiMap);
-//     // const allUpdatedGraph = await allRoute.getNewGraph(
-//     //     allUpdatedTokenBiMap,
-//     //     connection
-//     // );
-//     // console.log("allUpdatedGraph: ", allUpdatedGraph.length);
-//     // //TODO: NOT SURE IF I SHOULD CHECK IF GRAPH IS EMPTY
-//     // // if (!isGraphEmpty) {
-//     // setDexTokenIndexBiMapCache(allRoute.name, allUpdatedTokenBiMap as any);
-//     // setDexGraphCache(allRoute.name, allUpdatedGraph);
-//     // }
-// };
-// const CacheInterval = 1;
+// //     // //
+// //     // // it is after that we will update the ALL
+// //     // const allRoute = new AllRoute(connection);
+// //     // const allUpdatedTokenBiMap = await allRoute.getNewTokenBiMap<any>(connection);
+// //     // // console.log("allUpdatedTokenBiMap: ", allUpdatedTokenBiMap.tokenBiMap);
+// //     // const allUpdatedGraph = await allRoute.getNewGraph(
+// //     //     allUpdatedTokenBiMap,
+// //     //     connection
+// //     // );
+// //     // console.log("allUpdatedGraph: ", allUpdatedGraph.length);
+// //     // //TODO: NOT SURE IF I SHOULD CHECK IF GRAPH IS EMPTY
+// //     // // if (!isGraphEmpty) {
+// //     // setDexTokenIndexBiMapCache(allRoute.name, allUpdatedTokenBiMap as any);
+// //     // setDexGraphCache(allRoute.name, allUpdatedGraph);
+// //     // }
+// // };
+// // const CacheInterval = 1;
 // // updateCacheData();
 // // setInterval(() => {
 // //     console.log("Updating cache data...");

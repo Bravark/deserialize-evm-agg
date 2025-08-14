@@ -1,5 +1,5 @@
 export declare const ZeroGAbi: ({
-    inputs: any[];
+    inputs: never[];
     stateMutability: string;
     type: string;
     anonymous?: undefined;

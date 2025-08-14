@@ -35,7 +35,7 @@ const dijkstraAlgorithmList = (graph: Graph, from: number) => {
     for (let i = 0; i < graph[currentNode.i].length; i++) {
       const e = graph[currentNode.i][i];
       //e.form is the current node while e.to is the node we are checking it's distance
-      console.log("e: ", e);
+      // console.log("e: ", e);
       // we will have to compare the total cost, which is equal to the cost to get to the current node (e.from) plus the cost of going to the destination node (e.to)
       const nodeCost = dist[e.from] + e.edgeData.cost;
 

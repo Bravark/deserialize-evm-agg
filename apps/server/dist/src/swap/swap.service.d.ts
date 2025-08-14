@@ -8,4 +8,5 @@ export declare const swapQuoteService: (params: SwapQuoteRequestType["body"]) =>
     tokenPrice: string;
     routePlan: import("@deserialize-evm-agg/routes-providers").DeserializeRoutePlan<"ZERO_G">[];
     dexId: "ZERO_G";
+    dexFactory: any;
 }>;
