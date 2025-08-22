@@ -1,8 +1,10 @@
 import { JsonRpcProvider } from "ethers";
-import { SwapQuoteRequestType } from "./swap.schema";
-import { DEX_IDS, getBestRoutes } from "../index";
+import { SwapQuoteRequestType, SwapRequestType } from "./swap.schema";
+import { DEX_IDS, getBestRoutes, getRouteJsonRpcProvider, initAndGetCache } from "../index";
 import Decimal from "decimal.js";
 import { ApiError } from "../errors/errors.api";
+import { DESERIALIZE_FEE } from "../constants";
+import { getSwapRequestFeeRate } from "../utils";
 
 const chain = {
     name: "0g",
@@ -10,7 +12,7 @@ const chain = {
 }
 
 const provider = new JsonRpcProvider(chain.rpc)
-export const swapQuoteService = async (params: SwapQuoteRequestType["body"]) => {
+export const swapQuoteService = async (params: SwapQuoteRequestType) => {
 
     try {
         console.log("Processing swap quote request", {
@@ -67,6 +69,45 @@ export const swapQuoteService = async (params: SwapQuoteRequestType["body"]) => 
     }
 
 }
+
+export const swapService = async (params: SwapRequestType) => {
+    try {
+        // Calculate fee rate
+        let defaultFeeRate = DESERIALIZE_FEE // Default fee rate
+        defaultFeeRate =
+            getSwapRequestFeeRate(
+                params.quote.tokenA,
+                params.quote.tokenB
+            )?.feeRate ?? defaultFeeRate;
+
+
+        const cache = await initAndGetCache()
+        const RouteJsonRpcProvider = new (getRouteJsonRpcProvider(params.quote.dexId))(provider, cache);
+        // console.log("RouteProvider: ", RouteProvider);
+
+        const transaction = await RouteJsonRpcProvider.getTransactionInstructionFromRoutePlan(
+            new Decimal(params.quote.amountIn),
+            params.quote.routePlan,
+            params.publicKey,
+            params.slippage,
+        );
+
+
+
+
+        return {
+            transaction
+        };
+    } catch (error) {
+        console.log("Error in swapService", { error, params });
+        if (error instanceof ApiError) {
+            throw error;
+        }
+        throw new ApiError(500, "Failed to process swap");
+    }
+};
+
+
 
 
 

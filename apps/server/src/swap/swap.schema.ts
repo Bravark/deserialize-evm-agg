@@ -22,5 +22,50 @@ export const SwapQuoteRequestSchema = z.object({
 });
 
 
-export type SwapQuoteRequestType = z.infer<typeof SwapQuoteRequestSchema>;
+export type SwapQuoteRequestType = z.infer<typeof SwapQuoteRequestSchema>["body"]
 
+export const SwapRequestSchema = z.object({
+    body: z.object({
+        publicKey: z.string(),
+        quote: z.object({
+            tokenA: z.string(),
+            tokenB: z.string(),
+            amountIn: z.string().transform((arg) => {
+                return parseFloat(arg);
+            }),
+            amountOut: z.string().transform((arg) => {
+                return parseFloat(arg);
+            }),
+            tokenPrice: z.string().transform((arg) => {
+                return parseFloat(arg);
+            }),
+            feeRate: z.string().transform((arg) => {
+                return parseFloat(arg);
+            }),
+            routePlan: z.array(
+                z.object({
+                    tokenA: z.string(),
+                    tokenB: z.string(),
+                    poolAddress: z.string(),
+                    fee: z.number(),
+                    aToB: z.boolean(),
+                    dexId: z.enum(
+                        [
+                            DEX_IDS.ZERO_G
+                        ]
+                    ),
+                })
+            ),
+            dexFactory: z.string(),
+
+            dexId: z.enum(
+                [
+                    DEX_IDS.ZERO_G
+                ]
+            ),
+        }),
+        slippage: z.number(),
+    }),
+});
+
+export type SwapRequestType = z.infer<typeof SwapRequestSchema>["body"]

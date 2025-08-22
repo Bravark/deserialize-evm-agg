@@ -1,0 +1,1 @@
+export const DESERIALIZE_FEE = 0

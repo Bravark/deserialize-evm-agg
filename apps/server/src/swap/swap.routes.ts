@@ -17,6 +17,7 @@ import {
     // tokenPriceController,
     // unWrapEthTxController,
 } from "./swap.controllers";
+import { swapQuoteService } from "./swap.service";
 
 const swapRouter: Router = Router();
 
@@ -33,7 +34,7 @@ const swapRouter: Router = Router();
 swapRouter.post("/quote", swapQuoteController);
 // swapRouter.post("/quoteAll", swapQuoteAllController);
 // swapRouter.post("/quoteAllBetter", swapQuoteAllBetterController);
-// swapRouter.post("/swap", swapController);
+swapRouter.post("/swap", swapQuoteService);
 // swapRouter.post("/setQuest", setBoostController);
 
 // swapRouter.get("/allPoints", allUserPointsController);
