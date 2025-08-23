@@ -41,7 +41,7 @@ export const SwapRequestSchema = z.object({
             }),
             feeRate: z.string().transform((arg) => {
                 return parseFloat(arg);
-            }),
+            }).optional(),
             routePlan: z.array(
                 z.object({
                     tokenA: z.string(),

@@ -15,10 +15,8 @@ const provider = new JsonRpcProvider(chain.rpc)
 export const swapQuoteService = async (params: SwapQuoteRequestType) => {
 
     try {
-        console.log("Processing swap quote request", {
-            tokenA: params.tokenA.toString(),
-            tokenB: params.tokenB.toString(),
-            amountIn: params.amountIn,
+        console.log("Processing swap transaction request", {
+            ...params
         });
 
         const { routes, bestOutcome, RouteJsonRpcProvider } = await getBestRoutes(

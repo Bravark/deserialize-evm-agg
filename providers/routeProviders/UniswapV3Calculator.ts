@@ -251,6 +251,10 @@ export class UniswapV3QuoteCalculator {
             return cached as any; // Cast for token details
         }
 
+        console.log('tokenAddress: ', tokenAddress);
+        console.log('tokenAddress: ', tokenAddress);
+        console.log('tokenAddress: ', tokenAddress);
+        console.log('tokenAddress: ', tokenAddress);
         const tokenContract = new Contract(tokenAddress, ERC20_ABI, provider);
         const [decimals, symbol] = await Promise.all([
             tokenContract.decimals(),
@@ -334,6 +338,7 @@ export class UniswapV3QuoteCalculator {
 
         const pool = new Contract(poolAddress, POOL_ABI, this.provider);
 
+
         const [liquidity, slot0, token0Address, token1Address, fee] = await Promise.all([
             pool.liquidity(),
             pool.slot0(),
@@ -342,6 +347,8 @@ export class UniswapV3QuoteCalculator {
             pool.fee(),
         ]);
 
+        console.log('token0Address: ', token0Address);
+        console.log('token1Address: ', token1Address);
         const [token0Details, token1Details] = await Promise.all([
             this.getTokenDetails(token0Address),
             this.getTokenDetails(token1Address),

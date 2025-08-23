@@ -15,7 +15,6 @@ import { env } from "./config";
     console.log('Rate: ');
 
     const app = await setupApp(routers);
-    console.log('app: ', app);
 
 
 
