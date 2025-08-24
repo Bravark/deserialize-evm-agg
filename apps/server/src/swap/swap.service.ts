@@ -80,7 +80,10 @@ export const swapService = async (params: SwapRequestType) => {
 
 
         const cache = await initAndGetCache()
-        const RouteJsonRpcProvider = new (getRouteJsonRpcProvider(params.quote.dexId))(provider, cache);
+
+        //TODO: hot fix for the fact that i only have one dex id 
+        const dexId = DEX_IDS.ZERO_G
+        const RouteJsonRpcProvider = new (getRouteJsonRpcProvider(dexId))(provider, cache);
         // console.log("RouteProvider: ", RouteProvider);
 
         const transaction = await RouteJsonRpcProvider.getTransactionInstructionFromRoutePlan(

@@ -14,6 +14,7 @@ import { config } from "./config";
 
 export const DEX_IDS = {
     ZERO_G: "ZERO_G",
+    ALL: "ALL",
 } as const;
 export const dexIdList = Object.keys(DEX_IDS)
 export type DexIdTypes = (typeof DEX_IDS)[keyof typeof DEX_IDS];

@@ -56,11 +56,11 @@ export const SwapRequestSchema = z.object({
                     ),
                 })
             ),
-            dexFactory: z.string(),
+            // dexFactory: z.string(),
 
             dexId: z.enum(
                 [
-                    DEX_IDS.ZERO_G
+                    DEX_IDS.ALL
                 ]
             ),
         }),
