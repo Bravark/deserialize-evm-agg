@@ -542,7 +542,7 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     const slippageMultiplier = new Decimal(1).minus(slippage / 100);
     const minAmountOut = amountIn.mul(slippageMultiplier);
 
-    const tx = await createSwapTX(
+    const txs = await createSwapTX(
         {
             path: paths,
             amountInRaw: amountIn.toString(),
@@ -551,14 +551,14 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
         wallet, connection,
     );
 
-    const transaction: TransactionRequest = {
+    const transactions: TransactionRequest[] = txs.map((tx) => ({
         from: wallet,
         to: tx.to,
         data: tx.data,
         value: tx.value, // make sure this is BigNumberish (string, number, or BigNumber)
-    };
+    }));
 
-    return { transactions: [transaction] };
+    return { transactions };
 
 };
 

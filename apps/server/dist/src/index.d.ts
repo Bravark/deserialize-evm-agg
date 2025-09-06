@@ -3,6 +3,7 @@ import { DeserializeRoutePlan, IRoute, ZeroGRoute } from "@deserialize-evm-agg/r
 import { JsonRpcProvider } from "ethers";
 export declare const DEX_IDS: {
     readonly ZERO_G: "ZERO_G";
+    readonly ALL: "ALL";
 };
 export declare const dexIdList: string[];
 export type DexIdTypes = (typeof DEX_IDS)[keyof typeof DEX_IDS];

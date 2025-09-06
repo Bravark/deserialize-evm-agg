@@ -60,7 +60,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
             amountIn: z.ZodEffects<z.ZodString, number, string>;
             amountOut: z.ZodEffects<z.ZodString, number, string>;
             tokenPrice: z.ZodEffects<z.ZodString, number, string>;
-            feeRate: z.ZodEffects<z.ZodString, number, string>;
+            feeRate: z.ZodOptional<z.ZodEffects<z.ZodString, number, string>>;
             routePlan: z.ZodArray<z.ZodObject<{
                 tokenA: z.ZodString;
                 tokenB: z.ZodString;
@@ -83,16 +83,14 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }>, "many">;
-            dexFactory: z.ZodString;
-            dexId: z.ZodEnum<["ZERO_G"]>;
+            dexId: z.ZodEnum<["ALL"]>;
         }, "strip", z.ZodTypeAny, {
             amountOut: number;
             tokenA: string;
             tokenB: string;
             amountIn: number;
-            dexId: "ZERO_G";
+            dexId: "ALL";
             tokenPrice: number;
-            feeRate: number;
             routePlan: {
                 aToB: boolean;
                 tokenA: string;
@@ -101,15 +99,14 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
-            dexFactory: string;
+            feeRate?: number | undefined;
         }, {
             amountOut: string;
             tokenA: string;
             tokenB: string;
             amountIn: string;
-            dexId: "ZERO_G";
+            dexId: "ALL";
             tokenPrice: string;
-            feeRate: string;
             routePlan: {
                 aToB: boolean;
                 tokenA: string;
@@ -118,7 +115,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
-            dexFactory: string;
+            feeRate?: string | undefined;
         }>;
         slippage: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
@@ -128,9 +125,8 @@ export declare const SwapRequestSchema: z.ZodObject<{
             tokenA: string;
             tokenB: string;
             amountIn: number;
-            dexId: "ZERO_G";
+            dexId: "ALL";
             tokenPrice: number;
-            feeRate: number;
             routePlan: {
                 aToB: boolean;
                 tokenA: string;
@@ -139,7 +135,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
-            dexFactory: string;
+            feeRate?: number | undefined;
         };
         slippage: number;
     }, {
@@ -149,9 +145,8 @@ export declare const SwapRequestSchema: z.ZodObject<{
             tokenA: string;
             tokenB: string;
             amountIn: string;
-            dexId: "ZERO_G";
+            dexId: "ALL";
             tokenPrice: string;
-            feeRate: string;
             routePlan: {
                 aToB: boolean;
                 tokenA: string;
@@ -160,7 +155,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
-            dexFactory: string;
+            feeRate?: string | undefined;
         };
         slippage: number;
     }>;
@@ -172,9 +167,8 @@ export declare const SwapRequestSchema: z.ZodObject<{
             tokenA: string;
             tokenB: string;
             amountIn: number;
-            dexId: "ZERO_G";
+            dexId: "ALL";
             tokenPrice: number;
-            feeRate: number;
             routePlan: {
                 aToB: boolean;
                 tokenA: string;
@@ -183,7 +177,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
-            dexFactory: string;
+            feeRate?: number | undefined;
         };
         slippage: number;
     };
@@ -195,9 +189,8 @@ export declare const SwapRequestSchema: z.ZodObject<{
             tokenA: string;
             tokenB: string;
             amountIn: string;
-            dexId: "ZERO_G";
+            dexId: "ALL";
             tokenPrice: string;
-            feeRate: string;
             routePlan: {
                 aToB: boolean;
                 tokenA: string;
@@ -206,7 +199,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
-            dexFactory: string;
+            feeRate?: string | undefined;
         };
         slippage: number;
     };
