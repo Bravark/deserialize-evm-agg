@@ -540,7 +540,8 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
 ) => {
     const paths = transformRoutePlanToIPath(ZeroGRoute.config.factoryAddress, routePlan);
     const slippageMultiplier = new Decimal(1).minus(slippage / 100);
-    const minAmountOut = amountIn.sub(amountIn.mul(slippageMultiplier));
+    const minAmountOut = amountIn.mul(slippageMultiplier)
+    console.log('minAmountOut: ', minAmountOut);
 
     const txs = await createSwapTX(
         {
