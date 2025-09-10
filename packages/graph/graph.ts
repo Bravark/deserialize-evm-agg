@@ -116,8 +116,8 @@ const dijkstraAlgorithmWithKey = (
 
   while (!queue.isEmpty()) {
     const currentNode = queue.dequeue()!;
-    console.log('currentNode.i before : ', currentNode);
-    console.log('to: ', to);
+    // console.log('currentNode.i before : ', currentNode);
+    // console.log('to: ', to);
     // console.log('currentNode aka best for now: ', graph[currentNode.i]);
     visited[currentNode.i] = true;
 
@@ -128,7 +128,7 @@ const dijkstraAlgorithmWithKey = (
       let cost = functionToMutateTheEdgeCost({ ...e.edgeData, key }, e);
 
       const nodeCost = dist[e.from] + cost;
-      console.log('nodeCost: ', nodeCost);
+      // console.log('nodeCost: ', nodeCost);
 
       // Relaxation step: update if a better path is found.
 
@@ -145,14 +145,14 @@ const dijkstraAlgorithmWithKey = (
           p: cost,
         });
       }
-      console.log("============================================================================");
+      // console.log("============================================================================");
     }
     // If we've reached the destination, reconstruct the path.
 
     if (currentNode.i === to) {
-      console.log("prev: ", prev);
+      // console.log("prev: ", prev);
       const reconstructedPath = reconstructPath(from, to, prev);
-      console.log('reconstructedPath: ', reconstructedPath);
+      // console.log('reconstructedPath: ', reconstructedPath);
       // Reconstruct the list of edges corresponding to the path.
       const reconstructedEdges: Edge<EdgeData>[] = [];
       for (let i = 1; i < reconstructedPath.length; i++) {
@@ -237,18 +237,18 @@ export const findBestRouteIndex = <T extends EdgeData>(
   const func =
     (functionToMutateTheEdgeCost as FunctionToMutateTheEdgeCostType<EdgeData>)
 
-  console.log('graph: ', graph);
-  console.log('fromIndex: ', fromIndex);
-  console.log('toIndex: ', toIndex);
-  console.log('key: ', key);
+  // console.log('graph: ', graph);
+  // console.log('fromIndex: ', fromIndex);
+  // console.log('toIndex: ', toIndex);
+  // console.log('key: ', key);
   const result = dijkstraAlgorithmWithKey(graph, fromIndex, toIndex, key, func);
 
   // console.log("result: ", result);
 
   if (!result) {
-    console.log("====================================");
-    console.log(`Could not find ${fromIndex} ${toIndex}`);
-    console.log("====================================");
+    // console.log("====================================");
+    // console.log(`Could not find ${fromIndex} ${toIndex}`);
+    // console.log("====================================");
     return {
       bestOutcome: 100,
       bestRoute: [[]],
@@ -265,9 +265,9 @@ export const findBestRouteIndex = <T extends EdgeData>(
 
   // If targetHops is specified and the route needs reduction
   if (targetHops !== undefined && finalResult.length - 1 > targetHops) {
-    console.log("====================================");
-    console.log("Reducing to Smaller number of hops");
-    console.log("====================================");
+    // console.log("====================================");
+    // console.log("Reducing to Smaller number of hops");
+    // console.log("====================================");
     try {
       const red = reduceRouteToTargetHops(
         finalResult,
