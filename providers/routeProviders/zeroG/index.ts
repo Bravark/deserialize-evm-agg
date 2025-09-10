@@ -41,8 +41,9 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         slippage: number,
 
     ) => {
+        const { amountOut } = await this.getAmountOutFromPlan(amountFormattedToTokenDecimal, routePlan, 0, this.provider)
         //here we will get the transaction here
-        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, routePlan, wallet, slippage, this.provider)
+        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider)
     };
     getAmountOutFromPlan = async (
         amountFormattedToTokenDecimal: Decimal,
@@ -533,6 +534,7 @@ export const getTransactionInstructionFromRoutePlanZeroG = async <DexIdTypes>(
 
 export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     amountIn: Decimal,
+    amountOut: Decimal,
     routePlan: DeserializeRoutePlan<DexIdTypes>[],
     wallet: string,
     slippage: number,
@@ -540,7 +542,7 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
 ) => {
     const paths = transformRoutePlanToIPath(ZeroGRoute.config.factoryAddress, routePlan);
     const slippageMultiplier = new Decimal(1).minus(slippage / 100);
-    const minAmountOut = amountIn.mul(slippageMultiplier)
+    const minAmountOut = amountOut.mul(slippageMultiplier)
     console.log('minAmountOut: ', minAmountOut);
 
     const txs = await createSwapTX(
