@@ -85,7 +85,7 @@ export class DexCache<DexIdTypes> {
     data: unknown
   ): Promise<void> {
     // Save to memory cache
-    console.log('data to store in memory setStoreData: ', data[0]);
+    // console.log('data to store in memory setStoreData: ', data[0]);
     this.memoryCache.setNamespaceMemoryCache(namespace, dexId, data);
 
     if (this.storageDestination === "FILE") {
@@ -123,7 +123,7 @@ export class DexCache<DexIdTypes> {
     data: unknown
   ): Promise<void> {
     // Save to memory cache
-    console.log('data to store in memory setDexNamespaceCache : ', data);
+    // console.log('data to store in memory setDexNamespaceCache : ', data);
     this.memoryCache.setNamespaceMemoryCache(namespace, dexId, data);
     // Save to persistent storage
     await this.setStoreData(dexId, namespace, data);
@@ -140,7 +140,7 @@ export class DexCache<DexIdTypes> {
 
     // Check memory cache first
     const data = this.memoryCache.getNamespaceMemoryCache(namespace, dexId);
-    console.log('data from memory: ', data);
+    // console.log('data from memory: ', data);
     if (data) {
       const res = typeof data === "string" ? JSON.parse(data) : data
       return res as TokenBiMap<T>;
@@ -175,7 +175,7 @@ export class DexCache<DexIdTypes> {
     const namespace = DEX_CACHE_NAMESPACE.TOKEN_INDEX_BI_MAP;
 
     // Save to memory cache
-    console.log('data to store in setDexTokenIndexBiMapCache: ', data.tokenBiMap);
+    // console.log('data to store in setDexTokenIndexBiMapCache: ', data.tokenBiMap);
     this.memoryCache.setNamespaceMemoryCache(namespace, dexId, data);
 
 
