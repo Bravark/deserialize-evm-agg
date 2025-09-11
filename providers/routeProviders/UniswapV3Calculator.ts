@@ -251,10 +251,10 @@ export class UniswapV3QuoteCalculator {
             return cached as any; // Cast for token details
         }
 
-        console.log('tokenAddress: ', tokenAddress);
-        console.log('tokenAddress: ', tokenAddress);
-        console.log('tokenAddress: ', tokenAddress);
-        console.log('tokenAddress: ', tokenAddress);
+        // console.log('tokenAddress: ', tokenAddress);
+        // console.log('tokenAddress: ', tokenAddress);
+        // console.log('tokenAddress: ', tokenAddress);
+        // console.log('tokenAddress: ', tokenAddress);
         const tokenContract = new Contract(tokenAddress, ERC20_ABI, provider);
         const [decimals, symbol] = await Promise.all([
             tokenContract.decimals(),
