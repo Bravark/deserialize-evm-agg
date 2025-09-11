@@ -546,11 +546,14 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     const minAmountOut = amountOut.mul(slippageMultiplier)
     console.log('minAmountOut: ', minAmountOut);
 
+    console.log('amountIn: ', amountIn);
+    console.log('amountIn.toFixed(0),: ', amountIn.toFixed(0),);
+    console.log('minAmountOut.toFixed(0): ', minAmountOut.toFixed(0));
     const txs = await createSwapTX(
         {
             path: paths,
-            amountInRaw: amountIn.toString(),
-            minAmountOut: minAmountOut.ceil().toString(),
+            amountInRaw: amountIn.toFixed(0),
+            minAmountOut: minAmountOut.toFixed(0),
         },
         wallet, connection,
     );
