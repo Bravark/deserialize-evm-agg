@@ -42,6 +42,7 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
 
     ) => {
         const { amountOut } = await this.getAmountOutFromPlan(amountFormattedToTokenDecimal, routePlan, 0, this.provider)
+        console.log('amountOut: ', amountOut);
         //here we will get the transaction here
         return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider)
     };
