@@ -550,7 +550,7 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
         {
             path: paths,
             amountInRaw: amountIn.toString(),
-            minAmountOut: minAmountOut.toString(),
+            minAmountOut: minAmountOut.ceil().toString(),
         },
         wallet, connection,
     );
