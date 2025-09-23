@@ -16,3 +16,4 @@ export declare const swapService: (params: SwapRequestType, provider: JsonRpcPro
         transactions: import("ethers").TransactionRequest[];
     };
 }>;
+export declare const tokenList: (provider: JsonRpcProvider) => Promise<string[]>;

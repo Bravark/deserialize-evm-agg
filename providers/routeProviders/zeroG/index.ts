@@ -445,6 +445,10 @@ export class ZeroGTestnetRoute<DexIdTypes> implements IRoute<PoolData, DexIdType
 
         return finalPrice;
     };
+    listTokens = async () => {
+        const routeData = await this.getTokenBiMap(this.provider);
+        return routeData.tokenBiMap.toArray();
+    }
     getTokenXAndYFromPool = (pool: PoolData) => {
         const { token0, token1 } = pool;
         return {
@@ -568,6 +572,11 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
 
         return { data: data as T[], tokenBiMap, tokenPoolMap };
     };
+
+    listTokens = async () => {
+        const routeData = await this.getTokenBiMap(this.provider);
+        return routeData.tokenBiMap.toArray();
+    }
     getGraph = async (
         provider?: JsonRpcProvider,
         _tokenBiMap?: TokenBiMap<PoolData>,

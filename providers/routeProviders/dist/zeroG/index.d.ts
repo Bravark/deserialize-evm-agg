@@ -37,6 +37,7 @@ export declare class ZeroGTestnetRoute<DexIdTypes> implements IRoute<PoolData, D
     getFunctionToMutateEdgeCost: () => FunctionToMutateTheEdgeCostType<any>;
     getTokenPairEdgeData: (tokenA: string, tokenB: string) => Promise<Edge<EdgeData> | null>;
     calculateRoutePrice: (route: DeserializeRoutePlan<DexIdTypes>[]) => Promise<number>;
+    listTokens: () => Promise<string[]>;
     getTokenXAndYFromPool: (pool: PoolData) => {
         tokenX: string;
         tokenY: string;
@@ -68,6 +69,7 @@ export declare class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTyp
         data: T[];
         tokenPoolMap: Map<string, string>;
     }>;
+    listTokens: () => Promise<string[]>;
     getGraph: (provider?: JsonRpcProvider, _tokenBiMap?: TokenBiMap<PoolData>, ignoreCache?: boolean) => Promise<Graph>;
     getNewGraph: (tokenBiMap?: TokenBiMap<PoolData>, _provider?: JsonRpcProvider) => Promise<Graph>;
     getEdgeDataDirect: <T extends PoolData, R>(provider: JsonRpcProvider, data: T, r: boolean) => Promise<R | null>;

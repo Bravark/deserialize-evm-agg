@@ -2,7 +2,7 @@
 
 import { NextFunction, Request, Response } from "express";
 import { SwapQuoteRequestSchema, SwapRequestSchema } from "./swap.schema";
-import { swapQuoteService, swapService } from "./swap.service";
+import { swapQuoteService, swapService, tokenList } from "./swap.service";
 import { JsonRpcProvider } from "ethers";
 
 
@@ -119,6 +119,30 @@ export const testnetSwapTransactionController = async (
         res.send(transaction);
     } catch (error) {
         console.log("Error in swapController", { error });
+        next(error);
+    }
+};
+
+
+export const tokenListController = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    console.log("Token List accessed");
+    try {
+
+        //parse the data
+        const chain = {
+            name: "0g",
+            rpc: "https://evmrpc-testnet.0g.ai"
+        }
+        const provider = new JsonRpcProvider(chain.rpc)
+        const result = await tokenList(provider);
+
+        res.send({ result });
+    } catch (error) {
+        console.log("Error in tokeList", { error });
         next(error);
     }
 };

@@ -113,4 +113,9 @@ export const swapService = async (params: SwapRequestType, provider: JsonRpcProv
 
 
 
-
+export const tokenList = async (provider: JsonRpcProvider) => {
+    const router = getRouteJsonRpcProvider(DEX_IDS.ZERO_G)
+    const cache = await initAndGetCache()
+    const routeInstance = new router(provider, cache)
+    return routeInstance.listTokens()
+}

@@ -62,6 +62,7 @@ export interface IRoute<TPool, DexIdTypes> {
         amountOut?: Decimal;
         feeAmount?: Decimal;
     }>;
+    listTokens: () => Promise<string[]>
     getAmountOutFromPlan: (
         amountFormattedToTokenDecimal: Decimal,
         routePlan: DeserializeRoutePlan<DexIdTypes>[],
