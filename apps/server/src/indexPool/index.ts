@@ -11,10 +11,7 @@ import { cloneDeep } from 'lodash';
     const int = Number.parseInt(this.toString());
     return int ?? this.toString();
 };
-const chain = {
-    name: "0g",
-    rpc: "https://evmrpc-testnet.0g.ai"
-}
+
 const DEX_IDS = {
     ZERO_G: "ZERO_G",
 } as const;
@@ -160,22 +157,19 @@ function isEmptyEdgeData(edgeData: EdgeData): boolean {
         (typeof edgeData === "object" && Object.keys(edgeData).length === 0)
     );
 }
-const updateCacheData = async () => {
+const updateCacheData = async (rpc: string) => {
 
     // for (const routeJsonRpcProvider of ALL_ROUTES_PROVIDERS) {
-
-    const provider = new JsonRpcProvider(chain.rpc)
+    const provider = new JsonRpcProvider(rpc)
     const cache = await initAndGetCache()
     const route = new ZeroGRoute(provider, cache)
     // console.log('route: ', route);
 
-    const updatedTokenBiMap = await route.getTokenBiMap(provider);
+    const updatedTokenBiMap = await route.getNewTokenBiMap(provider);
     console.log('updatedTokenBiMap: ', updatedTokenBiMap.tokenBiMap);
     cache.setDexTokenIndexBiMapCache(route.name, updatedTokenBiMap);
     const currentGraph = await route.getGraph(provider);
-    // console.log("currentGraph: ", route.name, currentGraph.length);
-    const newGraph = await route.getGraph(provider);
-    // console.log("newGraph: ", route.name, newGraph);
+    const newGraph = await route.getNewGraph();
     const updatedGraph = updateGraphEdgeData(currentGraph, newGraph);
     // console.log("updatedGraph: ", route.name, updatedGraph.length);
     // const isGraphEmpty = checkIfGraphIsEmpty(updatedGraph);
@@ -184,7 +178,6 @@ const updateCacheData = async () => {
     cache.setDexGraphCache(route.name, updatedGraph);
     // }
 }
-
 
 // //
 // // it is after that we will update the ALL
@@ -202,17 +195,35 @@ const updateCacheData = async () => {
 // setDexGraphCache(allRoute.name, allUpdatedGraph);
 // }
 
-// const CacheInterval = 0.1; 
-// updateCacheData();
-// setInterval(async () => {
-//     console.log("Updating cache data...");
-//     await updateCacheData();
-// }, CacheInterval * 60 * 1000); // Convert minutes to milliseconds
-const timeTOWaitFor = 2//in seconds
-const runOneAfterTheOther = async () => {
-    await updateCacheData();
-    //wait for awhile
-    await wait(timeTOWaitFor)
+const CacheInterval = 1;
+const chain = {
+    name: "0g",
+    rpc: "https://evmrpc.0g.ai"
 }
+updateCacheData(chain.rpc);
+setInterval(async () => {
+    console.log("Updating cache data...");
+    await updateCacheData(chain.rpc);
+}, CacheInterval * 60 * 1000); // Convert minutes to milliseconds
+const timeTOWaitFor = 2//in seconds
+// 
 
-runOneAfterTheOther()
+// const runOneAfterTheOther = async () => {
+//     console.log("Updating cache data... 1");
+//     await updateCacheData(chain.rpc);
+//     console.log("Updating cache data... 2");
+//     await updateCacheData(chain.rpc);
+//     console.log("Updating cache data... 3");
+//     await updateCacheData(chain.rpc);
+//     console.log("Updating cache data... 4");
+//     await updateCacheData(chain.rpc);
+
+//     //wait for awhile
+//     await wait(timeTOWaitFor)
+// }
+
+
+
+// runOneAfterTheOther()
+
+

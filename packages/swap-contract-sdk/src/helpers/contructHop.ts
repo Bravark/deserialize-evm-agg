@@ -19,11 +19,11 @@ export interface IPath {
 export type IQuoteDataWithoutAmountIn = Omit<IQuoteData, "amountIn">;
 
 
-const rpc = "https://evmrpc-testnet.0g.ai";
-const _provider = new ethers.JsonRpcProvider(rpc);
-const fetchAdapter = async (factory: string, provider = _provider) => {
+
+
+const fetchAdapter = async (factory: string, adapterTracker: string, provider: ethers.JsonRpcProvider) => {
   const adapterTrackerContract = new ethers.Contract(
-    factoryToAdapter,
+    adapterTracker,
     adapterTrackerABI,
     provider
   );
@@ -32,13 +32,14 @@ const fetchAdapter = async (factory: string, provider = _provider) => {
 
 export const constructHop = async (
   paths: IPath[],
-  provider: ethers.JsonRpcProvider = _provider
+  adapterTracker: string,
+  provider: ethers.JsonRpcProvider
 ) => {
   const usedFactories = new Map();
   const hops = [] as string[][];
   for (let i = 0; i < paths.length; i++) {
     if (!usedFactories.has(paths[i].factory)) {
-      const adapter = await fetchAdapter(paths[i].factory, provider);
+      const adapter = await fetchAdapter(paths[i].factory, adapterTracker, provider);
       usedFactories.set(paths[i].factory, adapter);
     }
 

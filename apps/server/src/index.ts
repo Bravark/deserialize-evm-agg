@@ -70,10 +70,10 @@ export const getBestRoutes = async (
     const RouteJsonRpcProviderClass = getRouteJsonRpcProvider(dexId);
     const cache = await initAndGetCache()
     const RouteJsonRpcProvider = new RouteJsonRpcProviderClass(provider, cache);
-    // console.log("getting token bi map...");
+    console.log("getting token bi map...");
     const { tokenBiMap } = await RouteJsonRpcProvider.getTokenBiMap();
     // console.log('tokenBiMap: ', tokenBiMap);
-    // console.log("getting graph...");
+    console.log("getting graph...");
     const graph = await RouteJsonRpcProvider.getGraph();
     let path: number[][] = [];
     let keyRate;
@@ -89,9 +89,13 @@ export const getBestRoutes = async (
     //   keyRate = tokenAUsdRate.edgeData.priceUsdc ?? 0;
     //   console.log("keyRate here here: ", keyRate);
     // }
-    // console.log("graph: ", graph[0]);
-    const fromIndex = tokenBiMap.getByValue(fromTokenString);
-    const toIndex = tokenBiMap.getByValue(toTokenString);
+
+    const fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
+    console.log('fromTokenString: ', fromTokenString);
+    console.log('fromIndex: ', fromIndex);
+    const toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
+    console.log('toTokenString: ', toTokenString);
+    console.log('toIndex: ', toIndex);
     if (fromIndex === undefined || toIndex === undefined) {
         console.log(
             "Token not found in the tokenBiMap: Token Not yet Supported by the Selected Dex"

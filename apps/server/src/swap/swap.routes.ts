@@ -34,6 +34,9 @@ const swapRouter: Router = Router();
 
 swapRouter.post("/quote", swapQuoteController);
 swapRouter.post("/swap", swapTransactionController);
+
+swapRouter.post("/testnet/quote", swapQuoteController);
+swapRouter.post("/testnet/swap", swapTransactionController);
 // swapRouter.post("/quoteAll", swapQuoteAllController);
 // swapRouter.post("/quoteAllBetter", swapQuoteAllBetterController);
 // swapRouter.post("/setQuest", setBoostController);

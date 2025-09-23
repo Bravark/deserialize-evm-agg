@@ -1,6 +1,7 @@
+import { JsonRpcProvider } from "ethers";
 import { SwapQuoteRequestType, SwapRequestType } from "./swap.schema";
 import Decimal from "decimal.js";
-export declare const swapQuoteService: (params: SwapQuoteRequestType) => Promise<{
+export declare const swapQuoteService: (params: SwapQuoteRequestType, provider: JsonRpcProvider) => Promise<{
     tokenA: string;
     tokenB: string;
     amountIn: string;
@@ -10,7 +11,7 @@ export declare const swapQuoteService: (params: SwapQuoteRequestType) => Promise
     dexId: "ZERO_G";
     dexFactory: any;
 }>;
-export declare const swapService: (params: SwapRequestType) => Promise<{
+export declare const swapService: (params: SwapRequestType, provider: JsonRpcProvider) => Promise<{
     transaction: {
         transactions: import("ethers").TransactionRequest[];
     };

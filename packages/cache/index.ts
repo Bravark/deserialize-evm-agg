@@ -143,7 +143,12 @@ export class DexCache<DexIdTypes> {
     // console.log('data from memory: ', data);
     if (data) {
       const res = typeof data === "string" ? JSON.parse(data) : data
-      return res as TokenBiMap<T>;
+      const formattedObject = {
+        tokenBiMap: new ArrayBiMap<string>(res.tokenBiMap),
+        tokenPoolMap: new Map<string, string>(res.tokenPoolMap),
+        data: res.data.map(functionToParseTheObjectInTheData),
+      };
+      return formattedObject;
     }
 
     // Not in memory, fetch from persistent storage
@@ -180,8 +185,10 @@ export class DexCache<DexIdTypes> {
 
 
     // Convert to a format suitable for storage
+    console.log('data.tokenBiMap.toArray(): ', data.tokenBiMap.toArray());
+    console.log('data.tokenBiMap.toArray(): ', data.tokenBiMap);
     const storageData: TokenIndexBiMapLocalCache<T> = {
-      tokenBiMap: data.tokenBiMap.toArray(),
+      tokenBiMap: Array.isArray(data.tokenBiMap) ? data.tokenBiMap : data.tokenBiMap.toArray(),
       data: data.data,
       tokenPoolMap: Array.from([...data.tokenPoolMap.entries()]),
     };

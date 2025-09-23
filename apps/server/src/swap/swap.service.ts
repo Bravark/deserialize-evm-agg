@@ -6,13 +6,8 @@ import { ApiError } from "../errors/errors.api";
 import { DESERIALIZE_FEE } from "../constants";
 import { getSwapRequestFeeRate } from "../utils";
 
-const chain = {
-    name: "0g",
-    rpc: "https://evmrpc-testnet.0g.ai"
-}
 
-const provider = new JsonRpcProvider(chain.rpc)
-export const swapQuoteService = async (params: SwapQuoteRequestType) => {
+export const swapQuoteService = async (params: SwapQuoteRequestType, provider: JsonRpcProvider) => {
 
     try {
         console.log("Processing swap transaction request", {
@@ -40,7 +35,14 @@ export const swapQuoteService = async (params: SwapQuoteRequestType) => {
 
             );
         // Get token price
-        const tokenPrice = await RouteJsonRpcProvider.calculateRoutePrice(routes);
+        let tokenPrice = new Decimal(0);
+        try {
+
+            const p = await RouteJsonRpcProvider.calculateRoutePrice(routes);
+            tokenPrice = new Decimal(p)
+        } catch (error) {
+
+        }
 
         const dexConfig = RouteJsonRpcProvider.getDexConfig()
         return {
@@ -68,7 +70,7 @@ export const swapQuoteService = async (params: SwapQuoteRequestType) => {
 
 }
 
-export const swapService = async (params: SwapRequestType) => {
+export const swapService = async (params: SwapRequestType, provider: JsonRpcProvider) => {
     try {
         // Calculate fee rate
         let defaultFeeRate = DESERIALIZE_FEE // Default fee rate

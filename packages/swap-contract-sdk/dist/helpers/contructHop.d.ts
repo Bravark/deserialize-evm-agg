@@ -13,4 +13,4 @@ export interface IPath {
     fee: any;
 }
 export type IQuoteDataWithoutAmountIn = Omit<IQuoteData, "amountIn">;
-export declare const constructHop: (paths: IPath[], provider?: ethers.JsonRpcProvider) => Promise<string[][]>;
+export declare const constructHop: (paths: IPath[], adapterTracker: string, provider: ethers.JsonRpcProvider) => Promise<string[][]>;
