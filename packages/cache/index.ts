@@ -140,13 +140,11 @@ export class DexCache<DexIdTypes> {
 
     // Check memory cache first
     const data = this.memoryCache.getNamespaceMemoryCache(namespace, dexId);
-    console.log('data from memory: ', (data as any).tokenBiMap);
     if (data) {
       const res = typeof data === "string" ? JSON.parse(data) : data
-      console.log('res: ', res.tokenBiMap);
       const formattedObject = {
-        tokenBiMap: new ArrayBiMap<string>(res.tokenBiMap),
-        tokenPoolMap: new Map<string, string>(res.tokenPoolMap),
+        tokenBiMap: res.tokenBiMap instanceof ArrayBiMap ? res.tokenBiMap : new ArrayBiMap<string>(res.tokenBiMap),
+        tokenPoolMap: res.tokenPoolMap instanceof Map ? res.tokenPoolMap : new Map<string, string>(res.tokenPoolMap),
         data: res.data.map(functionToParseTheObjectInTheData),
       };
       return formattedObject;
