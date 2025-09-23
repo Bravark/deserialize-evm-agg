@@ -341,24 +341,27 @@ export class UniswapV3QuoteCalculator {
         if (!this.config.wrappedNativeTokenAddress) {
             throw new Error("Wrapped native token address not configured");
         }
+        let price: number
         if (tokenAddress.toLowerCase() === this.config.wrappedNativeTokenAddress.toLowerCase()) {
-            return 1;
+            price = 1;
+        } else {
+            const { poolData } = await this.findBestPool(
+                tokenAddress,
+                this.config.wrappedNativeTokenAddress
+            );
+
+            const aToB = this.config.wrappedNativeTokenAddress.toLowerCase() ===
+                poolData.token1.address.toLowerCase();
+
+            price = this.calculateSpotPrice(
+                new Decimal(poolData.slot0.sqrtPriceX96),
+                poolData.token0.decimals,
+                poolData.token1.decimals,
+                aToB
+            );
         }
 
-        const { poolData } = await this.findBestPool(
-            tokenAddress,
-            this.config.wrappedNativeTokenAddress
-        );
 
-        const aToB = this.config.wrappedNativeTokenAddress.toLowerCase() ===
-            poolData.token1.address.toLowerCase();
-
-        const price = this.calculateSpotPrice(
-            new Decimal(poolData.slot0.sqrtPriceX96),
-            poolData.token0.decimals,
-            poolData.token1.decimals,
-            aToB
-        );
         const wrappedTokenPrice = await get0gPrice()
 
         if (!wrappedTokenPrice.data?.price) {
