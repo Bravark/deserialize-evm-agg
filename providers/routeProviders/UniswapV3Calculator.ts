@@ -345,20 +345,26 @@ export class UniswapV3QuoteCalculator {
         if (tokenAddress.toLowerCase() === this.config.wrappedNativeTokenAddress.toLowerCase()) {
             price = 1;
         } else {
-            const { poolData } = await this.findBestPool(
-                tokenAddress,
-                this.config.wrappedNativeTokenAddress
-            );
+            try {
 
-            const aToB = this.config.wrappedNativeTokenAddress.toLowerCase() ===
-                poolData.token1.address.toLowerCase();
+                const { poolData } = await this.findBestPool(
+                    tokenAddress,
+                    this.config.wrappedNativeTokenAddress
+                );
 
-            price = this.calculateSpotPrice(
-                new Decimal(poolData.slot0.sqrtPriceX96),
-                poolData.token0.decimals,
-                poolData.token1.decimals,
-                aToB
-            );
+                const aToB = this.config.wrappedNativeTokenAddress.toLowerCase() ===
+                    poolData.token1.address.toLowerCase();
+
+                price = this.calculateSpotPrice(
+                    new Decimal(poolData.slot0.sqrtPriceX96),
+                    poolData.token0.decimals,
+                    poolData.token1.decimals,
+                    aToB
+                );
+            } catch (error) {
+                price = 0
+
+            }
         }
 
 
@@ -367,7 +373,7 @@ export class UniswapV3QuoteCalculator {
         if (!wrappedTokenPrice.data?.price) {
             throw new Error("Unable to fetch wrapped token price")
         }
-        return price * wrappedTokenPrice.data?.price
+        return price / wrappedTokenPrice.data?.price
     }
     private async getTokenUsdPriceFromPool(tokenAddress: string): Promise<number> {
         try {

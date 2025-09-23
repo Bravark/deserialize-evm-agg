@@ -118,7 +118,11 @@ export const tokenList = async (provider: JsonRpcProvider) => {
     const router = getRouteJsonRpcProvider(DEX_IDS.ZERO_G)
     const cache = await initAndGetCache()
     const routeInstance = new router(provider, cache)
-    return routeInstance.listTokens()
+    console.log('cache: ', (await cache.getDexTokenIndexBiMapCache(DEX_IDS.ZERO_G, (arg: any) => { return arg }))?.tokenPoolMap);
+    console.log("=====================================")
+    console.log("=====================================")
+    console.log("=====================================")
+    return await routeInstance.listTokens()
 }
 
 export const getTokenPriceService = async (tokenAddress: string, provider: JsonRpcProvider) => {
