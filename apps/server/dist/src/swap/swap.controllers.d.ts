@@ -3,3 +3,5 @@ export declare const swapQuoteController: (req: Request, res: Response, next: Ne
 export declare const swapTransactionController: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const testnetSwapQuoteController: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const testnetSwapTransactionController: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const tokenListController: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const tokenPriceController: (req: Request, res: Response, next: NextFunction) => Promise<void>;

@@ -59,6 +59,7 @@ export interface DexConfig {
     quoterAddress: string;
     fromBlock?: string;
     abi: any;
+    wrappedNativeTokenAddress: string;
     stableTokenAddress?: string;
 }
 export interface QuoteParams {
@@ -85,6 +86,8 @@ export declare class UniswapV3QuoteCalculator {
     getTokenDetails(tokenAddress: string, provider?: ethers.JsonRpcProvider): Promise<Token>;
     getTokenPrice(tokenAddress: string): Promise<number>;
     private getTokenPriceFromExternalAPI;
+    private getTokenUsdPriceFromPoolUsingStableCoin;
+    getTokenUsdPriceFromPoolWrappedToken(tokenAddress: string): Promise<number>;
     private getTokenUsdPriceFromPool;
     getPoolData(poolAddress: string): Promise<PoolData>;
     findBestPool(tokenA: string, tokenB: string): Promise<PoolInfo & {

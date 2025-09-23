@@ -26,7 +26,9 @@ export class ZeroGTestnetRoute<DexIdTypes> implements IRoute<PoolData, DexIdType
         quoterAddress: "0x8d5E064d2EF44C29eE349e71CF70F751ECD62892",
         fromBlock: "171522",
         stableTokenAddress: "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
-        abi: ZeroGAbi
+        abi: ZeroGAbi,
+        //! TODO: CHANGE, THIS IS NOT THE REAL WRAPPED TOKEN ADDRESS, THIS IS FOR MAINNET
+        wrappedNativeTokenAddress: "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
     }
 
     constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>) {
@@ -471,8 +473,9 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         quoterAddress: "0xd00883722cECAD3A1c60bCA611f09e1851a0bE02",
         fromBlock: "0",
         //! TODO: THIS IS NOT THE STABLE COIN ADDRESS ON MAINNET
-        stableTokenAddress: "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
-        abi: ZeroGAbi
+        stableTokenAddress: "",
+        abi: ZeroGAbi,
+        wrappedNativeTokenAddress: "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
     }
 
     constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>) {

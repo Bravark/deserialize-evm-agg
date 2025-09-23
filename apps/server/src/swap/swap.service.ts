@@ -5,6 +5,7 @@ import Decimal from "decimal.js";
 import { ApiError } from "../errors/errors.api";
 import { DESERIALIZE_FEE } from "../constants";
 import { getSwapRequestFeeRate } from "../utils";
+import { UniswapV3QuoteCalculator, ZeroGRoute } from "@deserialize-evm-agg/routes-providers";
 
 
 export const swapQuoteService = async (params: SwapQuoteRequestType, provider: JsonRpcProvider) => {
@@ -118,4 +119,11 @@ export const tokenList = async (provider: JsonRpcProvider) => {
     const cache = await initAndGetCache()
     const routeInstance = new router(provider, cache)
     return routeInstance.listTokens()
+}
+
+export const getTokenPriceService = async (tokenAddress: string, provider: JsonRpcProvider) => {
+    const calculator = new UniswapV3QuoteCalculator(ZeroGRoute.config, provider);
+
+    // return calculator.getPoolData("0x224D0891D63Ca83e6DD98B4653C27034503a5E76")
+    return await calculator.getTokenUsdPriceFromPoolWrappedToken(tokenAddress);
 }

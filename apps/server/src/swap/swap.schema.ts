@@ -1,3 +1,4 @@
+import exp from "constants";
 import { DEX_IDS, dexIdList } from "../index";
 import { z } from "zod";
 
@@ -69,3 +70,12 @@ export const SwapRequestSchema = z.object({
 });
 
 export type SwapRequestType = z.infer<typeof SwapRequestSchema>["body"]
+
+
+export const TokenPriceRequestSchema = z.object({
+    params: z.object({
+        tokenAddress: z.string(),
+    }),
+});
+
+export type TokenPriceRequestType = z.infer<typeof TokenPriceRequestSchema>["params"]

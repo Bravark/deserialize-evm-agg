@@ -7,6 +7,7 @@
 
 import { ethers, Contract, JsonRpcProvider } from "ethers";
 import Decimal from "decimal.js";
+import { get0gPrice, getTokenPrice } from "./price";
 
 // ==================== TYPES ====================
 
@@ -69,6 +70,7 @@ export interface DexConfig {
     quoterAddress: string;
     fromBlock?: string;
     abi: any
+    wrappedNativeTokenAddress: string;
     stableTokenAddress?: string; // For USD price calculations
 }
 
@@ -300,16 +302,24 @@ export class UniswapV3QuoteCalculator {
     }
 
     private async getTokenPriceFromExternalAPI(symbol: string): Promise<number> {
+        if (symbol.toLowerCase() === "w0g") {
+            const p = (await getTokenPrice('0G')).data?.price
+            if (p) return p
+        }
         const response = await fetch(
             `https://min-api.cryptocompare.com/data/price?fsym=${symbol.toUpperCase()}&tsyms=USD`
         );
         const data = await response.json();
-        return data["USD"];
+        return data["USD"]
     }
 
-    private async getTokenUsdPriceFromPool(tokenAddress: string): Promise<number> {
+    private async getTokenUsdPriceFromPoolUsingStableCoin(tokenAddress: string): Promise<number> {
         if (!this.config.stableTokenAddress) {
             throw new Error("Stable token address not configured");
+        }
+        if (tokenAddress.toLowerCase() === this.config.stableTokenAddress.toLowerCase()) {
+
+            return 1;
         }
 
         const { poolData } = await this.findBestPool(
@@ -327,6 +337,50 @@ export class UniswapV3QuoteCalculator {
             aToB
         );
     }
+    async getTokenUsdPriceFromPoolWrappedToken(tokenAddress: string): Promise<number> {
+        if (!this.config.wrappedNativeTokenAddress) {
+            throw new Error("Wrapped native token address not configured");
+        }
+        if (tokenAddress.toLowerCase() === this.config.wrappedNativeTokenAddress.toLowerCase()) {
+            return 1;
+        }
+
+        const { poolData } = await this.findBestPool(
+            tokenAddress,
+            this.config.wrappedNativeTokenAddress
+        );
+
+        const aToB = this.config.wrappedNativeTokenAddress.toLowerCase() ===
+            poolData.token1.address.toLowerCase();
+
+        const price = this.calculateSpotPrice(
+            new Decimal(poolData.slot0.sqrtPriceX96),
+            poolData.token0.decimals,
+            poolData.token1.decimals,
+            aToB
+        );
+        const wrappedTokenPrice = await get0gPrice()
+
+        if (!wrappedTokenPrice.data?.price) {
+            throw new Error("Unable to fetch wrapped token price")
+        }
+        return price * wrappedTokenPrice.data?.price
+    }
+    private async getTokenUsdPriceFromPool(tokenAddress: string): Promise<number> {
+        try {
+            return await this.getTokenUsdPriceFromPoolUsingStableCoin(tokenAddress);
+        } catch (error) {
+            console.warn(`Failed to get USD price from pool for ${tokenAddress}:`);
+        }
+
+        // Fallback to wrapped native token
+        try {
+            return await this.getTokenUsdPriceFromPoolWrappedToken(tokenAddress);
+        } catch (error) {
+            console.error(`Failed to get USD price from wrapped native token for ${tokenAddress}:`, error);
+            throw new Error(`Unable to fetch USD price for token ${tokenAddress}`);
+        }
+    }
 
     // ==================== POOL METHODS ====================
 
@@ -337,11 +391,12 @@ export class UniswapV3QuoteCalculator {
         }
 
         const pool = new Contract(poolAddress, POOL_ABI, this.provider);
+        console.log('this.provider: ', this.provider._getConnection().url);
 
 
-        const [liquidity, slot0, token0Address, token1Address, fee] = await Promise.all([
-            pool.liquidity(),
+        const [slot0, liquidity, token0Address, token1Address, fee] = await Promise.all([
             pool.slot0(),
+            pool.liquidity(),
             pool.token0(),
             pool.token1(),
             pool.fee(),
@@ -392,7 +447,7 @@ export class UniswapV3QuoteCalculator {
                     };
                 }
             } catch (error) {
-                console.warn(`Error checking pool for fee ${fee}:`, error);
+                console.warn(`Error checking pool for fee ${fee}:`);
             }
         }
 

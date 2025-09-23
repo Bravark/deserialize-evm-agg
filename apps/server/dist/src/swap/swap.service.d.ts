@@ -17,3 +17,4 @@ export declare const swapService: (params: SwapRequestType, provider: JsonRpcPro
     };
 }>;
 export declare const tokenList: (provider: JsonRpcProvider) => Promise<string[]>;
+export declare const getTokenPriceService: (tokenAddress: string, provider: JsonRpcProvider) => Promise<number>;

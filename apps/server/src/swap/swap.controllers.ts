@@ -1,8 +1,8 @@
 //controller logics here
 
 import { NextFunction, Request, Response } from "express";
-import { SwapQuoteRequestSchema, SwapRequestSchema } from "./swap.schema";
-import { swapQuoteService, swapService, tokenList } from "./swap.service";
+import { SwapQuoteRequestSchema, SwapRequestSchema, TokenPriceRequestSchema } from "./swap.schema";
+import { getTokenPriceService, swapQuoteService, swapService, tokenList } from "./swap.service";
 import { JsonRpcProvider } from "ethers";
 
 
@@ -135,10 +135,36 @@ export const tokenListController = async (
         //parse the data
         const chain = {
             name: "0g",
-            rpc: "https://evmrpc-testnet.0g.ai"
+            rpc: "https://evmrpc.0g.ai"
         }
+
         const provider = new JsonRpcProvider(chain.rpc)
         const result = await tokenList(provider);
+
+        res.send({ result });
+    } catch (error) {
+        console.log("Error in tokeList", { error });
+        next(error);
+    }
+};
+
+export const tokenPriceController = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    console.log("Token List accessed");
+    try {
+
+        //parse the data
+        const chain = {
+            name: "0g",
+            rpc: "https://evmrpc.0g.ai"
+        }
+
+        const provider = new JsonRpcProvider(chain.rpc)
+        const { params } = TokenPriceRequestSchema.parse(req);
+        const result = await getTokenPriceService(params.tokenAddress, provider);
 
         res.send({ result });
     } catch (error) {

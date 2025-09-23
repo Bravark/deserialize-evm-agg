@@ -205,3 +205,21 @@ export declare const SwapRequestSchema: z.ZodObject<{
     };
 }>;
 export type SwapRequestType = z.infer<typeof SwapRequestSchema>["body"];
+export declare const TokenPriceRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        tokenAddress: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        tokenAddress: string;
+    }, {
+        tokenAddress: string;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    params: {
+        tokenAddress: string;
+    };
+}, {
+    params: {
+        tokenAddress: string;
+    };
+}>;
+export type TokenPriceRequestType = z.infer<typeof TokenPriceRequestSchema>["params"];
