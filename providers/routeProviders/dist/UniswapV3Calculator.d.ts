@@ -77,7 +77,6 @@ export declare class UniswapV3QuoteCalculator {
     private poolCache;
     private readonly CACHE_DURATION;
     constructor(config: DexConfig, provider: JsonRpcProvider);
-    priceMap: Map<string, number>;
     getPriceFromPriceMap: (tokenAddress: string) => number | undefined;
     setPriceInPriceMap: (tokenAddress: string, price: number) => void;
     getSureTokenPrice(tokenAddress: string, _provider?: ethers.JsonRpcProvider): Promise<number>;

@@ -126,5 +126,12 @@ export const getTokenPriceService = async (tokenAddress: string, provider: JsonR
     const calculator = new UniswapV3QuoteCalculator(ZeroGRoute.config, provider);
 
     // return calculator.getPoolData("0x224D0891D63Ca83e6DD98B4653C27034503a5E76")
-    return await calculator.getTokenUsdPriceFromPoolWrappedToken(tokenAddress);
+    return await calculator.getSureTokenPrice(tokenAddress);
+}
+
+export const getTokenDetailsService = async (tokenAddress: string, provider: JsonRpcProvider) => {
+    const calculator = new UniswapV3QuoteCalculator(ZeroGRoute.config, provider);
+
+    // return calculator.getPoolData("0x224D0891D63Ca83e6DD98B4653C27034503a5E76")
+    return await calculator.getTokenDetails(tokenAddress);
 }

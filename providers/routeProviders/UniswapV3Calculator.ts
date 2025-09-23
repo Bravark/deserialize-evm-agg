@@ -185,13 +185,13 @@ const QUOTER_ABI = [
 ] as const;
 
 // ==================== MAIN CLASS ====================
-
+const priceCache = new Map()
 export class UniswapV3QuoteCalculator {
     private provider: JsonRpcProvider;
     private config: DexConfig;
     private priceCache: Map<string, { price: number; timestamp: number }>;
     private poolCache: Map<string, PoolData>;
-    private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    private readonly CACHE_DURATION = 0.5 * 60 * 1000; // 5 minutes
 
     constructor(config: DexConfig, provider: JsonRpcProvider) {
         this.config = config;
@@ -201,17 +201,24 @@ export class UniswapV3QuoteCalculator {
     }
     // ==================== PRICE METHODS ======================
 
-    priceMap = new Map<string, number>();
+
     getPriceFromPriceMap = (tokenAddress: string): number | undefined => {
-        return this.priceMap.get(tokenAddress);
+        console.log("map", priceCache);
+        const cached = priceCache.get(tokenAddress);
+        if (cached && this.isCacheValid(cached.timestamp)) {
+            return cached.price;
+        }
+        return undefined;
     };
     setPriceInPriceMap = (tokenAddress: string, price: number) => {
-        this.priceMap.set(tokenAddress, price);
+        priceCache.set(tokenAddress, { price, timestamp: Date.now() });
+        console.log("map", priceCache);
     };
     async getSureTokenPrice(tokenAddress: string, _provider = this.provider): Promise<number> {
         // we should add the cache here
         try {
             const cachedPrice = this.getPriceFromPriceMap(tokenAddress);
+            console.log('cachedPrice: ', cachedPrice);
             if (cachedPrice !== undefined) {
                 return cachedPrice;
             }
@@ -273,7 +280,7 @@ export class UniswapV3QuoteCalculator {
     }
 
     public async getTokenPrice(tokenAddress: string): Promise<number> {
-        const cached = this.priceCache.get(tokenAddress);
+        const cached = priceCache.get(tokenAddress);
         if (cached && this.isCacheValid(cached.timestamp)) {
             return cached.price;
         }
@@ -282,7 +289,7 @@ export class UniswapV3QuoteCalculator {
             // Try to get price from pool if stable token is configured
             if (this.config.stableTokenAddress) {
                 const price = await this.getTokenUsdPriceFromPool(tokenAddress);
-                this.priceCache.set(tokenAddress, { price, timestamp: Date.now() });
+                priceCache.set(tokenAddress, { price, timestamp: Date.now() });
                 return price;
             }
         } catch (error) {
@@ -293,7 +300,7 @@ export class UniswapV3QuoteCalculator {
         try {
             const tokenData = await this.getTokenDetails(tokenAddress);
             const price = await this.getTokenPriceFromExternalAPI(tokenData.symbol);
-            this.priceCache.set(tokenAddress, { price, timestamp: Date.now() });
+            priceCache.set(tokenAddress, { price, timestamp: Date.now() });
             return price;
         } catch (error) {
             console.error(`Failed to get price for token ${tokenAddress}:`, error);
@@ -376,19 +383,21 @@ export class UniswapV3QuoteCalculator {
         return price * wrappedTokenPrice.data?.price
     }
     private async getTokenUsdPriceFromPool(tokenAddress: string): Promise<number> {
-        try {
-            return await this.getTokenUsdPriceFromPoolUsingStableCoin(tokenAddress);
-        } catch (error) {
-            console.warn(`Failed to get USD price from pool for ${tokenAddress}:`);
-        }
-
         // Fallback to wrapped native token
         try {
             return await this.getTokenUsdPriceFromPoolWrappedToken(tokenAddress);
         } catch (error) {
             console.error(`Failed to get USD price from wrapped native token for ${tokenAddress}:`, error);
+
+        }
+
+        try {
+            return await this.getTokenUsdPriceFromPoolUsingStableCoin(tokenAddress);
+        } catch (error) {
+            console.warn(`Failed to get USD price from pool for ${tokenAddress}:`);
             throw new Error(`Unable to fetch USD price for token ${tokenAddress}`);
         }
+
     }
 
     // ==================== POOL METHODS ====================
@@ -749,7 +758,7 @@ export class UniswapV3QuoteCalculator {
     }
 
     public clearCache(): void {
-        this.priceCache.clear();
+        priceCache.clear();
         this.poolCache.clear();
     }
 
