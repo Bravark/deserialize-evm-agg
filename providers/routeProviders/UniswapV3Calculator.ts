@@ -373,7 +373,7 @@ export class UniswapV3QuoteCalculator {
         if (!wrappedTokenPrice.data?.price) {
             throw new Error("Unable to fetch wrapped token price")
         }
-        return price / wrappedTokenPrice.data?.price
+        return price * wrappedTokenPrice.data?.price
     }
     private async getTokenUsdPriceFromPool(tokenAddress: string): Promise<number> {
         try {
