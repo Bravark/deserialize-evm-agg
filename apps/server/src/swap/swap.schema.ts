@@ -64,6 +64,7 @@ export const SwapRequestSchema = z.object({
                     DEX_IDS.ALL
                 ]
             ),
+            isNativeIn: z.boolean(),
         }),
         slippage: z.number(),
     }),

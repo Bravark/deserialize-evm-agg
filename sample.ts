@@ -3,7 +3,8 @@ import { ethers } from "ethers";
 
 
 (async () => {
-    const W0G = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
+    // const W0G = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
+    const W0G = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
     const privateKey = "0xcd90354282b35344616d6b53684684bef6e8673ed601d562a5866dc67fafd1ef"
     const provider = new ethers.JsonRpcProvider("https://evmrpc.0g.ai");
     const wallet = new ethers.Wallet(privateKey, provider);

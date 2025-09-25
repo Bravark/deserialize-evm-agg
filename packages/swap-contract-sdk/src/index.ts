@@ -10,6 +10,7 @@ export const createSwapTX = async (
   walletAddress: string,
   provider: JsonRpcProvider,
   network: NetworkType,
+  isNativeIn: boolean
 ) => {
   if (!walletAddress) throw new Error("Wallet address must be passed");
   if (path.length < 1) throw new Error("Invalid path");
@@ -19,7 +20,7 @@ export const createSwapTX = async (
   const web3 = new Web3(provider._getConnection().url || rpc);
   const txs = []
 
-  if (path[0].tokenIn != nativeToken) {
+  if (!isNativeIn) {
     const erc20 = new web3.eth.Contract(erc20ABI, path[0].tokenIn)
     const allowance = await erc20.methods.allowance(walletAddress, swapProxy).call() as bigint
 

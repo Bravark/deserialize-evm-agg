@@ -16,7 +16,7 @@ export declare class ZeroGTestnetRoute<DexIdTypes> implements IRoute<PoolData, D
     static config: DexConfig;
     constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>);
     getDexConfig: () => DexConfig;
-    getTransactionInstructionFromRoutePlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number) => Promise<{
+    getTransactionInstructionFromRoutePlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number, isNativeIn: boolean) => Promise<{
         transactions: TransactionRequest[];
     }>;
     getAmountOutFromPlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], devFeeRate: number, provider?: JsonRpcProvider) => Promise<{
@@ -54,7 +54,7 @@ export declare class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTyp
     static config: DexConfig;
     constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>);
     getDexConfig: () => DexConfig;
-    getTransactionInstructionFromRoutePlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number) => Promise<{
+    getTransactionInstructionFromRoutePlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number, isNativeIn: boolean) => Promise<{
         transactions: TransactionRequest[];
     }>;
     getAmountOutFromPlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], devFeeRate: number, provider?: JsonRpcProvider) => Promise<{
@@ -84,6 +84,6 @@ export declare class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTyp
 export declare const getTransactionInstructionFromRoutePlanZeroG: <DexIdTypes>(amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], connection: JsonRpcProvider) => Promise<{
     amountOut: Decimal;
 }>;
-export declare const getTransactionFromRoutePlanZeroG: <DexIdTypes>(amountIn: Decimal, amountOut: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number, connection: JsonRpcProvider) => Promise<{
+export declare const getTransactionFromRoutePlanZeroG: <DexIdTypes>(amountIn: Decimal, amountOut: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number, connection: JsonRpcProvider, isNativeIn: boolean) => Promise<{
     transactions: TransactionRequest[];
 }>;

@@ -48,9 +48,9 @@ const testSwap = async () => {
         routes,
         userInput.wallet,
         userInput.slippage,
+        false
     );
     console.log('transaction: ', transaction);
 }
 
 
-testSwap()

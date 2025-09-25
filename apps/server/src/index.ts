@@ -90,6 +90,16 @@ export const getBestRoutes = async (
     //   console.log("keyRate here here: ", keyRate);
     // }
 
+    const nativeAddress = RouteJsonRpcProviderClass.config.nativeTokenAddress
+    if (fromTokenString === nativeAddress) {
+
+        fromTokenString = RouteJsonRpcProviderClass.config.wrappedNativeTokenAddress
+    }
+
+    if (toTokenString === nativeAddress) {
+
+        toTokenString = RouteJsonRpcProviderClass.config.wrappedNativeTokenAddress
+    }
     const fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
     console.log('fromTokenString: ', fromTokenString);
     console.log('fromIndex: ', fromIndex);

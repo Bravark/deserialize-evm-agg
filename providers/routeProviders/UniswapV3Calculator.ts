@@ -71,6 +71,7 @@ export interface DexConfig {
     fromBlock?: string;
     abi: any
     wrappedNativeTokenAddress: string;
+    nativeTokenAddress: string
     stableTokenAddress?: string; // For USD price calculations
 }
 

@@ -84,6 +84,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 fee: number;
             }>, "many">;
             dexId: z.ZodEnum<["ALL"]>;
+            isNativeIn: z.ZodBoolean;
         }, "strip", z.ZodTypeAny, {
             amountOut: number;
             tokenA: string;
@@ -99,6 +100,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
+            isNativeIn: boolean;
             feeRate?: number | undefined;
         }, {
             amountOut: string;
@@ -115,6 +117,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
+            isNativeIn: boolean;
             feeRate?: string | undefined;
         }>;
         slippage: z.ZodNumber;
@@ -135,6 +138,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
+            isNativeIn: boolean;
             feeRate?: number | undefined;
         };
         slippage: number;
@@ -155,6 +159,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
+            isNativeIn: boolean;
             feeRate?: string | undefined;
         };
         slippage: number;
@@ -177,6 +182,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
+            isNativeIn: boolean;
             feeRate?: number | undefined;
         };
         slippage: number;
@@ -199,6 +205,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 poolAddress: string;
                 fee: number;
             }[];
+            isNativeIn: boolean;
             feeRate?: string | undefined;
         };
         slippage: number;

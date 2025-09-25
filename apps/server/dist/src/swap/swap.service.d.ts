@@ -10,6 +10,7 @@ export declare const swapQuoteService: (params: SwapQuoteRequestType, provider: 
     routePlan: import("@deserialize-evm-agg/routes-providers").DeserializeRoutePlan<import("../index").DexIdTypes>[];
     dexId: "ZERO_G";
     dexFactory: any;
+    isNativeIn: boolean;
 }>;
 export declare const swapService: (params: SwapRequestType, provider: JsonRpcProvider) => Promise<{
     transaction: {

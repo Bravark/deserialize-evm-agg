@@ -60,6 +60,7 @@ export interface DexConfig {
     fromBlock?: string;
     abi: any;
     wrappedNativeTokenAddress: string;
+    nativeTokenAddress: string;
     stableTokenAddress?: string;
 }
 export interface QuoteParams {

@@ -28,7 +28,8 @@ export class ZeroGTestnetRoute<DexIdTypes> implements IRoute<PoolData, DexIdType
         stableTokenAddress: "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf",
         abi: ZeroGAbi,
         //! TODO: CHANGE, THIS IS NOT THE REAL WRAPPED TOKEN ADDRESS, THIS IS FOR MAINNET
-        wrappedNativeTokenAddress: "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
+        wrappedNativeTokenAddress: "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c",
+        nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
     }
 
     constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>) {
@@ -45,12 +46,13 @@ export class ZeroGTestnetRoute<DexIdTypes> implements IRoute<PoolData, DexIdType
         routePlan: DeserializeRoutePlan<DexIdTypes>[],
         wallet: string,
         slippage: number,
+        isNativeIn: boolean
 
     ) => {
         const { amountOut } = await this.getAmountOutFromPlan(amountFormattedToTokenDecimal, routePlan, 0, this.provider)
         console.log('amountOut: ', amountOut);
         //here we will get the transaction here
-        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider)
+        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider, isNativeIn)
     };
     getAmountOutFromPlan = async (
         amountFormattedToTokenDecimal: Decimal,
@@ -475,7 +477,8 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         //! TODO: THIS IS NOT THE STABLE COIN ADDRESS ON MAINNET
         stableTokenAddress: "",
         abi: ZeroGAbi,
-        wrappedNativeTokenAddress: "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
+        wrappedNativeTokenAddress: "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c",
+        nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
     }
 
     constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>) {
@@ -492,12 +495,13 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         routePlan: DeserializeRoutePlan<DexIdTypes>[],
         wallet: string,
         slippage: number,
+        isNativeIn: boolean
 
     ) => {
         const { amountOut } = await this.getAmountOutFromPlan(amountFormattedToTokenDecimal, routePlan, 0, this.provider)
         console.log('amountOut: ', amountOut);
         //here we will get the transaction here
-        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider)
+        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider, isNativeIn)
     };
     getAmountOutFromPlan = async (
         amountFormattedToTokenDecimal: Decimal,
@@ -1011,7 +1015,8 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     routePlan: DeserializeRoutePlan<DexIdTypes>[],
     wallet: string,
     slippage: number,
-    connection: JsonRpcProvider // Now properly typed
+    connection: JsonRpcProvider,
+    isNativeIn: boolean
 ) => {
     // console.log('routePlan: ', routePlan);
     const paths = transformRoutePlanToIPath(ZeroGRoute.config.factoryAddress, routePlan);
@@ -1028,8 +1033,9 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
             path: paths,
             amountInRaw: amountIn.toFixed(0),
             minAmountOut: minAmountOut.toFixed(0),
+
         },
-        wallet, connection, ZeroGRoute.network
+        wallet, connection, ZeroGRoute.network, isNativeIn
     );
 
     const transactions: TransactionRequest[] = txs.map((tx) => ({

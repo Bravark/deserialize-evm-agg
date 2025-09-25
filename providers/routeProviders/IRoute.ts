@@ -57,6 +57,7 @@ export interface IRoute<TPool, DexIdTypes> {
         routePlan: DeserializeRoutePlan<DexIdTypes>[],
         wallet: string,
         slippage: number,
+        isNativeIn: boolean,
     ) => Promise<{
         transactions: TransactionRequest[];
         amountOut?: Decimal;
