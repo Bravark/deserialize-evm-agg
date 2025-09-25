@@ -1013,6 +1013,7 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     slippage: number,
     connection: JsonRpcProvider // Now properly typed
 ) => {
+    console.log('routePlan: ', routePlan);
     const paths = transformRoutePlanToIPath(ZeroGRoute.config.factoryAddress, routePlan);
     const slippageMultiplier = new Decimal(1).minus(slippage / 100);
     const minAmountOut = amountOut.mul(slippageMultiplier)
@@ -1021,6 +1022,7 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     console.log('amountIn: ', amountIn);
     console.log('amountIn.toFixed(0),: ', amountIn.toFixed(0),);
     console.log('minAmountOut.toFixed(0): ', minAmountOut.toFixed(0));
+    console.log('paths: ', paths);
     const txs = await createSwapTX(
         {
             path: paths,

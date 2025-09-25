@@ -707,10 +707,10 @@ export class UniswapV3QuoteCalculator {
             blockNumber: event.blockNumber.toString(),
         }));
 
-        const dataToWrite = {
-            pools: pools,
-            lastBlockNumber: pools[pools.length - 1].blockNumber,
-        }
+        // const dataToWrite = {
+        //     pools: pools,
+        //     lastBlockNumber: pools[pools.length - 1].blockNumber,
+        // }
 
 
         return pools;

@@ -20,8 +20,10 @@ export const transformRoutePlanToIPath = <DexIdTypes>(factoryAddress: string, ro
         const path: IPath = {
             factory: factoryAddress, // Assuming factory is always ZERO_G for this example
             poolAddress: route.poolAddress,
-            tokenIn: route.aToB ? route.tokenA : route.tokenB,
-            tokenOut: route.aToB ? route.tokenB : route.tokenA,
+            // tokenIn: route.aToB ? route.tokenA : route.tokenB,
+            tokenIn: route.tokenA,
+            // tokenOut: route.aToB ? route.tokenB : route.tokenA,
+            tokenOut: route.tokenA,
             fee: route.fee,
         };
         plan.push(path);
