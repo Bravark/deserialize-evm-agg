@@ -5,6 +5,9 @@ import { ethers } from "ethers";
 (async () => {
     // const W0G = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
     const W0G = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+    const local = "http://localhost:3735"
+    const prod = "http://evm-api.deserialize.xyz"
+    const baseUrl = local
     const privateKey = "0xcd90354282b35344616d6b53684684bef6e8673ed601d562a5866dc67fafd1ef"
     const provider = new ethers.JsonRpcProvider("https://evmrpc.0g.ai");
     const wallet = new ethers.Wallet(privateKey, provider);
@@ -14,8 +17,7 @@ import { ethers } from "ethers";
         amountIn: "10000000000000000",
         dexId: "ZERO_G"
     }
-
-    const res = await fetch("https://evm-api.deserialize.xyz/quote", {
+    const res = await fetch(`${baseUrl}/quote`, {
         method: "POST",
         body: JSON.stringify(userInput),
         headers: {
@@ -30,7 +32,7 @@ import { ethers } from "ethers";
     const quoteData = { quote, publicKey: wallet.address, slippage: 0.5 }
 
 
-    const swapRes = await fetch("https://evm-api.deserialize.xyz/swap", {
+    const swapRes = await fetch(`${baseUrl}/swap`, {
         method: "POST",
         body: JSON.stringify(quoteData),
         headers: {

@@ -25,7 +25,7 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
                 targetRouteNumber: 5,
             })
 
-        const isNativeIn = params.tokenA === RouteJsonRpcProvider.getDexConfig().nativeTokenAddress
+        const isNativeIn = params.tokenA.toLowerCase() === RouteJsonRpcProvider.getDexConfig().nativeTokenAddress.toLowerCase()
         console.log('routes: ', routes);
 
         const { amountOut } =

@@ -20,7 +20,7 @@ export const createSwapTX = async (
   const web3 = new Web3(provider._getConnection().url || rpc);
   const txs = []
 
-  if (!isNativeIn) {
+  if (path[0].tokenIn.toLowerCase() !== nativeToken.toLowerCase()) {
     const erc20 = new web3.eth.Contract(erc20ABI, path[0].tokenIn)
     const allowance = await erc20.methods.allowance(walletAddress, swapProxy).call() as bigint
 

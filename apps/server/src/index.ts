@@ -91,12 +91,12 @@ export const getBestRoutes = async (
     // }
 
     const nativeAddress = RouteJsonRpcProviderClass.config.nativeTokenAddress
-    if (fromTokenString === nativeAddress) {
+    if (fromTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
 
         fromTokenString = RouteJsonRpcProviderClass.config.wrappedNativeTokenAddress
     }
 
-    if (toTokenString === nativeAddress) {
+    if (toTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
 
         toTokenString = RouteJsonRpcProviderClass.config.wrappedNativeTokenAddress
     }
