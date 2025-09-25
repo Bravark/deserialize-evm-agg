@@ -23,7 +23,7 @@ export const transformRoutePlanToIPath = <DexIdTypes>(factoryAddress: string, ro
             // tokenIn: route.aToB ? route.tokenA : route.tokenB,
             tokenIn: route.tokenA,
             // tokenOut: route.aToB ? route.tokenB : route.tokenA,
-            tokenOut: route.tokenA,
+            tokenOut: route.tokenB,
             fee: route.fee,
         };
         plan.push(path);
