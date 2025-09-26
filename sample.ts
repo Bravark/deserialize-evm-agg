@@ -4,7 +4,9 @@ import { ethers } from "ethers";
 
 (async () => {
     // const W0G = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
+    const NATIVE = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
     const W0G = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+
     const local = "http://localhost:3735"
     const prod = "http://evm-api.deserialize.xyz"
     const baseUrl = local
@@ -12,11 +14,12 @@ import { ethers } from "ethers";
     const provider = new ethers.JsonRpcProvider("https://evmrpc.0g.ai");
     const wallet = new ethers.Wallet(privateKey, provider);
     const userInput = {
-        tokenA: W0G,
-        tokenB: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
-        amountIn: "10000000000000000",
+        tokenB: NATIVE,
+        tokenA: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
+        amountIn: "100000000000000000",
         dexId: "ZERO_G"
     }
+
     const res = await fetch(`${baseUrl}/quote`, {
         method: "POST",
         body: JSON.stringify(userInput),
@@ -26,7 +29,7 @@ import { ethers } from "ethers";
     })
 
     const data = await res.json()
-    // console.log("data: ", data)
+    console.log("data: ", data)
 
     const quote = { ...data, dexId: "ALL" }
     const quoteData = { quote, publicKey: wallet.address, slippage: 0.5 }
@@ -47,6 +50,8 @@ import { ethers } from "ethers";
         // const signedTx = await wallet.signTransaction(tx);
         //send transaction
         console.log("tx: ", tx);
+
+        return
         const txResponse = await wallet.sendTransaction(tx)
         console.log("txResponse: ", txResponse);
         const receipt = await txResponse.wait();

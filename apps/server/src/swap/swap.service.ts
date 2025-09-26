@@ -26,6 +26,7 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
             })
 
         const isNativeIn = params.tokenA.toLowerCase() === RouteJsonRpcProvider.getDexConfig().nativeTokenAddress.toLowerCase()
+        const isNativeOut = params.tokenB.toLowerCase() === RouteJsonRpcProvider.getDexConfig().nativeTokenAddress.toLowerCase()
         console.log('routes: ', routes);
 
         const { amountOut } =
@@ -59,7 +60,8 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
             routePlan: routes,
             dexId: params.dexId,
             dexFactory: dexConfig.factoryAddress,
-            isNativeIn
+            isNativeIn,
+            isNativeOut
         };
     }
     catch (error) {
@@ -96,7 +98,8 @@ export const swapService = async (params: SwapRequestType, provider: JsonRpcProv
             params.quote.routePlan,
             params.publicKey,
             params.slippage,
-            params.quote.isNativeIn
+            params.quote.isNativeIn,
+            params.quote.isNativeOut
         );
 
 

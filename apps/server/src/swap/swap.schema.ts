@@ -65,8 +65,14 @@ export const SwapRequestSchema = z.object({
                 ]
             ),
             isNativeIn: z.boolean(),
+            isNativeOut: z.boolean(),
         }),
-        slippage: z.number(),
+        slippage: z.number().transform((arg) => {
+            if (arg < 0 || arg > 10) {
+                throw new Error("Slippage must be between 0 and 10");
+            }
+            return arg;
+        }),
     }),
 });
 

@@ -85,6 +85,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
             }>, "many">;
             dexId: z.ZodEnum<["ALL"]>;
             isNativeIn: z.ZodBoolean;
+            isNativeOut: z.ZodBoolean;
         }, "strip", z.ZodTypeAny, {
             amountOut: number;
             tokenA: string;
@@ -101,6 +102,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 fee: number;
             }[];
             isNativeIn: boolean;
+            isNativeOut: boolean;
             feeRate?: number | undefined;
         }, {
             amountOut: string;
@@ -118,9 +120,10 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 fee: number;
             }[];
             isNativeIn: boolean;
+            isNativeOut: boolean;
             feeRate?: string | undefined;
         }>;
-        slippage: z.ZodNumber;
+        slippage: z.ZodEffects<z.ZodNumber, number, number>;
     }, "strip", z.ZodTypeAny, {
         publicKey: string;
         quote: {
@@ -139,6 +142,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 fee: number;
             }[];
             isNativeIn: boolean;
+            isNativeOut: boolean;
             feeRate?: number | undefined;
         };
         slippage: number;
@@ -160,6 +164,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 fee: number;
             }[];
             isNativeIn: boolean;
+            isNativeOut: boolean;
             feeRate?: string | undefined;
         };
         slippage: number;
@@ -183,6 +188,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 fee: number;
             }[];
             isNativeIn: boolean;
+            isNativeOut: boolean;
             feeRate?: number | undefined;
         };
         slippage: number;
@@ -206,6 +212,7 @@ export declare const SwapRequestSchema: z.ZodObject<{
                 fee: number;
             }[];
             isNativeIn: boolean;
+            isNativeOut: boolean;
             feeRate?: string | undefined;
         };
         slippage: number;

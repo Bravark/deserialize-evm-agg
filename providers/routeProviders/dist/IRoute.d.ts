@@ -33,7 +33,7 @@ export interface IRoute<TPool, DexIdTypes> {
     getFunctionToMutateEdgeCost: <T extends EdgeData>() => FunctionToMutateTheEdgeCostType<T>;
     getNewTokenBiMap: <T>(provider: JsonRpcProvider) => Promise<TokenBiMap<T>>;
     getNewGraph: (tokenBiMap: TokenBiMap<TPool>, provider: JsonRpcProvider) => Promise<Graph>;
-    getTransactionInstructionFromRoutePlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number, isNativeIn: boolean) => Promise<{
+    getTransactionInstructionFromRoutePlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number, isNativeIn: boolean, isNativeOut: boolean) => Promise<{
         transactions: TransactionRequest[];
         amountOut?: Decimal;
         feeAmount?: Decimal;

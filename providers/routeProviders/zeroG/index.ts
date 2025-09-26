@@ -46,13 +46,14 @@ export class ZeroGTestnetRoute<DexIdTypes> implements IRoute<PoolData, DexIdType
         routePlan: DeserializeRoutePlan<DexIdTypes>[],
         wallet: string,
         slippage: number,
-        isNativeIn: boolean
+        isNativeIn: boolean,
+        isNativeOut: boolean
 
     ) => {
         const { amountOut } = await this.getAmountOutFromPlan(amountFormattedToTokenDecimal, routePlan, 0, this.provider)
         console.log('amountOut: ', amountOut);
         //here we will get the transaction here
-        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider, isNativeIn)
+        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider, isNativeIn, isNativeOut)
     };
     getAmountOutFromPlan = async (
         amountFormattedToTokenDecimal: Decimal,
@@ -495,13 +496,14 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         routePlan: DeserializeRoutePlan<DexIdTypes>[],
         wallet: string,
         slippage: number,
-        isNativeIn: boolean
+        isNativeIn: boolean,
+        isNativeOut: boolean
 
     ) => {
         const { amountOut } = await this.getAmountOutFromPlan(amountFormattedToTokenDecimal, routePlan, 0, this.provider)
         console.log('amountOut: ', amountOut);
         //here we will get the transaction here
-        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider, isNativeIn)
+        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider, isNativeIn, isNativeOut)
     };
     getAmountOutFromPlan = async (
         amountFormattedToTokenDecimal: Decimal,
@@ -1016,10 +1018,11 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     wallet: string,
     slippage: number,
     connection: JsonRpcProvider,
-    isNativeIn: boolean
+    isNativeIn: boolean,
+    isNativeOut: boolean
 ) => {
     // console.log('routePlan: ', routePlan);
-    const paths = transformRoutePlanToIPath(ZeroGRoute.config.factoryAddress, routePlan, ZeroGRoute.config.nativeTokenAddress, ZeroGRoute.config.wrappedNativeTokenAddress, isNativeIn);
+    const paths = transformRoutePlanToIPath(ZeroGRoute.config.factoryAddress, routePlan, ZeroGRoute.config.nativeTokenAddress, ZeroGRoute.config.wrappedNativeTokenAddress, isNativeIn, isNativeOut);
     const slippageMultiplier = new Decimal(1).minus(slippage / 100);
     const minAmountOut = amountOut.mul(slippageMultiplier)
     // console.log('minAmountOut: ', minAmountOut);
@@ -1033,7 +1036,6 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
             path: paths,
             amountInRaw: amountIn.toFixed(0),
             minAmountOut: minAmountOut.toFixed(0),
-
         },
         wallet, connection, ZeroGRoute.network, isNativeIn
     );

@@ -11,6 +11,7 @@ export declare const swapQuoteService: (params: SwapQuoteRequestType, provider: 
     dexId: "ZERO_G";
     dexFactory: any;
     isNativeIn: boolean;
+    isNativeOut: boolean;
 }>;
 export declare const swapService: (params: SwapRequestType, provider: JsonRpcProvider) => Promise<{
     transaction: {
