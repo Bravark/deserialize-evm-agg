@@ -204,7 +204,7 @@ export class UniswapV3QuoteCalculator {
 
 
     getPriceFromPriceMap = (tokenAddress: string): number | undefined => {
-        console.log("map", priceCache);
+
         const cached = priceCache.get(tokenAddress);
         if (cached && this.isCacheValid(cached.timestamp)) {
             return cached.price;
@@ -213,13 +213,16 @@ export class UniswapV3QuoteCalculator {
     };
     setPriceInPriceMap = (tokenAddress: string, price: number) => {
         priceCache.set(tokenAddress, { price, timestamp: Date.now() });
-        console.log("map", priceCache);
+
     };
     async getSureTokenPrice(tokenAddress: string, _provider = this.provider): Promise<number> {
         // we should add the cache here
+        if (tokenAddress.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenAddress = this.config.wrappedNativeTokenAddress
+        }
         try {
             const cachedPrice = this.getPriceFromPriceMap(tokenAddress);
-            console.log('cachedPrice: ', cachedPrice);
+            // console.log('cachedPrice: ', cachedPrice);
             if (cachedPrice !== undefined) {
                 return cachedPrice;
             }
@@ -410,7 +413,7 @@ export class UniswapV3QuoteCalculator {
         }
 
         const pool = new Contract(poolAddress, POOL_ABI, this.provider);
-        console.log('this.provider: ', this.provider._getConnection().url);
+
 
 
         const [slot0, liquidity, token0Address, token1Address, fee] = await Promise.all([

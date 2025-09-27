@@ -184,8 +184,8 @@ export class DexCache<DexIdTypes> {
 
 
     // Convert to a format suitable for storage
-    console.log('data.tokenBiMap.toArray(): ', data.tokenBiMap.toArray());
-    console.log('data.tokenBiMap.toArray(): ', data.tokenBiMap);
+    // console.log('data.tokenBiMap.toArray(): ', data.tokenBiMap.toArray());
+    // console.log('data.tokenBiMap.toArray(): ', data.tokenBiMap);
     const storageData: TokenIndexBiMapLocalCache<T> = {
       tokenBiMap: Array.isArray(data.tokenBiMap) ? data.tokenBiMap : data.tokenBiMap.toArray(),
       data: data.data,

@@ -15,7 +15,7 @@ export const swapQuoteController = async (
     console.log("Swap endpoint accessed");
     try {
         const data = req.body;
-        console.log("data: ", data);
+
         //parse the data
         const chain = {
             name: "0g",
@@ -44,7 +44,7 @@ export const swapTransactionController = async (
     console.log("Swap transaction accessed");
     try {
         const data = req.body;
-        console.log("data: ", data);
+
         //parse the data
         const chain = {
             name: "0g",
@@ -73,7 +73,7 @@ export const testnetSwapQuoteController = async (
     console.log("Swap endpoint accessed");
     try {
         const data = req.body;
-        console.log("data: ", data);
+
         //parse the data
         const chain = {
             name: "0g",
@@ -102,7 +102,7 @@ export const testnetSwapTransactionController = async (
     console.log("Swap transaction accessed");
     try {
         const data = req.body;
-        console.log("data: ", data);
+
         //parse the data
         const chain = {
             name: "0g",

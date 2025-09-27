@@ -101,6 +101,7 @@ function updateGraphEdgeData(currentGraph: Graph, updatedGraph: Graph): Graph {
     try {
         // First, try structuredClone with error handling
         resultGraph = structuredClone(currentGraph);
+
     } catch (error) {
         console.warn('structuredClone failed, using custom deep clone:', error);
         console.log('currentGraph this is the graph that could not be parsed: ', currentGraph);
@@ -117,6 +118,7 @@ function updateGraphEdgeData(currentGraph: Graph, updatedGraph: Graph): Graph {
     const edgeMap = new Map();
 
     // Populate the map with all edges from the current graph
+
     updatedGraph.forEach((edgeList) => {
         edgeList.forEach((edge) => {
             // Create a unique key for each edge based on from and to properties
@@ -165,17 +167,19 @@ const updateCacheData = async (rpc: string) => {
     const route = new ZeroGRoute(provider, cache)
     // console.log('route: ', route);
 
-    const updatedTokenBiMap = await route.getNewTokenBiMap(provider);
-    console.log('updatedTokenBiMap: ', updatedTokenBiMap.tokenBiMap);
-    cache.setDexTokenIndexBiMapCache(route.name, updatedTokenBiMap);
+    // const updatedTokenBiMap = await route.getNewTokenBiMap(provider);
+    // console.log('updatedTokenBiMap: ', updatedTokenBiMap.tokenBiMap);
+    // cache.setDexTokenIndexBiMapCache(route.name, updatedTokenBiMap);
     const currentGraph = await route.getGraph(provider);
+    console.log('currentGraph: ', currentGraph);
     const newGraph = await route.getNewGraph();
-    const updatedGraph = updateGraphEdgeData(currentGraph, newGraph);
+    // const updatedGraph = updateGraphEdgeData(currentGraph, newGraph);//? DECIDED NOT TO UPDATE THE GRAPH AGAIN
+    // console.log('updatedGraph: ', updatedGraph);
     // console.log("updatedGraph: ", route.name, updatedGraph.length);
     // const isGraphEmpty = checkIfGraphIsEmpty(updatedGraph);
     // console.log("isGraphEmpty: ", route.name, isGraphEmpty);
     // if (!isGraphEmpty) {
-    cache.setDexGraphCache(route.name, updatedGraph);
+    cache.setDexGraphCache(route.name, newGraph);
     // }
 }
 

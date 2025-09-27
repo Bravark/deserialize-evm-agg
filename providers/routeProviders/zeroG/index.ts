@@ -555,6 +555,8 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
 
         return tokenBiMap;
     }
+
+
     getNewTokenBiMap = async <T>(
         provider: JsonRpcProvider
     ): Promise<{
@@ -655,7 +657,7 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
 
 
         const processPool = async (wp: PoolData) => {
-            console.log('wp: ', wp);
+            console.log('wp: ', wp.token0.address, wp.token1.address, wp.poolAddress);
 
             const fromTokenString = wp.token0.address.toLowerCase()
             const fromTokenIndex = tokenIndexBiMap.getByValue(fromTokenString);
@@ -739,7 +741,7 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
                 graph[Number(fromTokenIndex)].push(directEdge);
                 graph[Number(toTokenIndex)].push(reverseEdge);
             } catch (error) {
-                console.error("Error processing pool:", error);
+                console.error("Error processing pool:", wp, error);
                 return;
             }
         };
@@ -751,6 +753,7 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
             console.log("count: ", count++);
         }
 
+        console.log('graph: ', graph);
         return graph;
     };
     getEdgeDataDirect = async <T extends PoolData, R>(
