@@ -167,11 +167,10 @@ const updateCacheData = async (rpc: string) => {
     const route = new ZeroGRoute(provider, cache)
     // console.log('route: ', route);
 
-    // const updatedTokenBiMap = await route.getNewTokenBiMap(provider);
+    const updatedTokenBiMap = await route.getNewTokenBiMap(provider);
     // console.log('updatedTokenBiMap: ', updatedTokenBiMap.tokenBiMap);
-    // cache.setDexTokenIndexBiMapCache(route.name, updatedTokenBiMap);
-    const currentGraph = await route.getGraph(provider);
-    console.log('currentGraph: ', currentGraph);
+    cache.setDexTokenIndexBiMapCache(route.name, updatedTokenBiMap);
+    // const currentGraph = await route.getGraph(provider);
     const newGraph = await route.getNewGraph();
     // const updatedGraph = updateGraphEdgeData(currentGraph, newGraph);//? DECIDED NOT TO UPDATE THE GRAPH AGAIN
     // console.log('updatedGraph: ', updatedGraph);
