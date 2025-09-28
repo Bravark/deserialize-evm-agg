@@ -753,7 +753,7 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
             console.log("count: ", count++);
         }
 
-        console.log('graph: ', graph);
+
         return graph;
     };
     getEdgeDataDirect = async <T extends PoolData, R>(

@@ -82,7 +82,7 @@ const dijkstraAlgorithmWithKey = (
   key: GraphKey,
   functionToMutateTheEdgeCost: FunctionToMutateTheEdgeCostType<EdgeData>
 ) => {
-  console.log('graph: ', graph);
+
   if (from > graph.length || to > graph.length)
     throw new Error("Start and/or end is out of bounds on graph");
 

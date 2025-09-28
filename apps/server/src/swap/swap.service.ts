@@ -126,6 +126,28 @@ export const tokenList = async (provider: JsonRpcProvider) => {
     return await routeInstance.listTokens()
 }
 
+export const tokenListWithDetailsService = async (provider: JsonRpcProvider) => {
+    const router = getRouteJsonRpcProvider(DEX_IDS.ZERO_G)
+    const cache = await initAndGetCache()
+    const routeInstance = new router(provider, cache)
+    const calculator = new UniswapV3QuoteCalculator(ZeroGRoute.config, provider);
+    const tokens = await routeInstance.listTokens()
+    const detailedTokens = await Promise.all(tokens.map(async (token) => {
+
+        const cacheDetails = await cache.getMintFromCache("ALL", token)
+
+        if (!cacheDetails) {
+            const details = await calculator.getTokenDetails(token);
+            await cache.setMintToCache("ALL", { ...details, contractAddress: token });
+            return details;
+        }
+
+        return cacheDetails;
+    }))
+
+    return detailedTokens
+}
+
 export const getTokenPriceService = async (tokenAddress: string, provider: JsonRpcProvider) => {
     const calculator = new UniswapV3QuoteCalculator(ZeroGRoute.config, provider);
 

@@ -289,7 +289,7 @@ const dijkstraAlgorithmWithKeyV2 = (
   key: number,
   functionToMutateTheEdgeCost: any
 ) => {
-  console.log("graph: ", graph.length);
+
   if (from > graph.length || to > graph.length)
     throw new Error("Start and or end is out of bounds on graph");
   const queue = new PriorityQueue<PriorityDataType>(comparatorFunction);
@@ -383,5 +383,4 @@ const res = dijkstraAlgorithmWithKeyV2(
   2,
   functionToMutateTheEdgeCost
 );
-console.log("graph: ", graph);
-console.log("res: ", res);
+

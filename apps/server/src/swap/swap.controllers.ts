@@ -2,7 +2,7 @@
 
 import { NextFunction, Request, Response } from "express";
 import { SwapQuoteRequestSchema, SwapRequestSchema, TokenDetailsRequestSchema, TokenPriceRequestSchema } from "./swap.schema";
-import { getTokenDetailsService, getTokenPriceService, swapQuoteService, swapService, tokenList } from "./swap.service";
+import { getTokenDetailsService, getTokenPriceService, swapQuoteService, swapService, tokenList, tokenListWithDetailsService } from "./swap.service";
 import { JsonRpcProvider } from "ethers";
 
 
@@ -196,6 +196,33 @@ export const tokenDetailsController = async (
         res.send({ result });
     } catch (error) {
         console.log("Error in tokeList", { error });
+        next(error);
+    }
+};
+
+
+
+
+export const tokenListWithDetailsController = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    console.log("Token List with Details accessed");
+    try {
+
+        //parse the data
+        const chain = {
+            name: "0g",
+            rpc: "https://evmrpc.0g.ai"
+        }
+
+        const provider = new JsonRpcProvider(chain.rpc)
+        const result = await tokenListWithDetailsService(provider);
+
+        res.send({ result });
+    } catch (error) {
+        console.log("Error in tokenListWithDetails", { error });
         next(error);
     }
 };

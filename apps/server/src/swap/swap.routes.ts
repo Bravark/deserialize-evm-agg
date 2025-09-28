@@ -16,6 +16,7 @@ import {
     swapTransactionController,
     tokenDetailsController,
     tokenListController,
+    tokenListWithDetailsController,
     tokenPriceController,
     // tokenListController,
     // tokenPriceController,
@@ -38,6 +39,7 @@ const swapRouter: Router = Router();
 swapRouter.post("/quote", swapQuoteController);
 swapRouter.post("/swap", swapTransactionController);
 swapRouter.get("/tokenList", tokenListController);
+swapRouter.get("/tokenListWithDetails", tokenListWithDetailsController);
 swapRouter.get("/tokenPrice/:tokenAddress", tokenPriceController);
 swapRouter.get("/tokenDetails/:tokenAddress", tokenDetailsController);
 

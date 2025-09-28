@@ -6,3 +6,4 @@ export declare const testnetSwapTransactionController: (req: Request, res: Respo
 export declare const tokenListController: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const tokenPriceController: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const tokenDetailsController: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const tokenListWithDetailsController: (req: Request, res: Response, next: NextFunction) => Promise<void>;
