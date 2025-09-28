@@ -375,7 +375,7 @@ export class ZeroGTestnetRoute<DexIdTypes> implements IRoute<PoolData, DexIdType
             // Calculate swap impact
             const _swapImpact = (((amountIn.sub(amountOutInTokenA)).div(amountIn)).mul(100)).toNumber()
             if (isNaN(_swapImpact)) {
-                console.warn("Swap impact is NaN, returning 100");
+                // console.warn("Swap impact is NaN, returning 100");
                 return 100;
             }
             // console.log(
@@ -848,7 +848,7 @@ export class ZeroGRoute<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
             // Calculate swap impact
             const _swapImpact = (((amountIn.sub(amountOutInTokenA)).div(amountIn)).mul(100)).toNumber()
             if (isNaN(_swapImpact)) {
-                console.warn("Swap impact is NaN, returning 100");
+                // console.warn("Swap impact is NaN, returning 100");
                 return 100;
             }
             // console.log(

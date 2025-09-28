@@ -659,12 +659,12 @@ export class UniswapV3QuoteCalculator {
         }
 
         const quoter = new Contract(this.config.quoterAddress, QUOTER_ABI, this.provider);
-        console.log('this.config.quoterAddress: ', this.config.quoterAddress);
+        // console.log('this.config.quoterAddress: ', this.config.quoterAddress);
 
-        console.log('this.provider._getConnection().url: ', this.provider._getConnection().url);
-        console.log('tokenIn: ', tokenIn);
-        console.log('tokenOut: ', tokenOut);
-        console.log('amountIn: ', amountIn);
+        // console.log('this.provider._getConnection().url: ', this.provider._getConnection().url);
+        // console.log('tokenIn: ', tokenIn);
+        // console.log('tokenOut: ', tokenOut);
+        // console.log('amountIn: ', amountIn);
         try {
             const amountOut = await quoter.quoteExactInputSingle(
                 tokenIn,
