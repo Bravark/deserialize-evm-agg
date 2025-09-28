@@ -15,6 +15,7 @@ export interface Token {
     address: string;
     decimals: number;
     symbol: string;
+    name: string
 }
 
 export interface PoolInfo {
@@ -167,6 +168,13 @@ const ERC20_ABI = [
         stateMutability: "view",
         type: "function",
     },
+    {
+        inputs: [],
+        name: "name",
+        outputs: [{ internalType: "string", name: "", type: "string" }],
+        stateMutability: "view",
+        type: "function",
+    },
 ] as const;
 
 const QUOTER_ABI = [
@@ -257,6 +265,9 @@ export class UniswapV3QuoteCalculator {
     // ==================== TOKEN METHODS ====================
 
     public async getTokenDetails(tokenAddress: string, provider = this.provider): Promise<Token> {
+        if (tokenAddress.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenAddress = this.config.wrappedNativeTokenAddress
+        }
         const cacheKey = `token_${tokenAddress}`;
         const cached = this.poolCache.get(cacheKey);
 
@@ -269,15 +280,17 @@ export class UniswapV3QuoteCalculator {
         // console.log('tokenAddress: ', tokenAddress);
         // console.log('tokenAddress: ', tokenAddress);
         const tokenContract = new Contract(tokenAddress, ERC20_ABI, provider);
-        const [decimals, symbol] = await Promise.all([
+        const [decimals, symbol, name] = await Promise.all([
             tokenContract.decimals(),
             tokenContract.symbol(),
+            tokenContract.name(),
         ]);
 
         const tokenDetails: Token = {
             address: tokenAddress,
             decimals: Number(decimals),
             symbol: symbol,
+            name: name
         };
 
         return tokenDetails;

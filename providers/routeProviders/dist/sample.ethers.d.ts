@@ -69,6 +69,7 @@ interface Token {
     address: string;
     decimals: number;
     symbol: string;
+    name: string;
 }
 export interface PoolData {
     token0: Token;

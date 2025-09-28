@@ -269,15 +269,18 @@ export class DexCache<DexIdTypes> {
     mintAddress: string
   ): Promise<TokenDetailsGenerics | null> {
     // Check memory cache
-    const data = this.memoryCache.getNamespaceMemoryCache(
+    let data = this.memoryCache.getNamespaceMemoryCache(
       DEX_CACHE_NAMESPACE.TOKEN_MINT_MAP,
       dexId
     ) as TokenDetailsLocalCacheMap<TokenDetailsGenerics> | null;
 
-    if (data && data.has(mintAddress)) {
-      const res = data.get(mintAddress) || null;
+    if (data) {
 
-      return typeof res == "string" ? JSON.parse(res) : res
+      data = data instanceof Map ? data : new Map(JSON.parse(data));
+      if (data.has(mintAddress)) {
+        const res = data.get(mintAddress) || null;
+        return typeof res == "string" ? JSON.parse(res) : res
+      }
     }
 
     // Not in memory, fetch from storage

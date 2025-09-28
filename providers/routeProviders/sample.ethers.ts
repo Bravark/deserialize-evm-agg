@@ -447,6 +447,7 @@ interface Token {
     address: string;
     decimals: number;
     symbol: string;
+    name: string
 }
 export interface PoolData {
     token0: Token;
@@ -469,14 +470,16 @@ interface QuoteParams {
 export const getPoolContractInstance = (poolAddress: string, _provider = provider) => { return new Contract(poolAddress, POOL_ABI, _provider) }
 export const getTokenDetails = async (tokenAddress: string, _provider = provider): Promise<Token> => {
     const tokenContract = new Contract(tokenAddress, ERC20_ABI, _provider);
-    const [decimals, symbol] = await Promise.all([
+    const [decimals, symbol, name] = await Promise.all([
         tokenContract.decimals(),
         tokenContract.symbol(),
+        tokenContract.name(),
     ]);
     return {
         address: tokenAddress,
         decimals: Number(decimals),
         symbol: symbol,
+        name
     };
 }
 
@@ -493,21 +496,25 @@ export const getPoolData = async (poolAddress: string, factoryAddress = FACTORY_
     const token0Contract = new Contract(token0Address, ERC20_ABI, _provider);
     const token1Contract = new Contract(token1Address, ERC20_ABI, _provider
     );
-    const [decimals0, decimals1, symbol0, symbol1] = await Promise.all([
+    const [decimals0, decimals1, symbol0, symbol1, name0, name1] = await Promise.all([
         token0Contract.decimals(),
         token1Contract.decimals(),
         token0Contract.symbol(),
         token1Contract.symbol(),
+        token0Contract.name(),
+        token1Contract.name(),
     ]);
     const token0: Token = {
         address: token0Address,
         decimals: Number(decimals0),
         symbol: symbol0,
+        name: name0
     };
     const token1: Token = {
         address: token1Address,
         decimals: Number(decimals1),
         symbol: symbol1,
+        name: name1
     };
     return {
         token0,

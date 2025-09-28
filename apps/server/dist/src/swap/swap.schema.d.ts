@@ -237,3 +237,21 @@ export declare const TokenPriceRequestSchema: z.ZodObject<{
     };
 }>;
 export type TokenPriceRequestType = z.infer<typeof TokenPriceRequestSchema>["params"];
+export declare const TokenDetailsRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        tokenAddress: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        tokenAddress: string;
+    }, {
+        tokenAddress: string;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    params: {
+        tokenAddress: string;
+    };
+}, {
+    params: {
+        tokenAddress: string;
+    };
+}>;
+export type TokenDetailsRequestType = z.infer<typeof TokenDetailsRequestSchema>["params"];

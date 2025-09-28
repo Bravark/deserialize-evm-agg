@@ -135,7 +135,17 @@ export const getTokenPriceService = async (tokenAddress: string, provider: JsonR
 
 export const getTokenDetailsService = async (tokenAddress: string, provider: JsonRpcProvider) => {
     const calculator = new UniswapV3QuoteCalculator(ZeroGRoute.config, provider);
+    const cache = await initAndGetCache()
 
-    // return calculator.getPoolData("0x224D0891D63Ca83e6DD98B4653C27034503a5E76")
-    return await calculator.getTokenDetails(tokenAddress);
+    const cacheDetails = await cache.getMintFromCache("ALL", tokenAddress)
+
+    if (!cacheDetails) {
+        const details = await calculator.getTokenDetails(tokenAddress);
+        await cache.setMintToCache("ALL", { ...details, contractAddress: tokenAddress });
+        return details;
+    }
+
+    return cacheDetails;
 }
+
+

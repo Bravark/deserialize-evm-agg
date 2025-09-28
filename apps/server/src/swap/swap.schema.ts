@@ -86,3 +86,12 @@ export const TokenPriceRequestSchema = z.object({
 });
 
 export type TokenPriceRequestType = z.infer<typeof TokenPriceRequestSchema>["params"]
+
+
+export const TokenDetailsRequestSchema = z.object({
+    params: z.object({
+        tokenAddress: z.string(),
+    }),
+});
+
+export type TokenDetailsRequestType = z.infer<typeof TokenDetailsRequestSchema>["params"]

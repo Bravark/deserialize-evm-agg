@@ -90,6 +90,8 @@ export const getBestRoutes = async (
     // }
 
     const nativeAddress = RouteJsonRpcProviderClass.config.nativeTokenAddress
+    console.log('RouteJsonRpcProviderClass.config: ', RouteJsonRpcProviderClass.config);
+    console.log('nativeAddress: ', nativeAddress);
     if (fromTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
 
         fromTokenString = RouteJsonRpcProviderClass.config.wrappedNativeTokenAddress

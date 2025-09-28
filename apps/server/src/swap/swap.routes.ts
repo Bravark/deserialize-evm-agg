@@ -14,6 +14,7 @@ import {
     // swapQuoteAllController,
     swapQuoteController,
     swapTransactionController,
+    tokenDetailsController,
     tokenListController,
     tokenPriceController,
     // tokenListController,
@@ -38,6 +39,7 @@ swapRouter.post("/quote", swapQuoteController);
 swapRouter.post("/swap", swapTransactionController);
 swapRouter.get("/tokenList", tokenListController);
 swapRouter.get("/tokenPrice/:tokenAddress", tokenPriceController);
+swapRouter.get("/tokenDetails/:tokenAddress", tokenDetailsController);
 
 swapRouter.post("/testnet/quote", swapQuoteController);
 swapRouter.post("/testnet/swap", swapTransactionController);
