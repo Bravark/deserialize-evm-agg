@@ -10,7 +10,7 @@ export const createSwapTX = async (
   walletAddress: string,
   provider: JsonRpcProvider,
   network: NetworkType,
-  isNativeIn: boolean
+  partnerFees?: { recipient: string; fee: number }
 ) => {
   if (!walletAddress) throw new Error("Wallet address must be passed");
   if (path.length < 1) throw new Error("Invalid path");
@@ -34,10 +34,14 @@ export const createSwapTX = async (
     }
 
   }
+
   const proxyContract = new web3.eth.Contract(swapABI, swapProxy);
 
   const proxyABI = proxyContract.methods
-    .swap(hops, amountInRaw, minAmountOut)
+    .swap(hops, amountInRaw, minAmountOut, partnerFees ? {
+      partnerFees: partnerFees.fee * 10000,
+      feeRecipient: partnerFees.recipient
+    } : { partnerFees: "0x", feeRecipient: 0 })
     .encodeABI();
 
   txs.push({

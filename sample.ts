@@ -32,7 +32,7 @@ import { ethers } from "ethers";
     console.log("data: ", data)
 
     const quote = { ...data, dexId: "ALL" }
-    const quoteData = { quote, publicKey: wallet.address, slippage: 0.5 }
+    const quoteData = { quote, publicKey: wallet.address, slippage: 0.5, partnerFees: { recipient: "0x3766c4a45e7a73874dbcaa51b1d73627cb9b9c1b", fee: 0.3 } }
 
 
     const swapRes = await fetch(`${baseUrl}/swap`, {
@@ -51,7 +51,7 @@ import { ethers } from "ethers";
         //send transaction
         console.log("tx: ", tx);
 
-        return
+        // return
         const txResponse = await wallet.sendTransaction(tx)
         console.log("txResponse: ", txResponse);
         const receipt = await txResponse.wait();

@@ -124,6 +124,16 @@ export declare const SwapRequestSchema: z.ZodObject<{
             feeRate?: string | undefined;
         }>;
         slippage: z.ZodEffects<z.ZodNumber, number, number>;
+        partnerFees: z.ZodOptional<z.ZodObject<{
+            recipient: z.ZodString;
+            fee: z.ZodOptional<z.ZodNumber>;
+        }, "strip", z.ZodTypeAny, {
+            recipient: string;
+            fee?: number | undefined;
+        }, {
+            recipient: string;
+            fee?: number | undefined;
+        }>>;
     }, "strip", z.ZodTypeAny, {
         publicKey: string;
         quote: {
@@ -146,6 +156,10 @@ export declare const SwapRequestSchema: z.ZodObject<{
             feeRate?: number | undefined;
         };
         slippage: number;
+        partnerFees?: {
+            recipient: string;
+            fee?: number | undefined;
+        } | undefined;
     }, {
         publicKey: string;
         quote: {
@@ -168,6 +182,10 @@ export declare const SwapRequestSchema: z.ZodObject<{
             feeRate?: string | undefined;
         };
         slippage: number;
+        partnerFees?: {
+            recipient: string;
+            fee?: number | undefined;
+        } | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
@@ -192,6 +210,10 @@ export declare const SwapRequestSchema: z.ZodObject<{
             feeRate?: number | undefined;
         };
         slippage: number;
+        partnerFees?: {
+            recipient: string;
+            fee?: number | undefined;
+        } | undefined;
     };
 }, {
     body: {
@@ -216,6 +238,10 @@ export declare const SwapRequestSchema: z.ZodObject<{
             feeRate?: string | undefined;
         };
         slippage: number;
+        partnerFees?: {
+            recipient: string;
+            fee?: number | undefined;
+        } | undefined;
     };
 }>;
 export type SwapRequestType = z.infer<typeof SwapRequestSchema>["body"];

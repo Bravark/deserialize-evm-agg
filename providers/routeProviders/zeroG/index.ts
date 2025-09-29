@@ -47,7 +47,8 @@ export class ZeroGTestnetRoute<DexIdTypes> implements IRoute<PoolData, DexIdType
         wallet: string,
         slippage: number,
         isNativeIn: boolean,
-        isNativeOut: boolean
+        isNativeOut: boolean,
+        partnerFees?: { recipient: string; fee?: number }
 
     ) => {
         const { amountOut } = await this.getAmountOutFromPlan(amountFormattedToTokenDecimal, routePlan, 0, this.provider)
@@ -1022,7 +1023,8 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     slippage: number,
     connection: JsonRpcProvider,
     isNativeIn: boolean,
-    isNativeOut: boolean
+    isNativeOut: boolean,
+    partnerFees?: { recipient: string; fee: number }
 ) => {
     // console.log('routePlan: ', routePlan);
     const paths = transformRoutePlanToIPath(ZeroGRoute.config.factoryAddress, routePlan, ZeroGRoute.config.nativeTokenAddress, ZeroGRoute.config.wrappedNativeTokenAddress, isNativeIn, isNativeOut);
@@ -1040,7 +1042,7 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
             amountInRaw: amountIn.toFixed(0),
             minAmountOut: minAmountOut.toFixed(0),
         },
-        wallet, connection, ZeroGRoute.network, isNativeIn
+        wallet, connection, ZeroGRoute.network, partnerFees
     );
 
     const transactions: TransactionRequest[] = txs.map((tx) => ({

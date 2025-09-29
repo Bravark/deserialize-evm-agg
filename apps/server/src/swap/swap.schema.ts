@@ -73,6 +73,10 @@ export const SwapRequestSchema = z.object({
             }
             return arg;
         }),
+        partnerFees: z.object({
+            recipient: z.string(),
+            fee: z.number().min(0),
+        }).optional()
     }),
 });
 

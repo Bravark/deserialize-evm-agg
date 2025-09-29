@@ -110,7 +110,7 @@ export const getBestRoutes = async (
         console.log(
             "Token not found in the tokenBiMap: Token Not yet Supported by the Selected Dex"
         );
-        console.log("tokenBiMap: ", tokenBiMap);
+
         throw new Error("DEX_ERRORS.PAIR_NOT_AVAILABLE_ON_DEX");
     }
     const func = RouteJsonRpcProvider.getFunctionToMutateEdgeCost();
