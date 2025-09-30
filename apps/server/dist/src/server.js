@@ -11,7 +11,6 @@ const config_1 = require("./config");
     // Rate limiting configuration
     console.log('Rate: ');
     const app = await (0, app_1.setupApp)(routers_1.default);
-    console.log('app: ', app);
     const PORT = config_1.env.PORT;
     // const logger = mainLogger.child({ service: "Server" });
     const server = app.listen(PORT, () => {

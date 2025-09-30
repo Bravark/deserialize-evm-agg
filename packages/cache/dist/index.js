@@ -51,6 +51,7 @@ class DexCache {
      */
     async setStoreData(dexId, namespace, data) {
         // Save to memory cache
+        // console.log('data to store in memory setStoreData: ', data[0]);
         this.memoryCache.setNamespaceMemoryCache(namespace, dexId, data);
         if (this.storageDestination === "FILE") {
             // Save to file cache
@@ -66,10 +67,11 @@ class DexCache {
      */
     async getDexNamespaceCache(namespace, dexId) {
         // First check memory cache
-        const data = this.memoryCache.getNamespaceMemoryCache(namespace, dexId);
-        if (data) {
-            return data;
-        }
+        // const data = this.memoryCache.getNamespaceMemoryCache(namespace, dexId);
+        // if (data) {
+        //   const res = typeof data === "string" ? JSON.parse(data) : data
+        //   return res as T;
+        // }
         return (await this.getStoreData(dexId, namespace)) || null;
     }
     /**
@@ -77,6 +79,7 @@ class DexCache {
      */
     async setDexNamespaceCache(namespace, dexId, data) {
         // Save to memory cache
+        // console.log('data to store in memory setDexNamespaceCache : ', data);
         this.memoryCache.setNamespaceMemoryCache(namespace, dexId, data);
         // Save to persistent storage
         await this.setStoreData(dexId, namespace, data);
@@ -88,9 +91,14 @@ class DexCache {
         const namespace = constants_1.DEX_CACHE_NAMESPACE.TOKEN_INDEX_BI_MAP;
         // Check memory cache first
         const data = this.memoryCache.getNamespaceMemoryCache(namespace, dexId);
-        console.log('data: ', data);
         if (data) {
-            return data;
+            const res = typeof data === "string" ? JSON.parse(data) : data;
+            const formattedObject = {
+                tokenBiMap: res.tokenBiMap instanceof graph_1.ArrayBiMap ? res.tokenBiMap : new graph_1.ArrayBiMap(res.tokenBiMap),
+                tokenPoolMap: res.tokenPoolMap instanceof Map ? res.tokenPoolMap : new Map(res.tokenPoolMap),
+                data: res.data.map(functionToParseTheObjectInTheData),
+            };
+            return formattedObject;
         }
         // Not in memory, fetch from persistent storage
         let persistenceStorage = await this.getStoreData(dexId, namespace);
@@ -114,10 +122,13 @@ class DexCache {
     async setDexTokenIndexBiMapCache(dexId, data) {
         const namespace = constants_1.DEX_CACHE_NAMESPACE.TOKEN_INDEX_BI_MAP;
         // Save to memory cache
+        // console.log('data to store in setDexTokenIndexBiMapCache: ', data.tokenBiMap);
         this.memoryCache.setNamespaceMemoryCache(namespace, dexId, data);
         // Convert to a format suitable for storage
+        // console.log('data.tokenBiMap.toArray(): ', data.tokenBiMap.toArray());
+        // console.log('data.tokenBiMap.toArray(): ', data.tokenBiMap);
         const storageData = {
-            tokenBiMap: data.tokenBiMap.toArray(),
+            tokenBiMap: Array.isArray(data.tokenBiMap) ? data.tokenBiMap : data.tokenBiMap.toArray(),
             data: data.data,
             tokenPoolMap: Array.from([...data.tokenPoolMap.entries()]),
         };
@@ -139,11 +150,11 @@ class DexCache {
      */
     async getDexGraphCache(dexId) {
         // Check memory cache
-        const data = this.memoryCache.getNamespaceMemoryCache(constants_1.DEX_CACHE_NAMESPACE.GRAPH, dexId);
-        if (data) {
-            const formatted = typeof data === "string" ? JSON.parse(data) : data;
-            return formatted;
-        }
+        // const data = this.memoryCache.getNamespaceMemoryCache(DEX_CACHE_NAMESPACE.GRAPH, dexId) as Graph;
+        // if (data) {
+        //   const formatted = typeof data === "string" ? JSON.parse(data) : data
+        //   return formatted;
+        // }
         // Not in memory, fetch from storage
         const storageData = await this.getStoreData(dexId, constants_1.DEX_CACHE_NAMESPACE.GRAPH);
         if (storageData) {
@@ -178,9 +189,13 @@ class DexCache {
      */
     async getMintFromCache(dexId, mintAddress) {
         // Check memory cache
-        const data = this.memoryCache.getNamespaceMemoryCache(constants_1.DEX_CACHE_NAMESPACE.TOKEN_MINT_MAP, dexId);
-        if (data && data.has(mintAddress)) {
-            return data.get(mintAddress) || null;
+        let data = this.memoryCache.getNamespaceMemoryCache(constants_1.DEX_CACHE_NAMESPACE.TOKEN_MINT_MAP, dexId);
+        if (data) {
+            data = data instanceof Map ? data : new Map(JSON.parse(data));
+            if (data.has(mintAddress)) {
+                const res = data.get(mintAddress) || null;
+                return typeof res == "string" ? JSON.parse(res) : res;
+            }
         }
         // Not in memory, fetch from storage
         const storageData = await this.getStoreData(dexId, constants_1.DEX_CACHE_NAMESPACE.TOKEN_MINT_MAP);

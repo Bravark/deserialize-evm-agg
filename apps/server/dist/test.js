@@ -26,7 +26,6 @@ const testSwap = async () => {
     console.log('routes: ', routes);
     const { amountOut } = await RouteJsonRpcProvider.getAmountOutFromPlan(new decimal_js_1.default(userInput.amountIn), routes, 0, provider);
     console.log('amountOut: ', amountOut);
-    const transaction = await RouteJsonRpcProvider.getTransactionInstructionFromRoutePlan(new decimal_js_1.default(userInput.amountIn), routes, userInput.wallet, userInput.slippage);
+    const transaction = await RouteJsonRpcProvider.getTransactionInstructionFromRoutePlan(new decimal_js_1.default(userInput.amountIn), routes, userInput.wallet, userInput.slippage, false, false);
     console.log('transaction: ', transaction);
 };
-testSwap();

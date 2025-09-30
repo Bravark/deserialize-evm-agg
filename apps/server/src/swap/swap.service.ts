@@ -99,7 +99,9 @@ export const swapService = async (params: SwapRequestType, provider: JsonRpcProv
             params.publicKey,
             params.slippage,
             params.quote.isNativeIn,
-            params.quote.isNativeOut
+            params.quote.isNativeOut,
+            params.partnerFees
+
         );
 
 

@@ -66,6 +66,19 @@
         "anonymous": false,
         "inputs": [
             {
+                "indexed": true,
+                "internalType": "address",
+                "name": "admin",
+                "type": "address"
+            }
+        ],
+        "name": "AdminChanged",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
                 "indexed": false,
                 "internalType": "address",
                 "name": "contractAddress",
@@ -118,6 +131,43 @@
             {
                 "indexed": true,
                 "internalType": "address",
+                "name": "sender",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "inputAmount",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "outputAmount",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "tokenIn",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "tokenOut",
+                "type": "address"
+            }
+        ],
+        "name": "SwapExecuted",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
                 "name": "implementation",
                 "type": "address"
             }
@@ -140,6 +190,32 @@
     },
     {
         "inputs": [],
+        "name": "APFC",
+        "outputs": [
+            {
+                "internalType": "uint16",
+                "name": "",
+                "type": "uint16"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "BPS",
+        "outputs": [
+            {
+                "internalType": "uint16",
+                "name": "",
+                "type": "uint16"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "UPGRADE_INTERFACE_VERSION",
         "outputs": [
             {
@@ -149,6 +225,45 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint16",
+                "name": "_APFC",
+                "type": "uint16"
+            }
+        ],
+        "name": "adjustAdminPartnerFeeCut",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint16",
+                "name": "_newMaxPartnerFeeBPS",
+                "type": "uint16"
+            }
+        ],
+        "name": "adjustMaxPartnerFee",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint16",
+                "name": "_newMinPartnerFeeBPS",
+                "type": "uint16"
+            }
+        ],
+        "name": "adjustMinPartnerFee",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -175,6 +290,45 @@
         "name": "initialize",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "maxAPFC",
+        "outputs": [
+            {
+                "internalType": "uint16",
+                "name": "",
+                "type": "uint16"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "maxPartnerFeeBPS",
+        "outputs": [
+            {
+                "internalType": "uint16",
+                "name": "",
+                "type": "uint16"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "minPartnerFeeBPS",
+        "outputs": [
+            {
+                "internalType": "uint16",
+                "name": "",
+                "type": "uint16"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -220,24 +374,54 @@
                         "type": "uint160"
                     }
                 ],
-                "internalType": "struct MultiRouterSwapv1.Hop[]",
+                "internalType": "struct MultiRouteSwapv1.Hop[]",
                 "name": "hops",
                 "type": "tuple[]"
             },
             {
                 "internalType": "uint256",
-                "name": "firstAmountIn",
+                "name": "_firstAmountIn",
                 "type": "uint256"
             },
             {
                 "internalType": "uint256",
                 "name": "minAmountOut",
                 "type": "uint256"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "uint16",
+                        "name": "partnerFee",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "feeRecepient",
+                        "type": "address"
+                    }
+                ],
+                "internalType": "struct MultiRouteSwapv1.PartnerSettings",
+                "name": "partnerSettings",
+                "type": "tuple"
             }
         ],
         "name": "swap",
         "outputs": [],
         "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_newAdmin",
+                "type": "address"
+            }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -257,9 +441,5 @@
         "outputs": [],
         "stateMutability": "payable",
         "type": "function"
-    },
-    {
-        "stateMutability": "payable",
-        "type": "receive"
     }
 ]

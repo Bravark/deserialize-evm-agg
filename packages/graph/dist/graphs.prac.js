@@ -25,7 +25,7 @@ const dijkstraAlgorithmList = (graph, from) => {
         for (let i = 0; i < graph[currentNode.i].length; i++) {
             const e = graph[currentNode.i][i];
             //e.form is the current node while e.to is the node we are checking it's distance
-            console.log("e: ", e);
+            // console.log("e: ", e);
             // we will have to compare the total cost, which is equal to the cost to get to the current node (e.from) plus the cost of going to the destination node (e.to)
             const nodeCost = dist[e.from] + e.edgeData.cost;
             if (nodeCost < dist[e.to]) {
@@ -222,7 +222,6 @@ const nodesEdgesInfo1 = [
     ],
 ];
 const dijkstraAlgorithmWithKeyV2 = (graph, from, to, key, functionToMutateTheEdgeCost) => {
-    console.log("graph: ", graph.length);
     if (from > graph.length || to > graph.length)
         throw new Error("Start and or end is out of bounds on graph");
     const queue = new pQueue_1.PriorityQueue(comparatorFunction);
@@ -290,5 +289,3 @@ for (let i = 0; i < nodesEdgesInfo.length; i++) {
     graph.push(indexEdges);
 }
 const res = dijkstraAlgorithmWithKeyV2(graph, 0, 6, 2, functionToMutateTheEdgeCost);
-console.log("graph: ", graph);
-console.log("res: ", res);

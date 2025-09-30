@@ -13,9 +13,10 @@ import { ethers } from "ethers";
     const privateKey = "0xcd90354282b35344616d6b53684684bef6e8673ed601d562a5866dc67fafd1ef"
     const provider = new ethers.JsonRpcProvider("https://evmrpc.0g.ai");
     const wallet = new ethers.Wallet(privateKey, provider);
+
     const userInput = {
-        tokenB: NATIVE,
-        tokenA: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
+        tokenA: NATIVE,
+        tokenB: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
         amountIn: "100000000000000000",
         dexId: "ZERO_G"
     }
@@ -32,7 +33,11 @@ import { ethers } from "ethers";
     console.log("data: ", data)
 
     const quote = { ...data, dexId: "ALL" }
-    const quoteData = { quote, publicKey: wallet.address, slippage: 0.5, partnerFees: { recipient: "0x3766c4a45e7a73874dbcaa51b1d73627cb9b9c1b", fee: 0.3 } }
+    const quoteData = {
+        quote, publicKey: wallet.address, slippage: 0.5,
+
+        partnerFees: { recipient: "0x3766c4a45e7a73874dbcaa51b1d73627cb9b9c1b", fee: 0.3 }
+    }
 
 
     const swapRes = await fetch(`${baseUrl}/swap`, {
@@ -44,7 +49,7 @@ import { ethers } from "ethers";
     })
 
     const swapData = await swapRes.json()
-    // console.log("swapData: ", swapData)
+    console.log("swapData: ", swapData)
 
     for (const tx of swapData.transactions) {
         // const signedTx = await wallet.signTransaction(tx);
@@ -52,7 +57,7 @@ import { ethers } from "ethers";
         console.log("tx: ", tx);
 
         // return
-        const txResponse = await wallet.sendTransaction(tx)
+        const txResponse = await wallet.sendTransaction({ ...tx })
         console.log("txResponse: ", txResponse);
         const receipt = await txResponse.wait();
         console.log("Transaction was mined in block ", await receipt?.getTransaction());

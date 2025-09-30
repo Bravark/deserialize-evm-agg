@@ -35,7 +35,7 @@ export interface IRoute<TPool, DexIdTypes> {
     getNewGraph: (tokenBiMap: TokenBiMap<TPool>, provider: JsonRpcProvider) => Promise<Graph>;
     getTransactionInstructionFromRoutePlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number, isNativeIn: boolean, isNativeOut: boolean, partnerFees?: {
         recipient: string;
-        fee?: number;
+        fee: number;
     }) => Promise<{
         transactions: TransactionRequest[];
         amountOut?: Decimal;

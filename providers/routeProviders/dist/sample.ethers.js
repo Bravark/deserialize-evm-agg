@@ -366,14 +366,16 @@ const getPoolContractInstance = (poolAddress, _provider = exports.provider) => {
 exports.getPoolContractInstance = getPoolContractInstance;
 const getTokenDetails = async (tokenAddress, _provider = exports.provider) => {
     const tokenContract = new ethers_1.Contract(tokenAddress, ERC20_ABI, _provider);
-    const [decimals, symbol] = await Promise.all([
+    const [decimals, symbol, name] = await Promise.all([
         tokenContract.decimals(),
         tokenContract.symbol(),
+        tokenContract.name(),
     ]);
     return {
         address: tokenAddress,
         decimals: Number(decimals),
         symbol: symbol,
+        name
     };
 };
 exports.getTokenDetails = getTokenDetails;
@@ -388,21 +390,25 @@ const getPoolData = async (poolAddress, factoryAddress = exports.FACTORY_ADDRESS
     const fee = await pool.fee();
     const token0Contract = new ethers_1.Contract(token0Address, ERC20_ABI, _provider);
     const token1Contract = new ethers_1.Contract(token1Address, ERC20_ABI, _provider);
-    const [decimals0, decimals1, symbol0, symbol1] = await Promise.all([
+    const [decimals0, decimals1, symbol0, symbol1, name0, name1] = await Promise.all([
         token0Contract.decimals(),
         token1Contract.decimals(),
         token0Contract.symbol(),
         token1Contract.symbol(),
+        token0Contract.name(),
+        token1Contract.name(),
     ]);
     const token0 = {
         address: token0Address,
         decimals: Number(decimals0),
         symbol: symbol0,
+        name: name0
     };
     const token1 = {
         address: token1Address,
         decimals: Number(decimals1),
         symbol: symbol1,
+        name: name1
     };
     return {
         token0,

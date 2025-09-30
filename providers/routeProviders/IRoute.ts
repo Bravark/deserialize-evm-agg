@@ -59,7 +59,7 @@ export interface IRoute<TPool, DexIdTypes> {
         slippage: number,
         isNativeIn: boolean,
         isNativeOut: boolean,
-        partnerFees?: { recipient: string; fee?: number }
+        partnerFees?: { recipient: string; fee: number }
     ) => Promise<{
         transactions: TransactionRequest[];
         amountOut?: Decimal;

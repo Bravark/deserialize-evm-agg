@@ -126,13 +126,13 @@ export declare const SwapRequestSchema: z.ZodObject<{
         slippage: z.ZodEffects<z.ZodNumber, number, number>;
         partnerFees: z.ZodOptional<z.ZodObject<{
             recipient: z.ZodString;
-            fee: z.ZodOptional<z.ZodNumber>;
+            fee: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
+            fee: number;
             recipient: string;
-            fee?: number | undefined;
         }, {
+            fee: number;
             recipient: string;
-            fee?: number | undefined;
         }>>;
     }, "strip", z.ZodTypeAny, {
         publicKey: string;
@@ -157,8 +157,8 @@ export declare const SwapRequestSchema: z.ZodObject<{
         };
         slippage: number;
         partnerFees?: {
+            fee: number;
             recipient: string;
-            fee?: number | undefined;
         } | undefined;
     }, {
         publicKey: string;
@@ -183,8 +183,8 @@ export declare const SwapRequestSchema: z.ZodObject<{
         };
         slippage: number;
         partnerFees?: {
+            fee: number;
             recipient: string;
-            fee?: number | undefined;
         } | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
@@ -211,8 +211,8 @@ export declare const SwapRequestSchema: z.ZodObject<{
         };
         slippage: number;
         partnerFees?: {
+            fee: number;
             recipient: string;
-            fee?: number | undefined;
         } | undefined;
     };
 }, {
@@ -239,8 +239,8 @@ export declare const SwapRequestSchema: z.ZodObject<{
         };
         slippage: number;
         partnerFees?: {
+            fee: number;
             recipient: string;
-            fee?: number | undefined;
         } | undefined;
     };
 }>;

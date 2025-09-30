@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.wait = exports.DEX_CONFIGS = exports.UniswapV3QuoteCalculator = void 0;
 const ethers_1 = require("ethers");
 const decimal_js_1 = __importDefault(require("decimal.js"));
+const price_1 = require("./price");
 // ==================== CONSTANTS ====================
 const FEE_TIERS = [100, 500, 3000, 10000];
 const FEE_DENOMINATOR = new decimal_js_1.default(1000000);
@@ -90,6 +91,13 @@ const ERC20_ABI = [
         stateMutability: "view",
         type: "function",
     },
+    {
+        inputs: [],
+        name: "name",
+        outputs: [{ internalType: "string", name: "", type: "string" }],
+        stateMutability: "view",
+        type: "function",
+    },
 ];
 const QUOTER_ABI = [
     {
@@ -107,16 +115,20 @@ const QUOTER_ABI = [
     },
 ];
 // ==================== MAIN CLASS ====================
+const priceCache = new Map();
 class UniswapV3QuoteCalculator {
     constructor(config, provider) {
-        this.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        this.CACHE_DURATION = 0.5 * 60 * 1000; // 5 minutes
         // ==================== PRICE METHODS ======================
-        this.priceMap = new Map();
         this.getPriceFromPriceMap = (tokenAddress) => {
-            return this.priceMap.get(tokenAddress);
+            const cached = priceCache.get(tokenAddress);
+            if (cached && this.isCacheValid(cached.timestamp)) {
+                return cached.price;
+            }
+            return undefined;
         };
         this.setPriceInPriceMap = (tokenAddress, price) => {
-            this.priceMap.set(tokenAddress, price);
+            priceCache.set(tokenAddress, { price, timestamp: Date.now() });
         };
         // ==================== POOL DISCOVERY ====================
         /**
@@ -144,10 +156,10 @@ class UniswapV3QuoteCalculator {
                 poolAddress: event.args.pool,
                 blockNumber: event.blockNumber.toString(),
             }));
-            const dataToWrite = {
-                pools: pools,
-                lastBlockNumber: pools[pools.length - 1].blockNumber,
-            };
+            // const dataToWrite = {
+            //     pools: pools,
+            //     lastBlockNumber: pools[pools.length - 1].blockNumber,
+            // }
             return pools;
         };
         this.config = config;
@@ -157,8 +169,12 @@ class UniswapV3QuoteCalculator {
     }
     async getSureTokenPrice(tokenAddress, _provider = this.provider) {
         // we should add the cache here
+        if (tokenAddress.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenAddress = this.config.wrappedNativeTokenAddress;
+        }
         try {
             const cachedPrice = this.getPriceFromPriceMap(tokenAddress);
+            // console.log('cachedPrice: ', cachedPrice);
             if (cachedPrice !== undefined) {
                 return cachedPrice;
             }
@@ -190,25 +206,34 @@ class UniswapV3QuoteCalculator {
     }
     // ==================== TOKEN METHODS ====================
     async getTokenDetails(tokenAddress, provider = this.provider) {
+        if (tokenAddress.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenAddress = this.config.wrappedNativeTokenAddress;
+        }
         const cacheKey = `token_${tokenAddress}`;
         const cached = this.poolCache.get(cacheKey);
         if (cached) {
             return cached; // Cast for token details
         }
+        // console.log('tokenAddress: ', tokenAddress);
+        // console.log('tokenAddress: ', tokenAddress);
+        // console.log('tokenAddress: ', tokenAddress);
+        // console.log('tokenAddress: ', tokenAddress);
         const tokenContract = new ethers_1.Contract(tokenAddress, ERC20_ABI, provider);
-        const [decimals, symbol] = await Promise.all([
+        const [decimals, symbol, name] = await Promise.all([
             tokenContract.decimals(),
             tokenContract.symbol(),
+            tokenContract.name(),
         ]);
         const tokenDetails = {
             address: tokenAddress,
             decimals: Number(decimals),
             symbol: symbol,
+            name: name
         };
         return tokenDetails;
     }
     async getTokenPrice(tokenAddress) {
-        const cached = this.priceCache.get(tokenAddress);
+        const cached = priceCache.get(tokenAddress);
         if (cached && this.isCacheValid(cached.timestamp)) {
             return cached.price;
         }
@@ -216,7 +241,7 @@ class UniswapV3QuoteCalculator {
             // Try to get price from pool if stable token is configured
             if (this.config.stableTokenAddress) {
                 const price = await this.getTokenUsdPriceFromPool(tokenAddress);
-                this.priceCache.set(tokenAddress, { price, timestamp: Date.now() });
+                priceCache.set(tokenAddress, { price, timestamp: Date.now() });
                 return price;
             }
         }
@@ -227,7 +252,7 @@ class UniswapV3QuoteCalculator {
         try {
             const tokenData = await this.getTokenDetails(tokenAddress);
             const price = await this.getTokenPriceFromExternalAPI(tokenData.symbol);
-            this.priceCache.set(tokenAddress, { price, timestamp: Date.now() });
+            priceCache.set(tokenAddress, { price, timestamp: Date.now() });
             return price;
         }
         catch (error) {
@@ -236,18 +261,67 @@ class UniswapV3QuoteCalculator {
         }
     }
     async getTokenPriceFromExternalAPI(symbol) {
+        if (symbol.toLowerCase() === "w0g") {
+            const p = (await (0, price_1.getTokenPrice)('0G')).data?.price;
+            if (p)
+                return p;
+        }
         const response = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${symbol.toUpperCase()}&tsyms=USD`);
         const data = await response.json();
         return data["USD"];
     }
-    async getTokenUsdPriceFromPool(tokenAddress) {
+    async getTokenUsdPriceFromPoolUsingStableCoin(tokenAddress) {
         if (!this.config.stableTokenAddress) {
             throw new Error("Stable token address not configured");
+        }
+        if (tokenAddress.toLowerCase() === this.config.stableTokenAddress.toLowerCase()) {
+            return 1;
         }
         const { poolData } = await this.findBestPool(tokenAddress, this.config.stableTokenAddress);
         const aToB = this.config.stableTokenAddress.toLowerCase() ===
             poolData.token1.address.toLowerCase();
         return this.calculateSpotPrice(new decimal_js_1.default(poolData.slot0.sqrtPriceX96), poolData.token0.decimals, poolData.token1.decimals, aToB);
+    }
+    async getTokenUsdPriceFromPoolWrappedToken(tokenAddress) {
+        if (!this.config.wrappedNativeTokenAddress) {
+            throw new Error("Wrapped native token address not configured");
+        }
+        let price;
+        if (tokenAddress.toLowerCase() === this.config.wrappedNativeTokenAddress.toLowerCase()) {
+            price = 1;
+        }
+        else {
+            try {
+                const { poolData } = await this.findBestPool(tokenAddress, this.config.wrappedNativeTokenAddress);
+                const aToB = this.config.wrappedNativeTokenAddress.toLowerCase() ===
+                    poolData.token1.address.toLowerCase();
+                price = this.calculateSpotPrice(new decimal_js_1.default(poolData.slot0.sqrtPriceX96), poolData.token0.decimals, poolData.token1.decimals, aToB);
+            }
+            catch (error) {
+                price = 0;
+            }
+        }
+        const wrappedTokenPrice = await (0, price_1.get0gPrice)();
+        if (!wrappedTokenPrice.data?.price) {
+            throw new Error("Unable to fetch wrapped token price");
+        }
+        return price * wrappedTokenPrice.data?.price;
+    }
+    async getTokenUsdPriceFromPool(tokenAddress) {
+        // Fallback to wrapped native token
+        try {
+            return await this.getTokenUsdPriceFromPoolWrappedToken(tokenAddress);
+        }
+        catch (error) {
+            console.error(`Failed to get USD price from wrapped native token for ${tokenAddress}:`, error);
+        }
+        try {
+            return await this.getTokenUsdPriceFromPoolUsingStableCoin(tokenAddress);
+        }
+        catch (error) {
+            console.warn(`Failed to get USD price from pool for ${tokenAddress}:`);
+            throw new Error(`Unable to fetch USD price for token ${tokenAddress}`);
+        }
     }
     // ==================== POOL METHODS ====================
     async getPoolData(poolAddress) {
@@ -256,13 +330,15 @@ class UniswapV3QuoteCalculator {
             return cached;
         }
         const pool = new ethers_1.Contract(poolAddress, POOL_ABI, this.provider);
-        const [liquidity, slot0, token0Address, token1Address, fee] = await Promise.all([
-            pool.liquidity(),
+        const [slot0, liquidity, token0Address, token1Address, fee] = await Promise.all([
             pool.slot0(),
+            pool.liquidity(),
             pool.token0(),
             pool.token1(),
             pool.fee(),
         ]);
+        console.log('token0Address: ', token0Address);
+        console.log('token1Address: ', token1Address);
         const [token0Details, token1Details] = await Promise.all([
             this.getTokenDetails(token0Address),
             this.getTokenDetails(token1Address),
@@ -300,7 +376,7 @@ class UniswapV3QuoteCalculator {
                 }
             }
             catch (error) {
-                console.warn(`Error checking pool for fee ${fee}:`, error);
+                console.warn(`Error checking pool for fee ${fee}:`);
             }
         }
         if (!bestPool) {
@@ -426,13 +502,18 @@ class UniswapV3QuoteCalculator {
             throw new Error("Quoter address not configured for this DEX");
         }
         const quoter = new ethers_1.Contract(this.config.quoterAddress, QUOTER_ABI, this.provider);
+        // console.log('this.config.quoterAddress: ', this.config.quoterAddress);
+        // console.log('this.provider._getConnection().url: ', this.provider._getConnection().url);
+        // console.log('tokenIn: ', tokenIn);
+        // console.log('tokenOut: ', tokenOut);
+        // console.log('amountIn: ', amountIn);
         try {
-            const amountOut = await quoter.quoteExactInputSingle(tokenIn, tokenOut, fee, amountIn, sqrtPriceLimitX96);
+            const amountOut = await quoter.quoteExactInputSingle(tokenIn, tokenOut, fee, BigInt(Number(amountIn)), sqrtPriceLimitX96);
             return amountOut.toString();
         }
         catch (error) {
             console.error("Quote simulation failed:", error);
-            throw error;
+            return "0";
         }
     }
     // ==================== POOL DISCOVERY METHODS ====================
@@ -472,7 +553,7 @@ class UniswapV3QuoteCalculator {
         return this.provider;
     }
     clearCache() {
-        this.priceCache.clear();
+        priceCache.clear();
         this.poolCache.clear();
     }
     setCacheTimeout(durationMs) {

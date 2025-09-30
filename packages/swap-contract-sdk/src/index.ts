@@ -4,6 +4,7 @@ import swapABI from "./interfaces/js/IMultiRouterSwapV1.json";
 import { JsonRpcProvider } from "ethers";
 import erc20ABI from "./interfaces/js/erc20.json"
 import { networkSetup, NetworkType } from "./interfaces/js/networkSetup";
+import BN from "bn.js";
 
 export const createSwapTX = async (
   { path, amountInRaw, minAmountOut }: IQuoteDataWithoutAmountIn,
@@ -37,11 +38,19 @@ export const createSwapTX = async (
 
   const proxyContract = new web3.eth.Contract(swapABI, swapProxy);
 
+  console.log('partnerFees: ', partnerFees);
+  const partnerFeeSettings = partnerFees ? {
+    partnerFee: partnerFees.fee * 10000,
+    feeRecepient: partnerFees.recipient,
+  } : {
+    partnerFee: new BN(0),
+    feeRecepient: "0x0000000000000000000000000000000000000000",
+  };
+
+  console.log('partnerFeeSettings: ', partnerFeeSettings);
+  console.log('hops: ', hops);
   const proxyABI = proxyContract.methods
-    .swap(hops, amountInRaw, minAmountOut, partnerFees ? {
-      partnerFees: partnerFees.fee * 10000,
-      feeRecipient: partnerFees.recipient
-    } : { partnerFees: "0x", feeRecipient: 0 })
+    .swap(hops, amountInRaw, minAmountOut, partnerFeeSettings)
     .encodeABI();
 
   txs.push({
