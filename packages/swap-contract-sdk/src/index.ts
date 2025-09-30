@@ -43,7 +43,7 @@ export const createSwapTX = async (
     partnerFee: partnerFees.fee * 10000,
     feeRecepient: partnerFees.recipient,
   } : {
-    partnerFee: new BN(0),
+    partnerFee: 0,
     feeRecepient: "0x0000000000000000000000000000000000000000",
   };
 

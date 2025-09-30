@@ -9,7 +9,6 @@ const contructHop_1 = require("./helpers/contructHop");
 const IMultiRouterSwapV1_json_1 = __importDefault(require("./interfaces/js/IMultiRouterSwapV1.json"));
 const erc20_json_1 = __importDefault(require("./interfaces/js/erc20.json"));
 const networkSetup_1 = require("./interfaces/js/networkSetup");
-const bn_js_1 = __importDefault(require("bn.js"));
 const createSwapTX = async ({ path, amountInRaw, minAmountOut }, walletAddress, provider, network, partnerFees) => {
     if (!walletAddress)
         throw new Error("Wallet address must be passed");
@@ -39,7 +38,7 @@ const createSwapTX = async ({ path, amountInRaw, minAmountOut }, walletAddress, 
         partnerFee: partnerFees.fee * 10000,
         feeRecepient: partnerFees.recipient,
     } : {
-        partnerFee: new bn_js_1.default(0),
+        partnerFee: 1,
         feeRecepient: "0x0000000000000000000000000000000000000000",
     };
     console.log('partnerFeeSettings: ', partnerFeeSettings);

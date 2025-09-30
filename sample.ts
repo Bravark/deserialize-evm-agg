@@ -36,7 +36,7 @@ import { ethers } from "ethers";
     const quoteData = {
         quote, publicKey: wallet.address, slippage: 0.5,
 
-        partnerFees: { recipient: "0x3766c4a45e7a73874dbcaa51b1d73627cb9b9c1b", fee: 0.3 }
+        // partnerFees: { recipient: "0x3766c4a45e7a73874dbcaa51b1d73627cb9b9c1b", fee: 0.3 }
     }
 
 
