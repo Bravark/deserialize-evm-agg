@@ -66,6 +66,32 @@
         "anonymous": false,
         "inputs": [
             {
+                "indexed": false,
+                "internalType": "address",
+                "name": "adapter",
+                "type": "address"
+            }
+        ],
+        "name": "AdapaterRegistered",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "adapter",
+                "type": "address"
+            }
+        ],
+        "name": "AdapaterRemoved",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
                 "indexed": true,
                 "internalType": "address",
                 "name": "admin",
@@ -285,11 +311,29 @@
                 "internalType": "address",
                 "name": "_admin",
                 "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_tracker",
+                "type": "address"
             }
         ],
         "name": "initialize",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "isPaused",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -333,6 +377,13 @@
     },
     {
         "inputs": [],
+        "name": "pauseContract",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "proxiableUUID",
         "outputs": [
             {
@@ -342,6 +393,39 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_adapter",
+                "type": "address"
+            }
+        ],
+        "name": "registerAdapter",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_adapter",
+                "type": "address"
+            }
+        ],
+        "name": "removeAdapter",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "rescueFunds",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -374,13 +458,13 @@
                         "type": "uint160"
                     }
                 ],
-                "internalType": "struct MultiRouteSwapv1.Hop[]",
+                "internalType": "struct MultiRouteSwapV2.Hop[]",
                 "name": "hops",
                 "type": "tuple[]"
             },
             {
                 "internalType": "uint256",
-                "name": "_firstAmountIn",
+                "name": "firstAmountIn",
                 "type": "uint256"
             },
             {
@@ -401,7 +485,7 @@
                         "type": "address"
                     }
                 ],
-                "internalType": "struct MultiRouteSwapv1.PartnerSettings",
+                "internalType": "struct MultiRouteSwapV2.PartnerSettings",
                 "name": "partnerSettings",
                 "type": "tuple"
             }
@@ -409,6 +493,19 @@
         "name": "swap",
         "outputs": [],
         "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "tracker",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -420,6 +517,13 @@
             }
         ],
         "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "unPauseContract",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -441,5 +545,28 @@
         "outputs": [],
         "stateMutability": "payable",
         "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "name": "whitelistedAdapters",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "stateMutability": "payable",
+        "type": "receive"
     }
 ]

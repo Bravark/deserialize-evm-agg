@@ -1024,8 +1024,11 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     isNativeOut: boolean,
     partnerFees?: { recipient: string; fee: number }
 ) => {
+    console.log('isNativeIn: ', isNativeIn);
     // console.log('routePlan: ', routePlan);
     const paths = transformRoutePlanToIPath(ZeroGRoute.config.factoryAddress, routePlan, ZeroGRoute.config.nativeTokenAddress, ZeroGRoute.config.wrappedNativeTokenAddress, isNativeIn, isNativeOut);
+    console.log('routePlan: ', routePlan);
+    console.log('paths: ', paths);
     const slippageMultiplier = new Decimal(1).minus(slippage / 100);
     const minAmountOut = amountOut.mul(slippageMultiplier)
     // console.log('minAmountOut: ', minAmountOut);

@@ -811,8 +811,11 @@ const getTransactionInstructionFromRoutePlanZeroG = async (amountFormattedToToke
 };
 exports.getTransactionInstructionFromRoutePlanZeroG = getTransactionInstructionFromRoutePlanZeroG;
 const getTransactionFromRoutePlanZeroG = async (amountIn, amountOut, routePlan, wallet, slippage, connection, isNativeIn, isNativeOut, partnerFees) => {
+    console.log('isNativeIn: ', isNativeIn);
     // console.log('routePlan: ', routePlan);
     const paths = (0, utils_1.transformRoutePlanToIPath)(ZeroGRoute.config.factoryAddress, routePlan, ZeroGRoute.config.nativeTokenAddress, ZeroGRoute.config.wrappedNativeTokenAddress, isNativeIn, isNativeOut);
+    console.log('routePlan: ', routePlan);
+    console.log('paths: ', paths);
     const slippageMultiplier = new decimal_js_1.default(1).minus(slippage / 100);
     const minAmountOut = amountOut.mul(slippageMultiplier);
     // console.log('minAmountOut: ', minAmountOut);

@@ -9,7 +9,9 @@ const contructHop_1 = require("./helpers/contructHop");
 const IMultiRouterSwapV1_json_1 = __importDefault(require("./interfaces/js/IMultiRouterSwapV1.json"));
 const erc20_json_1 = __importDefault(require("./interfaces/js/erc20.json"));
 const networkSetup_1 = require("./interfaces/js/networkSetup");
-const createSwapTX = async ({ path, amountInRaw, minAmountOut }, walletAddress, provider, network, partnerFees) => {
+const createSwapTX = async ({ path, amountInRaw, minAmountOut }, walletAddress, provider, network, 
+// isNativeIn: boolean,
+partnerFees) => {
     if (!walletAddress)
         throw new Error("Wallet address must be passed");
     if (path.length < 1)
@@ -20,6 +22,7 @@ const createSwapTX = async ({ path, amountInRaw, minAmountOut }, walletAddress, 
     const hops = await (0, contructHop_1.constructHop)(path, adapterTracker, provider);
     const web3 = new web3_1.default(provider._getConnection().url || rpc);
     const txs = [];
+    // if (!isNativeIn) {
     if (path[0].tokenIn.toLowerCase() !== nativeToken.toLowerCase()) {
         const erc20 = new web3.eth.Contract(erc20_json_1.default, path[0].tokenIn);
         const allowance = await erc20.methods.allowance(walletAddress, swapProxy).call();
@@ -32,13 +35,14 @@ const createSwapTX = async ({ path, amountInRaw, minAmountOut }, walletAddress, 
             });
         }
     }
+    // }
     const proxyContract = new web3.eth.Contract(IMultiRouterSwapV1_json_1.default, swapProxy);
     console.log('partnerFees: ', partnerFees);
     const partnerFeeSettings = partnerFees ? {
-        partnerFee: partnerFees.fee * 10000,
+        partnerFee: partnerFees.fee * 100,
         feeRecepient: partnerFees.recipient,
     } : {
-        partnerFee: 1,
+        partnerFee: 0,
         feeRecepient: "0x0000000000000000000000000000000000000000",
     };
     console.log('partnerFeeSettings: ', partnerFeeSettings);

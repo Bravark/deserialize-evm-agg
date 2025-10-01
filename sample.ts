@@ -14,9 +14,16 @@ import { ethers } from "ethers";
     const provider = new ethers.JsonRpcProvider("https://evmrpc.0g.ai");
     const wallet = new ethers.Wallet(privateKey, provider);
 
+    // const userInput = {
+    //     tokenA: W0G,
+    //     tokenB: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
+    //     amountIn: "100000000000000000",
+    //     dexId: "ZERO_G"
+    // }
+
     const userInput = {
-        tokenA: NATIVE,
-        tokenB: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
+        tokenA: "0x7bbc63d01ca42491c3e084c941c3e86e55951404",
+        tokenB: W0G,
         amountIn: "100000000000000000",
         dexId: "ZERO_G"
     }
@@ -35,8 +42,7 @@ import { ethers } from "ethers";
     const quote = { ...data, dexId: "ALL" }
     const quoteData = {
         quote, publicKey: wallet.address, slippage: 0.5,
-
-        // partnerFees: { recipient: "0x3766c4a45e7a73874dbcaa51b1d73627cb9b9c1b", fee: 0.3 }
+        // partnerFees: { recipient: "0x3766c4a45e7a73874dbcaa51b1d73627cb9b9c1b", fee: 1 }
     }
 
 

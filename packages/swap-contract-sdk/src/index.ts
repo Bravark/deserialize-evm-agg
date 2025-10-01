@@ -11,6 +11,7 @@ export const createSwapTX = async (
   walletAddress: string,
   provider: JsonRpcProvider,
   network: NetworkType,
+  // isNativeIn: boolean,
   partnerFees?: { recipient: string; fee: number }
 ) => {
   if (!walletAddress) throw new Error("Wallet address must be passed");
@@ -21,6 +22,7 @@ export const createSwapTX = async (
   const web3 = new Web3(provider._getConnection().url || rpc);
   const txs = []
 
+  // if (!isNativeIn) {
   if (path[0].tokenIn.toLowerCase() !== nativeToken.toLowerCase()) {
     const erc20 = new web3.eth.Contract(erc20ABI, path[0].tokenIn)
     const allowance = await erc20.methods.allowance(walletAddress, swapProxy).call() as bigint
@@ -35,12 +37,14 @@ export const createSwapTX = async (
     }
 
   }
+  // }
+
 
   const proxyContract = new web3.eth.Contract(swapABI, swapProxy);
 
   console.log('partnerFees: ', partnerFees);
   const partnerFeeSettings = partnerFees ? {
-    partnerFee: partnerFees.fee * 10000,
+    partnerFee: partnerFees.fee * 100,
     feeRecepient: partnerFees.recipient,
   } : {
     partnerFee: 0,

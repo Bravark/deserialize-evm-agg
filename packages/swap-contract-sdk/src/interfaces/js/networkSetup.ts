@@ -5,8 +5,8 @@ export const networkSetup = (network: NetworkType) => {
     const config = { rpc: "", addresses: { adapterTracker: "", swapProxy: "", nativeToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" } }
     if (network == "0gMainnet") {
         config.rpc = rpcMainnet;
-        config.addresses.adapterTracker = "0x88A5E26Dd738AC81ab73FFfcFB91c20d4E8Df528";
-        config.addresses.swapProxy = "0x40213Df989de86a8523Fb175235813ADfE4CeF6f";
+        config.addresses.adapterTracker = "0xc4b688854e870408E82519204918c8130Fbe4764";
+        config.addresses.swapProxy = "0xea88170f58126aDFafeFEcEbbF8E1daFD48DF0C3";
         return config
     }
     if (network == "0gTestnet") {
