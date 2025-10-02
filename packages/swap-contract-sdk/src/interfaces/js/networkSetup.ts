@@ -6,7 +6,7 @@ export const networkSetup = (network: NetworkType) => {
     if (network == "0gMainnet") {
         config.rpc = rpcMainnet;
         config.addresses.adapterTracker = "0xc4b688854e870408E82519204918c8130Fbe4764";
-        config.addresses.swapProxy = "0xea88170f58126aDFafeFEcEbbF8E1daFD48DF0C3";
+        config.addresses.swapProxy = "0x228864aeAAE12Ee8000D9543d9cCfB538F46Da3b";
         return config
     }
     if (network == "0gTestnet") {
