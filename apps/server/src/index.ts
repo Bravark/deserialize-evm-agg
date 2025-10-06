@@ -1,10 +1,11 @@
 
 import { DexCache } from "@deserialize-evm-agg/cache";
 import { ArrayBiMap, Edge, EdgeData, findBestRouteIndex } from "@deserialize-evm-agg/graph";
-import { DeserializeRoutePlan, IRoute, ZeroGRoute } from "@deserialize-evm-agg/routes-providers"
+import { AllRoute, DeserializeRoutePlan, DEX_IDS, dexIdList, DexIdTypes, getTokenDetails, IRoute, ZeroGRoute } from "@deserialize-evm-agg/routes-providers"
 import { JsonRpcApiProvider, JsonRpcProvider } from "ethers";
 import { createClient, RedisClientType } from "redis"
 import { config } from "./config";
+
 
 
 (BigInt.prototype as any).toJSON = function () {
@@ -12,12 +13,11 @@ import { config } from "./config";
     return int ?? this.toString();
 };
 
-export const DEX_IDS = {
-    ZERO_G: "ZERO_G",
-    ALL: "ALL",
-} as const;
-export const dexIdList = Object.keys(DEX_IDS)
-export type DexIdTypes = (typeof DEX_IDS)[keyof typeof DEX_IDS];
+
+
+console.log(DEX_IDS); // { ZERO_G: "ZERO_G", ZIA: "ZIA", ALL: "ALL" }
+console.log(dexIdList); // ["ZERO_G", "ZIA", "ALL"]
+
 
 export interface RouteOptions {
     targetRouteNumber: number;
@@ -26,6 +26,8 @@ export interface RouteOptions {
 export const getRouteJsonRpcProvider = (dexId: DexIdTypes) => {
     if (dexId === DEX_IDS.ZERO_G) {
         return ZeroGRoute;
+    } else if (dexId === DEX_IDS.ALL) {
+        return AllRoute;
     }
     throw new Error(`No route provider for ${dexId}`);
 };
@@ -70,6 +72,7 @@ export const getBestRoutes = async (
     const RouteJsonRpcProviderClass = getRouteJsonRpcProvider(dexId);
     const cache = await initAndGetCache()
     const RouteJsonRpcProvider = new RouteJsonRpcProviderClass(provider, cache);
+    const config = RouteJsonRpcProvider.getDexConfig()
 
     const { tokenBiMap } = await RouteJsonRpcProvider.getTokenBiMap();
     // console.log('tokenBiMap: ', tokenBiMap);
@@ -82,23 +85,23 @@ export const getBestRoutes = async (
     // );
     // if (!tokenAUsdRate) {
 
-    keyRate = await RouteJsonRpcProvider.calculator.getSureTokenPrice((fromTokenString), provider);
+    keyRate = await RouteJsonRpcProvider.getSurePriceOfToken((fromTokenString));
 
     // } else {
     //   keyRate = tokenAUsdRate.edgeData.priceUsdc ?? 0;
     //   console.log("keyRate here here: ", keyRate);
     // }
 
-    const nativeAddress = RouteJsonRpcProviderClass.config.nativeTokenAddress
+    const nativeAddress = config.nativeTokenAddress
 
     if (fromTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
 
-        fromTokenString = RouteJsonRpcProviderClass.config.wrappedNativeTokenAddress
+        fromTokenString = config.wrappedNativeTokenAddress
     }
 
     if (toTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
 
-        toTokenString = RouteJsonRpcProviderClass.config.wrappedNativeTokenAddress
+        toTokenString = config.wrappedNativeTokenAddress
     }
     const fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
     console.log('fromTokenString: ', fromTokenString);
@@ -114,9 +117,10 @@ export const getBestRoutes = async (
         throw new Error("DEX_ERRORS.PAIR_NOT_AVAILABLE_ON_DEX");
     }
     const func = RouteJsonRpcProvider.getFunctionToMutateEdgeCost();
-    const token = await RouteJsonRpcProvider.calculator.getTokenDetails(
-        (fromTokenString),
+    const token = await getTokenDetails(
+        (fromTokenString), provider
     );
+
     const {
         bestRoute: _path,
         edgeData,
@@ -131,7 +135,6 @@ export const getBestRoutes = async (
     );
     console.log('_path: ', _path);
     path = _path;
-
     if (path.length < 1) {
         console.log("No route found");
         throw new Error("No route found");

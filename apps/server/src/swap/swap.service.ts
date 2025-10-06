@@ -1,11 +1,11 @@
 import { JsonRpcProvider } from "ethers";
 import { SwapQuoteRequestType, SwapRequestType } from "./swap.schema";
-import { DEX_IDS, getBestRoutes, getRouteJsonRpcProvider, initAndGetCache } from "../index";
+import { getBestRoutes, getRouteJsonRpcProvider, initAndGetCache } from "../index";
 import Decimal from "decimal.js";
 import { ApiError } from "../errors/errors.api";
 import { DESERIALIZE_FEE } from "../constants";
 import { getSwapRequestFeeRate } from "../utils";
-import { UniswapV3QuoteCalculator, ZeroGRoute } from "@deserialize-evm-agg/routes-providers";
+import { DEX_IDS, getTokenDetails, UniswapV3QuoteCalculator, ZeroGRoute } from "@deserialize-evm-agg/routes-providers";
 
 
 export const swapQuoteService = async (params: SwapQuoteRequestType, provider: JsonRpcProvider) => {
@@ -16,7 +16,8 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
         });
 
         const { routes, bestOutcome, RouteJsonRpcProvider } = await getBestRoutes(
-            DEX_IDS.ZERO_G,
+            //TODO: THIS IS FOR BACKWARD COMPATIBILITY, REMOVE LATER
+            DEX_IDS.ALL,
             params.tokenA,
             params.tokenB,
             (params.amountIn),
@@ -88,9 +89,9 @@ export const swapService = async (params: SwapRequestType, provider: JsonRpcProv
 
         const cache = await initAndGetCache()
 
-        //TODO: hot fix for the fact that i only have one dex id 
-        const dexId = DEX_IDS.ZERO_G
-        const RouteJsonRpcProvider = new (getRouteJsonRpcProvider(dexId))(provider, cache);
+
+        // const RouteJsonRpcProvider = new (getRouteJsonRpcProvider(params.quote.dexId))(provider, cache);
+        const RouteJsonRpcProvider = new (getRouteJsonRpcProvider("ALL"))(provider, cache); //TODO: THIS IS FOR BACKWARD COMPATIBILITY, REMOVE LATER
         // console.log("RouteProvider: ", RouteProvider);
 
         const transaction = await RouteJsonRpcProvider.getTransactionInstructionFromRoutePlan(
@@ -121,7 +122,7 @@ export const swapService = async (params: SwapRequestType, provider: JsonRpcProv
 
 
 export const tokenList = async (provider: JsonRpcProvider) => {
-    const router = getRouteJsonRpcProvider(DEX_IDS.ZERO_G)
+    const router = getRouteJsonRpcProvider(DEX_IDS.ALL)
     const cache = await initAndGetCache()
     const routeInstance = new router(provider, cache)
 
@@ -129,17 +130,17 @@ export const tokenList = async (provider: JsonRpcProvider) => {
 }
 
 export const tokenListWithDetailsService = async (provider: JsonRpcProvider) => {
-    const router = getRouteJsonRpcProvider(DEX_IDS.ZERO_G)
+    const router = getRouteJsonRpcProvider(DEX_IDS.ALL)
     const cache = await initAndGetCache()
     const routeInstance = new router(provider, cache)
-    const calculator = new UniswapV3QuoteCalculator(ZeroGRoute.config, provider);
+
     const tokens = await routeInstance.listTokens()
     const detailedTokens = await Promise.all(tokens.map(async (token) => {
 
         const cacheDetails = await cache.getMintFromCache("ALL", token)
 
         if (!cacheDetails) {
-            const details = await calculator.getTokenDetails(token);
+            const details = await getTokenDetails(token, provider);
             await cache.setMintToCache("ALL", { ...details, contractAddress: token });
             return details;
         }
@@ -151,20 +152,24 @@ export const tokenListWithDetailsService = async (provider: JsonRpcProvider) => 
 }
 
 export const getTokenPriceService = async (tokenAddress: string, provider: JsonRpcProvider) => {
-    const calculator = new UniswapV3QuoteCalculator(ZeroGRoute.config, provider);
+    const router = getRouteJsonRpcProvider(DEX_IDS.ALL)
+    const cache = await initAndGetCache()
+    const routeInstance = new router(provider, cache)
 
     // return calculator.getPoolData("0x224D0891D63Ca83e6DD98B4653C27034503a5E76")
-    return await calculator.getSureTokenPrice(tokenAddress);
+    return await routeInstance.getSurePriceOfToken(tokenAddress);
 }
 
 export const getTokenDetailsService = async (tokenAddress: string, provider: JsonRpcProvider) => {
-    const calculator = new UniswapV3QuoteCalculator(ZeroGRoute.config, provider);
+    const router = getRouteJsonRpcProvider(DEX_IDS.ALL)
     const cache = await initAndGetCache()
+    const routeInstance = new router(provider, cache)
+
 
     const cacheDetails = await cache.getMintFromCache("ALL", tokenAddress)
 
     if (!cacheDetails) {
-        const details = await calculator.getTokenDetails(tokenAddress);
+        const details = await getTokenDetails(tokenAddress, provider);
         await cache.setMintToCache("ALL", { ...details, contractAddress: tokenAddress });
         return details;
     }

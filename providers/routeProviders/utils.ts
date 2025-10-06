@@ -1,4 +1,7 @@
+import { Token } from "./type";
 import { DeserializeRoutePlan } from "./IRoute";
+import { Contract, JsonRpcProvider } from "ethers";
+import { ERC20_ABI } from "./UniswapV3Calculator";
 
 interface IQuoteData {
     path: IPath[];
@@ -30,3 +33,20 @@ export const transformRoutePlanToIPath = <DexIdTypes>(factoryAddress: string, ro
     }
     return plan;
 };
+
+export const getTokenDetails = async (tokenAddress: string, provider: JsonRpcProvider): Promise<Token> => {
+    const tokenContract = new Contract(tokenAddress, ERC20_ABI, provider);
+    const [decimals, symbol, name] = await Promise.all([
+        tokenContract.decimals(),
+        tokenContract.symbol(),
+        tokenContract.name(),
+    ]);
+
+    const tokenDetails: Token = {
+        address: tokenAddress,
+        decimals: Number(decimals),
+        symbol: symbol,
+        name: name
+    };
+    return tokenDetails;
+}

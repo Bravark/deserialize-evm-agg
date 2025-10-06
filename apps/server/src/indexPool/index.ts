@@ -1,10 +1,11 @@
 import { DexCache } from "@deserialize-evm-agg/cache";
-import { wait, ZeroGRoute } from "@deserialize-evm-agg/routes-providers";
+import { wait, ZeroGRoute, AllRoute, ZiaRoute, DEX_IDS, dexIdList, } from "@deserialize-evm-agg/routes-providers";
 import { config } from "../config";
 import { JsonRpcProvider } from "ethers";
 import { createClient, RedisClientType } from "redis";
 import { checkIfGraphIsEmpty, Edge, EdgeData, Graph } from "@deserialize-evm-agg/graph";
-import { cloneDeep } from 'lodash';
+
+
 
 
 (BigInt.prototype as any).toJSON = function () {
@@ -12,20 +13,13 @@ import { cloneDeep } from 'lodash';
     return int ?? this.toString();
 };
 
-const DEX_IDS = {
-    ZERO_G: "ZERO_G",
-} as const;
-export const dexIdList = Object.keys(DEX_IDS)
-export type DexIdTypes = (typeof DEX_IDS)[keyof typeof DEX_IDS];
-let cache: DexCache<DexIdTypes> | undefined = undefined
+let cache: DexCache<any> | undefined = undefined
 
 
-
-export const initAndGetCache = async (): Promise<DexCache<DexIdTypes>> => {
+export const initAndGetCache = async <T>(): Promise<DexCache<T>> => {
     if (cache) {
         return cache
     }
-    //TODO: switch to redis cache
     const redisClient = createClient({
         url: config.REDIS_URL
     })
@@ -160,26 +154,38 @@ function isEmptyEdgeData(edgeData: EdgeData): boolean {
     );
 }
 const updateCacheData = async (rpc: string) => {
-
-    // for (const routeJsonRpcProvider of ALL_ROUTES_PROVIDERS) {
     const provider = new JsonRpcProvider(rpc)
-    const cache = await initAndGetCache()
-    const route = new ZeroGRoute(provider, cache)
-    // console.log('route: ', route);
+    const allRoute = new AllRoute(provider, await initAndGetCache());
+    const cache = await initAndGetCache();
 
-    const updatedTokenBiMap = await route.getNewTokenBiMap(provider);
-    // console.log('updatedTokenBiMap: ', updatedTokenBiMap.tokenBiMap);
-    cache.setDexTokenIndexBiMapCache(route.name, updatedTokenBiMap);
-    // const currentGraph = await route.getGraph(provider);
-    const newGraph = await route.getNewGraph();
-    // const updatedGraph = updateGraphEdgeData(currentGraph, newGraph);//? DECIDED NOT TO UPDATE THE GRAPH AGAIN
-    // console.log('updatedGraph: ', updatedGraph);
-    // console.log("updatedGraph: ", route.name, updatedGraph.length);
-    // const isGraphEmpty = checkIfGraphIsEmpty(updatedGraph);
-    // console.log("isGraphEmpty: ", route.name, isGraphEmpty);
+    //test all routes one by one
+    for (const routeJsonRpcProvider of allRoute.routeProviders) {
+
+        const route = new routeJsonRpcProvider(provider, cache)
+
+
+        const updatedTokenBiMap = await route.getNewTokenBiMap(provider);
+        allRoute.cache.setDexTokenIndexBiMapCache(route.name, updatedTokenBiMap);
+
+        const newGraph = await route.getNewGraph(updatedTokenBiMap, provider);
+
+        const isGraphEmpty = checkIfGraphIsEmpty(newGraph);
+        console.log("isGraphEmpty: ", route.name, isGraphEmpty);
+        // if (!isGraphEmpty) {
+        allRoute.cache.setDexGraphCache(route.name as any as string, newGraph);
+    }
+    const allUpdatedTokenBiMap = await allRoute.getNewTokenBiMap<any>(provider);
+    // console.log("allUpdatedTokenBiMap: ", allUpdatedTokenBiMap.tokenBiMap);
+    const allUpdatedGraph = await allRoute.getNewGraph(
+        allUpdatedTokenBiMap,
+        provider
+    );
+    console.log("allUpdatedGraph: ", allUpdatedGraph.length);
+    const isAllGraphEmpty = checkIfGraphIsEmpty(allUpdatedGraph);
+    console.log("isAllGraphEmpty: ", allRoute.name, isAllGraphEmpty);
     // if (!isGraphEmpty) {
-    cache.setDexGraphCache(route.name, newGraph);
-    // }
+    allRoute.cache.setDexTokenIndexBiMapCache(allRoute.name as any as string, allUpdatedTokenBiMap as any);
+    allRoute.cache.setDexGraphCache(allRoute.name as any as string, allUpdatedGraph);
 }
 
 // //

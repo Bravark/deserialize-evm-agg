@@ -1,7 +1,7 @@
-import { ZeroGRoute } from "@deserialize-evm-agg/routes-providers"
+import { DEX_IDS, ZeroGRoute } from "@deserialize-evm-agg/routes-providers"
 import Decimal from "decimal.js"
 import { JsonRpcProvider, JsonRpcSigner } from "ethers"
-import { DEX_IDS, getBestRoutes } from "./src/index"
+import { getBestRoutes } from "./src/index"
 
 const userInput = {
     tokenIn: "0x36f6414FF1df609214dDAbA71c84f18bcf00F67d",//BTC

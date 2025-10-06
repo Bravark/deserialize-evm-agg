@@ -8,15 +8,14 @@
 import { ethers, Contract, JsonRpcProvider } from "ethers";
 import Decimal from "decimal.js";
 import { get0gPrice, getTokenPrice } from "./price";
+import { NetworkType } from "deserialize-evm-server-sdk";
+import { Token } from "./type";
+import { DexCache } from "@deserialize-evm-agg/cache";
+import { DexIdTypes } from "0g";
 
 // ==================== TYPES ====================
 
-export interface Token {
-    address: string;
-    decimals: number;
-    symbol: string;
-    name: string
-}
+
 
 export interface PoolInfo {
     pool: Contract;
@@ -24,7 +23,11 @@ export interface PoolInfo {
     liquidity: Decimal;
     address: string;
 }
-
+export interface ZeroDexQuoteParams {
+    aToB: boolean; // true if swapping token0 for token1, false if swapping token1 for token0
+    amountInFormattedInDecimal: Decimal; // Amount of input token in human-readable format
+    pool: PoolData; // Pool data containing token metadata and liquidity
+}
 export interface PoolData {
     token0: Token;
     token1: Token;
@@ -67,12 +70,22 @@ export interface PoolCreatedEvent {
 
 export interface DexConfig {
     name: string;
+    network: NetworkType;
     factoryAddress: string;
     quoterAddress: string;
     fromBlock?: string;
     abi: any
     wrappedNativeTokenAddress: string;
     nativeTokenAddress: string
+    stableTokenAddress?: string; // For USD price calculations
+}
+
+export interface ChainConfig {
+    name: string;
+    network: NetworkType;
+    rpcUrl: string;
+    wrappedNativeTokenAddress: string;
+    nativeTokenAddress: string;
     stableTokenAddress?: string; // For USD price calculations
 }
 
@@ -153,7 +166,7 @@ const POOL_ABI = [
     },
 ] as const;
 
-const ERC20_ABI = [
+export const ERC20_ABI = [
     {
         inputs: [],
         name: "decimals",
@@ -550,21 +563,13 @@ export class UniswapV3QuoteCalculator {
             amountOut = liquidity.mul(delta).div(Q96);
         }
 
-        // Adjust for decimals
-        let adjustedAmountOut = amountOut;
-        if (decimalsIn > decimalsOut) {
-            const diff = new Decimal(10).pow(new Decimal(decimalsIn - decimalsOut));
-            adjustedAmountOut = amountOut.div(diff);
-        } else if (decimalsOut > decimalsIn) {
-            const diff = new Decimal(10).pow(new Decimal(decimalsOut - decimalsIn));
-            adjustedAmountOut = amountOut.mul(diff);
-        }
 
         return {
-            amountOut: adjustedAmountOut,
+            amountOut,
             sqrtPNext,
             feeAmount,
             amountInAfterFee,
+
         };
     }
 
@@ -630,10 +635,11 @@ export class UniswapV3QuoteCalculator {
             zeroForOne
         );
 
+
         return {
             price: spotPrice,
             amountIn: amountInFormattedInDecimal,
-            amountOut,
+            amountOut: amountOut,
             poolAddress,
             fee: feeAmount,
             sqrtPriceStart: new Decimal(sqrtPriceX96),

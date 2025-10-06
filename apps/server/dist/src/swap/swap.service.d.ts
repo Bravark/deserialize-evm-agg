@@ -7,18 +7,18 @@ export declare const swapQuoteService: (params: SwapQuoteRequestType, provider: 
     amountIn: string;
     amountOut: Decimal;
     tokenPrice: string;
-    routePlan: import("@deserialize-evm-agg/routes-providers").DeserializeRoutePlan<import("../index").DexIdTypes>[];
-    dexId: "ZERO_G";
+    routePlan: import("@deserialize-evm-agg/routes-providers").DeserializeRoutePlan<string>[];
+    dexId: string;
     dexFactory: any;
     isNativeIn: boolean;
     isNativeOut: boolean;
 }>;
 export declare const swapService: (params: SwapRequestType, provider: JsonRpcProvider) => Promise<{
     transaction: {
-        transactions: import("ethers").TransactionRequest[];
+        transactions: any[];
     };
 }>;
 export declare const tokenList: (provider: JsonRpcProvider) => Promise<string[]>;
 export declare const tokenListWithDetailsService: (provider: JsonRpcProvider) => Promise<{}[]>;
-export declare const getTokenPriceService: (tokenAddress: string, provider: JsonRpcProvider) => Promise<number>;
+export declare const getTokenPriceService: (tokenAddress: string, provider: JsonRpcProvider) => Promise<number | null>;
 export declare const getTokenDetailsService: (tokenAddress: string, provider: JsonRpcProvider) => Promise<{}>;

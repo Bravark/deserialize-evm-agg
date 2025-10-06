@@ -6,17 +6,18 @@
  */
 import { ethers, Contract, JsonRpcProvider } from "ethers";
 import Decimal from "decimal.js";
-export interface Token {
-    address: string;
-    decimals: number;
-    symbol: string;
-    name: string;
-}
+import { NetworkType } from "deserialize-evm-server-sdk";
+import { Token } from "./type";
 export interface PoolInfo {
     pool: Contract;
     fee: number;
     liquidity: Decimal;
     address: string;
+}
+export interface ZeroDexQuoteParams {
+    aToB: boolean;
+    amountInFormattedInDecimal: Decimal;
+    pool: PoolData;
 }
 export interface PoolData {
     token0: Token;
@@ -56,10 +57,19 @@ export interface PoolCreatedEvent {
 }
 export interface DexConfig {
     name: string;
+    network: NetworkType;
     factoryAddress: string;
     quoterAddress: string;
     fromBlock?: string;
     abi: any;
+    wrappedNativeTokenAddress: string;
+    nativeTokenAddress: string;
+    stableTokenAddress?: string;
+}
+export interface ChainConfig {
+    name: string;
+    network: NetworkType;
+    rpcUrl: string;
     wrappedNativeTokenAddress: string;
     nativeTokenAddress: string;
     stableTokenAddress?: string;
@@ -72,6 +82,37 @@ export interface QuoteParams {
     amountInFormattedInDecimal?: Decimal;
     pool?: PoolData;
 }
+export declare const ERC20_ABI: readonly [{
+    readonly inputs: readonly [];
+    readonly name: "decimals";
+    readonly outputs: readonly [{
+        readonly internalType: "uint8";
+        readonly name: "";
+        readonly type: "uint8";
+    }];
+    readonly stateMutability: "view";
+    readonly type: "function";
+}, {
+    readonly inputs: readonly [];
+    readonly name: "symbol";
+    readonly outputs: readonly [{
+        readonly internalType: "string";
+        readonly name: "";
+        readonly type: "string";
+    }];
+    readonly stateMutability: "view";
+    readonly type: "function";
+}, {
+    readonly inputs: readonly [];
+    readonly name: "name";
+    readonly outputs: readonly [{
+        readonly internalType: "string";
+        readonly name: "";
+        readonly type: "string";
+    }];
+    readonly stateMutability: "view";
+    readonly type: "function";
+}];
 export declare class UniswapV3QuoteCalculator {
     private provider;
     private config;

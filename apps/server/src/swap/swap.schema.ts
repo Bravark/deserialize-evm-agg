@@ -1,6 +1,7 @@
+import { DEX_IDS, dexIdList } from "@deserialize-evm-agg/routes-providers";
 import exp from "constants";
-import { DEX_IDS, dexIdList } from "../index";
-import { z } from "zod";
+
+import { object, z } from "zod";
 
 export const SwapQuoteRequestSchema = z.object({
     body: z.object({
@@ -11,6 +12,8 @@ export const SwapQuoteRequestSchema = z.object({
         }),
         dexId: z.enum(
             [
+                DEX_IDS.ALL,
+                //TODO: THIS IS FOR BACKWARD COMPATIBILITY, REMOVE LATER
                 DEX_IDS.ZERO_G
             ]
         ),
@@ -51,9 +54,7 @@ export const SwapRequestSchema = z.object({
                     fee: z.number(),
                     aToB: z.boolean(),
                     dexId: z.enum(
-                        [
-                            DEX_IDS.ZERO_G
-                        ]
+                        Object.keys(DEX_IDS) as [string, ...string[]]
                     ),
                 })
             ),

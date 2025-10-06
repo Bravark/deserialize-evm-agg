@@ -1,4 +1,4 @@
-export const ZeroGAbi = [
+export const v3PoolAbi = [
     {
         "inputs": [],
         "stateMutability": "nonpayable",

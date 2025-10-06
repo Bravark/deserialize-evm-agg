@@ -87,6 +87,8 @@ export interface IRoute<TPool, DexIdTypes> {
     ) => Promise<R | null>;
     formatPool: (pool: any) => TPool;
 
+    getSurePriceOfToken: (tokenAddress: string) => Promise<number | null>;
+
     getTokenPairEdgeData: (
         tokenA: string,
         tokenB: string

@@ -111,7 +111,7 @@ export class RedisCacheManager<DexIdTypes> {
   /**
    * Set token price in Redis with expiration
    */
-  async setPriceToRedis(token: string, price: number, expiryInSeconds: number = 3600): Promise<void> {
+  async setPriceToRedis(token: string, price: number, expiryInSeconds: number = 60): Promise<void> {
     try {
       const key = this.getPriceKey(token);
       await this.redisClient.setEx(key, expiryInSeconds, price.toString());

@@ -4,45 +4,55 @@ import Decimal from "decimal.js";
 import { NetworkType } from "deserialize-evm-server-sdk";
 import { JsonRpcProvider, TransactionRequest } from "ethers";
 import { DeserializeRoutePlan, IRoute, SwapQuoteParamWithEdgeData, SwapQuoteParamWithEdgeDataString } from "./IRoute";
-import { DexConfig, PoolData, UniswapV3QuoteCalculator } from "UniswapV3Calculator";
+import { DexConfig, PoolData, UniswapV3QuoteCalculator, ZeroDexQuoteParams } from "./UniswapV3Calculator";
 import { ArrayBiMap, Edge, EdgeData, FunctionToMutateTheEdgeCostType, Graph, TokenBiMap } from "@deserialize-evm-agg/graph";
-import { ZeroGAbi } from "zeroG/abi";
+import { transformRoutePlanToIPath } from "./utils";
+
+export type RouteConstructor<DexIdTypes, T = any> = new (
+    provider: JsonRpcProvider,
+    cache: DexCache<DexIdTypes>
+) => IRoute<T, DexIdTypes>;
 
 
-export const createV3Route = <DexIdTypes>(config: DexConfig, cache: DexCache<DexIdTypes>): IRoute<PoolData, DexIdTypes> => {
-    // Initialize and return a route instance using the provided config and cache
-    return new BaseV3Route<DexIdTypes>(new JsonRpcProvider(), cache);
+type V3RouteConstructor<DexIdTypes> = new (
+    provider: JsonRpcProvider,
+    cache: DexCache<DexIdTypes>
+) => BaseV3Route<DexIdTypes>;
+
+export const createV3Route = <DexIdTypes>(
+    config: DexConfig,
+    dexId: DexIdTypes,
+): V3RouteConstructor<DexIdTypes> => {
+    return class ConfiguredV3Route extends BaseV3Route<DexIdTypes> {
+        constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>) {
+            super(provider, cache, config, dexId, config.network);
+        }
+    };
 }
 
 
-export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
-    name = "ZERO_G" as DexIdTypes;
-    provider: JsonRpcProvider;
-    cache: DexCache<DexIdTypes>
-    dexConfig: DexConfig
-    calculator: UniswapV3QuoteCalculator
-    network: NetworkType = "0gMainnet"
-    static network: NetworkType = "0gMainnet"
-    static config: DexConfig = {
-        name: "Janie (formally Zero G)",
-        factoryAddress: "0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4",
-        quoterAddress: "0xd00883722cECAD3A1c60bCA611f09e1851a0bE02",
-        fromBlock: "0",
-        //! TODO: THIS IS NOT THE STABLE COIN ADDRESS ON MAINNET
-        stableTokenAddress: "0x1f3aa82227281ca364bfb3d253b0f1af1da6473e",
-        abi: ZeroGAbi,
-        wrappedNativeTokenAddress: "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c",
-        nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
-    }
 
-    constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>) {
+export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
+    name: DexIdTypes;
+    provider: JsonRpcProvider;
+    cache: DexCache<DexIdTypes>;
+    dexConfig: DexConfig;
+    calculator: UniswapV3QuoteCalculator;
+    network: NetworkType;
+    constructor(provider: JsonRpcProvider,
+        cache: DexCache<DexIdTypes>,
+        config: DexConfig,
+        dexId: DexIdTypes,
+        network: NetworkType) {
         this.provider = provider;
         this.cache = cache
-        this.dexConfig = BaseV3Route.config
-        this.calculator = new UniswapV3QuoteCalculator(BaseV3Route.config, this.provider)
+        this.dexConfig = config
+        this.calculator = new UniswapV3QuoteCalculator(config, this.provider)
+        this.name = dexId
+        this.network = network
     }
     getDexConfig = () => {
-        return BaseV3Route.config
+        return this.dexConfig
     };
     getTransactionInstructionFromRoutePlan = async (
         amountFormattedToTokenDecimal: Decimal,
@@ -55,7 +65,7 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
     ) => {
         const { amountOut } = await this.getAmountOutFromPlan(amountFormattedToTokenDecimal, routePlan, 0, this.provider)
         //here we will get the transaction here
-        return await getTransactionFromRoutePlanZeroG(amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider, isNativeIn, isNativeOut, partnerFees)
+        return await getTransactionFromRoutePlanZeroG(this.dexConfig, amountFormattedToTokenDecimal, amountOut, routePlan, wallet, slippage, this.provider, isNativeIn, isNativeOut, partnerFees)
     };
     getAmountOutFromPlan = async (
         amountFormattedToTokenDecimal: Decimal,
@@ -63,7 +73,8 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         devFeeRate: number,
         provider?: JsonRpcProvider
     ) => {
-        return await getTransactionInstructionFromRoutePlanZeroG(
+        return await getTransactionInstructionFromRoutePlanV3(
+            this.dexConfig,
             amountFormattedToTokenDecimal,
             routePlan,
             provider || this.provider,
@@ -313,12 +324,12 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         data: T,
         r: boolean
     ): Promise<R | null> => {
-        const priceUsdc = await this.calculator.getSureTokenPrice(
+        const priceUsdc = await this.getSurePriceOfToken(
             data.token0.address,
         );
         console.log('priceUsdc: ', priceUsdc);
 
-        const rPriceUsdc = await this.calculator.getSureTokenPrice(
+        const rPriceUsdc = await this.getSurePriceOfToken(
             data.token1.address,
         );
 
@@ -350,6 +361,18 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         }
         return res as R | null
     };
+    getSurePriceOfToken = async (tokenAddress: string) => {
+        //check if it is cache and return early
+        const cachedPrice = await this.cache.getPriceFromCache(tokenAddress)
+        if (cachedPrice !== null) {
+            return cachedPrice
+        }
+        const priceUsdc = await this.calculator.getSureTokenPrice(
+            tokenAddress,
+        );
+        await this.cache.setPriceToCache(tokenAddress, priceUsdc)
+        return priceUsdc
+    }
     getFunctionToMutateEdgeCost = () => {
         //?i should find a way to properly type the below generic instead of using "any"
         let func: FunctionToMutateTheEdgeCostType<any>;
@@ -404,6 +427,7 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
                 return 100;
             }
             // console.log(
+            //     "DEX ID", e.edgeData.dexId,
             //     "_swapImpact: ", _swapImpact,
             //     "from", e?.from,
             //     "to", e?.to,
@@ -412,10 +436,10 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
             // );
 
             // console.log(
-            //     "amountBOut: =>", amountBOut.toNumber() / 10 ** 18,
+            //     "amountBOut: =>", amountBOut.toNumber(),
             //     "params.price: ", params.price,
-            //     "amountIn", amountIn.toNumber() / 10 ** 18,
-            //     "amountOutInTokenA: ", amountOutInTokenA.toNumber() / 10 ** 18,
+            //     "amountIn", amountIn.toNumber(),
+            //     "amountOutInTokenA: ", amountOutInTokenA.toNumber()
             // );
             // console.log("======================================")
 
@@ -484,19 +508,21 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
     };
 }
 
-export const getTransactionInstructionFromRoutePlanZeroG = async <DexIdTypes>(
+export const getTransactionInstructionFromRoutePlanV3 = async <DexIdTypes>(
+    dexConfig: DexConfig,
     amountFormattedToTokenDecimal: Decimal,
     routePlan: DeserializeRoutePlan<DexIdTypes>[],
     connection: JsonRpcProvider,
 
 ) => {
-    routePlan.map((r) => {
-        if (r.dexId !== "ZERO_G") {
-            throw new Error(
-                "One or all of the passed route is not a ZERO_G route path"
-            );
-        }
-    });
+    //TODO: SKIPPING VALIDATION FOR NOW
+    // routePlan.map((r) => {
+    //     if (r.dexId !== "ZERO_G") {
+    //         throw new Error(
+    //             "One or all of the passed route is not a ZERO_G route path"
+    //         );
+    //     }
+    // });
 
     let currentAmountIn = new Decimal(amountFormattedToTokenDecimal);
 
@@ -504,7 +530,7 @@ export const getTransactionInstructionFromRoutePlanZeroG = async <DexIdTypes>(
         const route = routePlan[i];
         console.log("currentAmountIn: ", currentAmountIn);
 
-        const calculator = new UniswapV3QuoteCalculator(BaseV3Route.config, connection)
+        const calculator = new UniswapV3QuoteCalculator(dexConfig, connection)
         const amountOut = await calculator.simulateTransaction(
             route.tokenA,
             route.tokenB,
@@ -519,6 +545,7 @@ export const getTransactionInstructionFromRoutePlanZeroG = async <DexIdTypes>(
 };
 
 export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
+    dexConfig: DexConfig,
     amountIn: Decimal,
     amountOut: Decimal,
     routePlan: DeserializeRoutePlan<DexIdTypes>[],
@@ -530,7 +557,7 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     partnerFees?: { recipient: string; fee: number }
 ) => {
     // console.log('routePlan: ', routePlan);
-    const paths = transformRoutePlanToIPath(BaseV3Route.config.factoryAddress, routePlan, ZeroGRoute.config.nativeTokenAddress, ZeroGRoute.config.wrappedNativeTokenAddress, isNativeIn, isNativeOut);
+    const paths = transformRoutePlanToIPath(dexConfig.factoryAddress, routePlan, dexConfig.nativeTokenAddress, dexConfig.wrappedNativeTokenAddress, isNativeIn, isNativeOut);
     const slippageMultiplier = new Decimal(1).minus(slippage / 100);
     const minAmountOut = amountOut.mul(slippageMultiplier)
     // console.log('minAmountOut: ', minAmountOut);
@@ -545,7 +572,7 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
             amountInRaw: amountIn.toFixed(0),
             minAmountOut: minAmountOut.toFixed(0),
         },
-        wallet, connection, ZeroGRoute.network, partnerFees ? partnerFees : undefined
+        wallet, connection, dexConfig.network, partnerFees ? partnerFees : undefined
     );
 
     const transactions: TransactionRequest[] = txs.map((tx) => ({
