@@ -25,7 +25,7 @@ import { ethers } from "ethers";
         tokenA: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
         tokenB: W0G,
         amountIn: "100000000000",
-        dexId: "ZERO_G"
+        dexId: "ALL"
     }
 
     const res = await fetch(`${baseUrl}/quote`, {
