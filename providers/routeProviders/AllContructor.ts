@@ -1,12 +1,13 @@
 import { DexCache } from "@deserialize-evm-agg/cache";
 import { ArrayBiMap, Edge, FunctionToMutateTheEdgeCostType, Graph, TokenBiMap } from "@deserialize-evm-agg/graph";
-import { NetworkType } from "deserialize-evm-server-sdk";
-import { JsonRpcProvider } from "ethers";
+import { IPath, NetworkType } from "deserialize-evm-server-sdk";
+import { JsonRpcProvider, TransactionRequest } from "ethers";
 
 import { DeserializeRoutePlan, IRoute } from "./IRoute";
 import Decimal from "decimal.js";
 import { RouteConstructor } from "./v3Route";
 import { UniswapV3QuoteCalculator } from "./UniswapV3Calculator";
+import { createSwapTX } from "@deserialize-evm-agg/swap-contract-sdk";
 
 export type AllRouteConstructor<DexIdTypes extends string> = new (
     provider: JsonRpcProvider,
@@ -310,37 +311,84 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         isNativeOut: boolean,
         partnerFees?: { recipient: string; fee: number }
     ) => {
-        let currentAmountIn = new Decimal(amountFormattedToTokenDecimal);
-        const allTransactions: any[] = [];
+        const { amountOut } = await this.getAmountOutFromPlan(amountFormattedToTokenDecimal, routePlan, 0, this.provider)
 
-        for (let i = 0; i < routePlan.length; i++) {
-            const plan = routePlan[i];
+        // for (let i = 0; i < routePlan.length; i++) {
+        //     const plan = routePlan[i];
 
-            const RouteProviderClass = this.getRouteProviderByDexId(plan.dexId as string);
-            const route = new RouteProviderClass(this.provider, this.cache);
+        //     const RouteProviderClass = this.getRouteProviderByDexId(plan.dexId as string);
+        //     const route = new RouteProviderClass(this.provider, this.cache);
 
-            const transaction = await route.getTransactionInstructionFromRoutePlan(
-                currentAmountIn,
-                [plan],
-                wallet,
-                slippage,
-                i === 0 ? isNativeIn : false,
-                i === routePlan.length - 1 ? isNativeOut : false,
-                i === 0 ? partnerFees : undefined
-            );
+        //     const transaction = await route.getTransactionInstructionFromRoutePlan(
+        //         currentAmountIn,
+        //         [plan],
+        //         wallet,
+        //         slippage,
+        //         i === 0 ? isNativeIn : false,
+        //         i === routePlan.length - 1 ? isNativeOut : false,
+        //         i === 0 ? partnerFees : undefined
+        //     );
 
-            allTransactions.push(transaction);
+        //     allTransactions.push(transaction);
 
-            const { amountOut } = await route.getAmountOutFromPlan(
-                currentAmountIn,
-                [plan],
-                0,
-                this.provider
-            );
-            currentAmountIn = amountOut;
+        //     const { amountOut } = await route.getAmountOutFromPlan(
+        //         currentAmountIn,
+        //         [plan],
+        //         0,
+        //         this.provider
+        //     );
+        //     currentAmountIn = amountOut;
+        // }
+
+        const plan: IPath[] = [];
+        for (const route of routePlan) {
+            const RouteProviderClass = this.getRouteProviderByDexId(route.dexId as string);
+            const dexRoute = new RouteProviderClass(this.provider, this.cache);
+            const config = dexRoute.getDexConfig();
+            const warpedTokenAddress = config.wrappedNativeTokenAddress;
+            const nativeTokenAddress = config.nativeTokenAddress;
+            if (!warpedTokenAddress || !nativeTokenAddress) {
+                throw new Error("Dex config must have wrappedNativeTokenAddress and nativeTokenAddress");
+            }
+            const path: IPath = {
+                factory: config.factoryAddress, // Assuming factory is always ZERO_G for this example
+                poolAddress: route.poolAddress,
+                // tokenIn: route.aToB ? route.tokenA : route.tokenB,
+                tokenIn: isNativeIn ? route.tokenA.toLowerCase() === warpedTokenAddress.toLowerCase() ? nativeTokenAddress : route.tokenA : route.tokenA,
+                // tokenOut: route.aToB ? route.tokenB : route.tokenA,
+                tokenOut: isNativeOut ? route.tokenB.toLowerCase() === warpedTokenAddress.toLowerCase() ? nativeTokenAddress : route.tokenB : route.tokenB,
+                fee: route.fee,
+            };
+            plan.push(path);
         }
+        const paths = plan;
+        const slippageMultiplier = new Decimal(1).minus(slippage / 100);
+        const minAmountOut = amountOut.mul(slippageMultiplier)
+        // console.log('minAmountOut: ', minAmountOut);
 
-        return { transactions: allTransactions };
+        // console.log('amountIn: ', amountIn);
+        // console.log('amountIn.toFixed(0),: ', amountIn.toFixed(0),);
+        // console.log('minAmountOut.toFixed(0): ', minAmountOut.toFixed(0));
+        // console.log('paths: ', paths);
+        const txs = await createSwapTX(
+            {
+                path: paths,
+                amountInRaw: amountFormattedToTokenDecimal.toFixed(0),
+                minAmountOut: minAmountOut.toFixed(0),
+            },
+            wallet, this.provider, this.network, partnerFees
+        );
+
+        const transactions: TransactionRequest[] = txs.map((tx) => ({
+            from: wallet,
+            to: tx.to,
+            data: tx.data,
+            value: tx.value, // make sure this is BigNumberish (string, number, or BigNumber)
+        }));
+        return { transactions };
+
+
+
     };
 
     getAmountOutFromPlan = async (

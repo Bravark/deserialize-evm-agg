@@ -14,19 +14,19 @@ import { ethers } from "ethers";
     const provider = new ethers.JsonRpcProvider("https://evmrpc.0g.ai");
     const wallet = new ethers.Wallet(privateKey, provider);
 
-    // const userInput = {
-    //     tokenA: W0G,
-    //     tokenB: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
-    //     amountIn: "100000000000000000",
-    //     dexId: "ZERO_G"
-    // }
-
     const userInput = {
-        tokenA: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
-        tokenB: W0G,
-        amountIn: "100000000000",
-        dexId: "ALL"
+        tokenA: W0G,
+        tokenB: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
+        amountIn: "100000000000000000",
+        dexId: "ZERO_G"
     }
+
+    // const userInput = {
+    //     tokenA: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
+    //     tokenB: W0G,
+    //     amountIn: "100000000000",
+    //     dexId: "ALL"
+    // }
 
     const res = await fetch(`${baseUrl}/quote`, {
         method: "POST",
