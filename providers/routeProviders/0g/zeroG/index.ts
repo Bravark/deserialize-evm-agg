@@ -1,7 +1,8 @@
 
+import { chain } from "../chain";
 import { DexConfig, } from "../../UniswapV3Calculator";
 
-import { v3PoolAbi } from "../../v3PoolAbi";
+import { v3PoolAbi } from "../../v3FactoryAbi";
 
 import { createV3Route } from "../../v3Route";
 
@@ -11,7 +12,7 @@ const config: DexConfig = {
     factoryAddress: "0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4",
     quoterAddress: "0xd00883722cECAD3A1c60bCA611f09e1851a0bE02",
     fromBlock: "0",
-    network: "0gMainnet",
+    network: "0G",
     //! TODO: THIS IS NOT THE STABLE COIN ADDRESS ON MAINNET
     stableTokenAddress: "0x1f3aa82227281ca364bfb3d253b0f1af1da6473e",
     abi: v3PoolAbi,
@@ -21,6 +22,7 @@ const config: DexConfig = {
 
 export const ZeroGRoute = createV3Route(
     config,
+    chain,
     "ZERO_G",
 );
 // Export type for convenience

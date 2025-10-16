@@ -1,5 +1,5 @@
 import { DexCache } from "@deserialize-evm-agg/cache";
-import { wait, ZeroGRoute, AllRoute, ZiaRoute, DEX_IDS, dexIdList, } from "@deserialize-evm-agg/routes-providers";
+
 import { config } from "../config";
 import { JsonRpcProvider } from "ethers";
 import { createClient, RedisClientType } from "redis";
@@ -153,40 +153,6 @@ function isEmptyEdgeData(edgeData: EdgeData): boolean {
         (typeof edgeData === "object" && Object.keys(edgeData).length === 0)
     );
 }
-const updateCacheData = async (rpc: string) => {
-    const provider = new JsonRpcProvider(rpc)
-    const allRoute = new AllRoute(provider, await initAndGetCache());
-    const cache = await initAndGetCache();
-
-    //test all routes one by one
-    for (const routeJsonRpcProvider of allRoute.routeProviders) {
-
-        const route = new routeJsonRpcProvider(provider, cache)
-
-
-        const updatedTokenBiMap = await route.getNewTokenBiMap(provider);
-        allRoute.cache.setDexTokenIndexBiMapCache(route.name, updatedTokenBiMap);
-
-        const newGraph = await route.getNewGraph(updatedTokenBiMap, provider);
-
-        const isGraphEmpty = checkIfGraphIsEmpty(newGraph);
-        console.log("isGraphEmpty: ", route.name, isGraphEmpty);
-        // if (!isGraphEmpty) {
-        allRoute.cache.setDexGraphCache(route.name as any as string, newGraph);
-    }
-    const allUpdatedTokenBiMap = await allRoute.getNewTokenBiMap<any>(provider);
-    // console.log("allUpdatedTokenBiMap: ", allUpdatedTokenBiMap.tokenBiMap);
-    const allUpdatedGraph = await allRoute.getNewGraph(
-        allUpdatedTokenBiMap,
-        provider
-    );
-    console.log("allUpdatedGraph: ", allUpdatedGraph.length);
-    const isAllGraphEmpty = checkIfGraphIsEmpty(allUpdatedGraph);
-    console.log("isAllGraphEmpty: ", allRoute.name, isAllGraphEmpty);
-    // if (!isGraphEmpty) {
-    allRoute.cache.setDexTokenIndexBiMapCache(allRoute.name as any as string, allUpdatedTokenBiMap as any);
-    allRoute.cache.setDexGraphCache(allRoute.name as any as string, allUpdatedGraph);
-}
 
 // //
 // // it is after that we will update the ALL
@@ -209,13 +175,7 @@ const chain = {
     name: "0g",
     rpc: "https://evmrpc.0g.ai"
 }
-updateCacheData(chain.rpc);
-setInterval(async () => {
-    console.log("Updating cache data...");
-    await updateCacheData(chain.rpc);
-}, CacheInterval * 60 * 1000); // Convert minutes to milliseconds
-const timeTOWaitFor = 2//in seconds
-// 
+
 
 // const runOneAfterTheOther = async () => {
 //     console.log("Updating cache data... 1");

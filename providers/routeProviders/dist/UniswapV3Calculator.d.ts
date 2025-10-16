@@ -6,8 +6,8 @@
  */
 import { ethers, Contract, JsonRpcProvider } from "ethers";
 import Decimal from "decimal.js";
-import { NetworkType } from "deserialize-evm-server-sdk";
 import { Token } from "./type";
+import { NetworkType } from "./constants";
 export interface PoolInfo {
     pool: Contract;
     fee: number;
@@ -71,7 +71,9 @@ export interface ChainConfig {
     network: NetworkType;
     rpcUrl: string;
     wrappedNativeTokenAddress: string;
+    wrappedTokenSymbol: string;
     nativeTokenAddress: string;
+    nativeTokenSymbol: string;
     stableTokenAddress?: string;
 }
 export interface QuoteParams {
@@ -114,12 +116,13 @@ export declare const ERC20_ABI: readonly [{
     readonly type: "function";
 }];
 export declare class UniswapV3QuoteCalculator {
-    private provider;
-    private config;
+    provider: JsonRpcProvider;
+    config: DexConfig;
+    chainConfig: ChainConfig;
     private priceCache;
-    private poolCache;
+    poolCache: Map<string, PoolData>;
     private readonly CACHE_DURATION;
-    constructor(config: DexConfig, provider: JsonRpcProvider);
+    constructor(config: DexConfig, chainConfig: ChainConfig, _provider?: JsonRpcProvider);
     getPriceFromPriceMap: (tokenAddress: string) => number | undefined;
     setPriceInPriceMap: (tokenAddress: string, price: number) => void;
     getSureTokenPrice(tokenAddress: string, _provider?: ethers.JsonRpcProvider): Promise<number>;
@@ -132,7 +135,7 @@ export declare class UniswapV3QuoteCalculator {
     getTokenUsdPriceFromPoolWrappedToken(tokenAddress: string): Promise<number>;
     private getTokenUsdPriceFromPool;
     getPoolData(poolAddress: string): Promise<PoolData>;
-    findBestPool(tokenA: string, tokenB: string): Promise<PoolInfo & {
+    findBestPool(tokenA: string, tokenB: string, feeTiers?: number[]): Promise<PoolInfo & {
         poolData: PoolData;
     }>;
     calculateSpotPrice(sqrtPriceX96: Decimal, decimals0: number, decimals1: number, token0IsInput: boolean): number;
@@ -153,28 +156,15 @@ export declare class UniswapV3QuoteCalculator {
      * @param provider - blockchain connection
      * @returns Promise<PoolCreatedEvent[]> - Array of pool creation events
      */
-    getAllPoolsFromEvents: (factoryAddress: string, provider: JsonRpcProvider, fromBlockHeight: string | undefined, abi: any) => Promise<PoolCreatedEvent[]>;
+    /**
+     * Override getAllPoolsFromEvents to batch requests for RPC providers
+     * that have block range limitations (typically 10,000 blocks per request)
+     */
+    getAllPoolsFromEvents(factoryAddress: string, provider: JsonRpcProvider, fromBlockHeight: string | undefined, abi: any): Promise<any[]>;
     getAllPools(abi: any, fromBlock?: string): Promise<PoolData[]>;
     getConfig(): DexConfig;
     getProvider(): JsonRpcProvider;
     clearCache(): void;
     setCacheTimeout(durationMs: number): void;
 }
-export declare const DEX_CONFIGS: {
-    readonly ZERODEX_TESTNET: {
-        readonly name: "ZeroDEX Testnet";
-        readonly factoryAddress: "0x7453582657F056ce5CfcEeE9E31E4BC390fa2b3c";
-        readonly quoterAddress: "0x8d5E064d2EF44C29eE349e71CF70F751ECD62892";
-        readonly rpcUrl: "https://evmrpc-testnet.0g.ai";
-        readonly fromBlock: 171522;
-        readonly stableTokenAddress: "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf";
-    };
-    readonly UNISWAP_V3_MAINNET: {
-        readonly name: "Uniswap V3 Mainnet";
-        readonly factoryAddress: "0x1F98431c8aD98523631AE4a59f267346ea31F984";
-        readonly quoterAddress: "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6";
-        readonly rpcUrl: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY";
-        readonly stableTokenAddress: "0xA0b86a33E6441b8d6c6e4fC6F120d4d5A1b9A651";
-    };
-};
 export declare const wait: (time?: number) => Promise<unknown>;

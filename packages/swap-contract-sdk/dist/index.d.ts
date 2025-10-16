@@ -1,7 +1,9 @@
 import { IQuoteDataWithoutAmountIn } from "./helpers/contructHop";
 import { JsonRpcProvider } from "ethers";
-import { NetworkType } from "./interfaces/js/networkSetup";
-export declare const createSwapTX: ({ path, amountInRaw, minAmountOut }: IQuoteDataWithoutAmountIn, walletAddress: string, provider: JsonRpcProvider, network: NetworkType, partnerFees?: {
+export declare const createSwapTX: ({ path, amountInRaw, minAmountOut }: IQuoteDataWithoutAmountIn, walletAddress: string, provider: JsonRpcProvider, network: {
+    id: string;
+    rpc: string;
+}, partnerFees?: {
     recipient: string;
     fee: number;
 }) => Promise<({

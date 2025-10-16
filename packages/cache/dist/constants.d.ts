@@ -4,4 +4,5 @@ export declare const DEX_CACHE_NAMESPACE: {
     readonly TOKEN_POOL_MAP: "TOKEN_POOL_MAP";
     readonly TOKEN_MINT_MAP: "TOKEN_MINT_MAP";
     readonly TOKEN_PRICE: "TOKEN_PRICE";
+    readonly LAST_BLOCK_FETCHED: "LAST_BLOCK_FETCHED";
 };

@@ -4,7 +4,7 @@ import Decimal from "decimal.js";
 import { NetworkType } from "deserialize-evm-server-sdk";
 import { JsonRpcProvider, TransactionRequest } from "ethers";
 import { DeserializeRoutePlan, IRoute, SwapQuoteParamWithEdgeData, SwapQuoteParamWithEdgeDataString } from "./IRoute";
-import { DexConfig, PoolData, UniswapV3QuoteCalculator, ZeroDexQuoteParams } from "./UniswapV3Calculator";
+import { ChainConfig, DexConfig, PoolData, UniswapV3QuoteCalculator, ZeroDexQuoteParams } from "./UniswapV3Calculator";
 import { ArrayBiMap, Edge, EdgeData, FunctionToMutateTheEdgeCostType, Graph, TokenBiMap } from "@deserialize-evm-agg/graph";
 import { transformRoutePlanToIPath } from "./utils";
 
@@ -21,11 +21,13 @@ type V3RouteConstructor<DexIdTypes> = new (
 
 export const createV3Route = <DexIdTypes>(
     config: DexConfig,
+    chain: ChainConfig,
     dexId: DexIdTypes,
+    calculator: UniswapV3QuoteCalculator = new UniswapV3QuoteCalculator(config, chain, new JsonRpcProvider(chain.rpcUrl))
 ): V3RouteConstructor<DexIdTypes> => {
     return class ConfiguredV3Route extends BaseV3Route<DexIdTypes> {
         constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>) {
-            super(provider, cache, config, dexId, config.network);
+            super(provider, cache, config, chain, dexId, chain.network as NetworkType, calculator);
         }
     };
 }
@@ -37,19 +39,24 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
     provider: JsonRpcProvider;
     cache: DexCache<DexIdTypes>;
     dexConfig: DexConfig;
+    chainConfig: ChainConfig;
     calculator: UniswapV3QuoteCalculator;
     network: NetworkType;
     constructor(provider: JsonRpcProvider,
         cache: DexCache<DexIdTypes>,
         config: DexConfig,
+        chain: ChainConfig,
         dexId: DexIdTypes,
-        network: NetworkType) {
+        network: NetworkType,
+        calculator: UniswapV3QuoteCalculator
+    ) {
         this.provider = provider;
-        this.cache = cache
-        this.dexConfig = config
-        this.calculator = new UniswapV3QuoteCalculator(config, this.provider)
-        this.name = dexId
-        this.network = network
+        this.cache = cache;
+        this.chainConfig = chain;
+        this.dexConfig = config;
+        this.calculator = calculator;
+        this.name = dexId;
+        this.network = network;
     }
     getDexConfig = () => {
         return this.dexConfig
@@ -75,9 +82,11 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
     ) => {
         return await getTransactionInstructionFromRoutePlanV3(
             this.dexConfig,
+            this.chainConfig,
             amountFormattedToTokenDecimal,
             routePlan,
             provider || this.provider,
+            this.calculator
 
         );
     };
@@ -128,7 +137,10 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         tokenPoolMap: Map<string, string>;
     }> => {
         // Fetch token data
-        const data = await this.calculator.getAllPools(this.dexConfig.abi)
+        const lastBlock = await this.cache.getLastBlockFetched(this.name)
+        const data = await this.calculator.getAllPools(this.dexConfig.abi, lastBlock ? lastBlock.toString() : undefined)
+        const newLastBlock = data[data.length - 1].blockNumber
+        console.log('newLastBlock: ', newLastBlock);
         // console.log('data: ', data);
         const tokenBiMap = new ArrayBiMap<string>();
         const tokenPoolMap = new Map<string, string>();
@@ -143,7 +155,10 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
                 poolAddress);
             // }
         });
-
+        console.log('newLastBlock: ', newLastBlock);
+        if (newLastBlock) {
+            await this.cache.setLastBlockFetched(this.name, Number(newLastBlock))
+        }
         return { data: data as T[], tokenBiMap, tokenPoolMap };
     };
 
@@ -510,9 +525,11 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
 
 export const getTransactionInstructionFromRoutePlanV3 = async <DexIdTypes>(
     dexConfig: DexConfig,
+    chainConfig: ChainConfig,
     amountFormattedToTokenDecimal: Decimal,
     routePlan: DeserializeRoutePlan<DexIdTypes>[],
     connection: JsonRpcProvider,
+    calculator: UniswapV3QuoteCalculator
 
 ) => {
     //TODO: SKIPPING VALIDATION FOR NOW
@@ -530,7 +547,7 @@ export const getTransactionInstructionFromRoutePlanV3 = async <DexIdTypes>(
         const route = routePlan[i];
         console.log("currentAmountIn: ", currentAmountIn);
 
-        const calculator = new UniswapV3QuoteCalculator(dexConfig, connection)
+
         const amountOut = await calculator.simulateTransaction(
             route.tokenA,
             route.tokenB,
@@ -572,7 +589,7 @@ export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
             amountInRaw: amountIn.toFixed(0),
             minAmountOut: minAmountOut.toFixed(0),
         },
-        wallet, connection, dexConfig.network, partnerFees ? partnerFees : undefined
+        wallet, connection, { id: dexConfig.network, rpc: connection._getConnection().url }, partnerFees ? partnerFees : undefined
     );
 
     const transactions: TransactionRequest[] = txs.map((tx) => ({

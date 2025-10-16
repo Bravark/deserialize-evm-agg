@@ -1,5 +1,6 @@
-import { DEX_IDS, dexIdList } from "@deserialize-evm-agg/routes-providers";
+import { getChainDexIds, } from "@deserialize-evm-agg/routes-providers";
 import exp from "constants";
+import { chain } from "lodash";
 
 import { object, z } from "zod";
 
@@ -10,19 +11,16 @@ export const SwapQuoteRequestSchema = z.object({
         amountIn: z.string().transform((arg) => {
             return parseFloat(arg);
         }),
-        dexId: z.enum(
-            [
-                DEX_IDS.ALL,
-                //TODO: THIS IS FOR BACKWARD COMPATIBILITY, REMOVE LATER
-                DEX_IDS.ZERO_G
-            ]
-        ),
+        dexId: z.string(),
         options: z
             .object({
                 targetRouteNumber: z.number(),
             })
             .optional(),
     }),
+    params: z.object({
+        chain: z.string().default("0G"),
+    }).optional(),
 });
 
 //
@@ -53,18 +51,12 @@ export const SwapRequestSchema = z.object({
                     poolAddress: z.string(),
                     fee: z.number(),
                     aToB: z.boolean(),
-                    dexId: z.enum(
-                        Object.keys(DEX_IDS) as [string, ...string[]]
-                    ),
+                    dexId: z.string(),
                 })
             ),
             // dexFactory: z.string(),
 
-            dexId: z.enum(
-                [
-                    DEX_IDS.ALL
-                ]
-            ),
+            dexId: z.string(),
             isNativeIn: z.boolean(),
             isNativeOut: z.boolean(),
         }),
@@ -79,6 +71,9 @@ export const SwapRequestSchema = z.object({
             fee: z.number().min(0),
         }).optional()
     }),
+    params: z.object({
+        chain: z.string().default("0G"),
+    }).optional(),
 });
 
 export type SwapRequestType = z.infer<typeof SwapRequestSchema>["body"]
@@ -87,6 +82,7 @@ export type SwapRequestType = z.infer<typeof SwapRequestSchema>["body"]
 export const TokenPriceRequestSchema = z.object({
     params: z.object({
         tokenAddress: z.string(),
+        chain: z.string().optional().default("0G"),
     }),
 });
 
@@ -96,6 +92,7 @@ export type TokenPriceRequestType = z.infer<typeof TokenPriceRequestSchema>["par
 export const TokenDetailsRequestSchema = z.object({
     params: z.object({
         tokenAddress: z.string(),
+        chain: z.string().optional().default("0G"),
     }),
 });
 

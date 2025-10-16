@@ -9,7 +9,7 @@ import { ethers } from "ethers";
 
     const local = "http://localhost:3735"
     const prod = "http://evm-api.deserialize.xyz"
-    const baseUrl = local
+    const baseUrl = prod
     const privateKey = "0xcd90354282b35344616d6b53684684bef6e8673ed601d562a5866dc67fafd1ef"
     const provider = new ethers.JsonRpcProvider("https://evmrpc.0g.ai");
     const wallet = new ethers.Wallet(privateKey, provider);

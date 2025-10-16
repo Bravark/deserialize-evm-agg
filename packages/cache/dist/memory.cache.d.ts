@@ -50,6 +50,8 @@ export declare class MemoryCacheManager<DexIdTypes> {
      * Set the cache for a dex graph
      */
     setGraphMemoryCache(dexId: DexIdTypes, graph: Graph): void;
+    getLastBlockFetchedCache(dexId: DexIdTypes): number | null;
+    setLastBlockFetchedCache(dexId: DexIdTypes, blockNumber: number): void;
     /**
      * Clear all cache for a specific dex
      */

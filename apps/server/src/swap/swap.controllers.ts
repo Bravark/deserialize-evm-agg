@@ -4,7 +4,9 @@ import { NextFunction, Request, Response } from "express";
 import { SwapQuoteRequestSchema, SwapRequestSchema, TokenDetailsRequestSchema, TokenPriceRequestSchema } from "./swap.schema";
 import { getTokenDetailsService, getTokenPriceService, swapQuoteService, swapService, tokenList, tokenListWithDetailsService } from "./swap.service";
 import { JsonRpcProvider } from "ethers";
-
+import { NetworkType } from "@deserialize-evm-agg/routes-providers/dist/constants";
+import { BaseChain, getChainFromName, OgChain } from "@deserialize-evm-agg/routes-providers";
+import { get } from "lodash";
 
 
 export const swapQuoteController = async (
@@ -17,14 +19,15 @@ export const swapQuoteController = async (
         const data = req.body;
 
         //parse the data
-        const chain = {
-            name: "0g",
-            rpc: "https://evmrpc.0g.ai"
+        const { body, params } = SwapQuoteRequestSchema.parse(req);
+        let chain
+        if (!params?.chain) {
+            chain = getChainFromName("0G")
+        } else {
+            chain = getChainFromName(params.chain as NetworkType)
         }
-
-        const provider = new JsonRpcProvider(chain.rpc)
-        const { body } = SwapQuoteRequestSchema.parse(req);
-        const swap = await swapQuoteService(body, provider);
+        const provider = new JsonRpcProvider(chain.rpcUrl)
+        const swap = await swapQuoteService(body, provider, params?.chain as NetworkType ?? "0G");
         console.log("Swap quote processed successfully", {
             amountOut: swap.amountOut.toString(),
         });
@@ -45,15 +48,16 @@ export const swapTransactionController = async (
     try {
         const data = req.body;
 
+        const { body, params } = SwapRequestSchema.parse(req);
         //parse the data
-        const chain = {
-            name: "0g",
-            rpc: "https://evmrpc.0g.ai"
+        let chain
+        if (!params?.chain) {
+            chain = getChainFromName("0G")
+        } else {
+            chain = getChainFromName(params.chain as NetworkType)
         }
-
-        const provider = new JsonRpcProvider(chain.rpc)
-        const { body } = SwapRequestSchema.parse(req);
-        const { transaction } = await swapService(body, provider);
+        const provider = new JsonRpcProvider(chain.rpcUrl)
+        const { transaction } = await swapService(body, provider, params?.chain as NetworkType ?? "0G");
         console.log("Swap quote processed successfully", {
             amountOut: transaction.transactions,
         });
@@ -65,34 +69,34 @@ export const swapTransactionController = async (
     }
 };
 
-export const testnetSwapQuoteController = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    console.log("Swap endpoint accessed");
-    try {
-        const data = req.body;
+// export const testnetSwapQuoteController = async (
+//     req: Request,
+//     res: Response,
+//     next: NextFunction
+// ) => {
+//     console.log("Swap endpoint accessed");
+//     try {
+//         const data = req.body;
 
-        //parse the data
-        const chain = {
-            name: "0g",
-            rpc: "https://evmrpc-testnet.0g.ai"
-        }
+//         //parse the data
+//         const chain = {
+//             name: "0g",
+//             rpc: "https://evmrpc-testnet.0g.ai"
+//         }
 
-        const provider = new JsonRpcProvider(chain.rpc)
-        const { body } = SwapQuoteRequestSchema.parse(req);
-        const swap = await swapQuoteService(body, provider);
-        console.log("Swap quote processed successfully", {
-            amountOut: swap.amountOut.toString(),
-        });
+//         const provider = new JsonRpcProvider(chain.rpc)
+//         const { body } = SwapQuoteRequestSchema.parse(req);
+//         const swap = await swapQuoteService(body, provider);
+//         console.log("Swap quote processed successfully", {
+//             amountOut: swap.amountOut.toString(),
+//         });
 
-        res.send(swap);
-    } catch (error) {
-        console.log("Error in swapController", { error });
-        next(error);
-    }
-};
+//         res.send(swap);
+//     } catch (error) {
+//         console.log("Error in swapController", { error });
+//         next(error);
+//     }
+// };
 
 export const testnetSwapTransactionController = async (
     req: Request,
@@ -104,14 +108,15 @@ export const testnetSwapTransactionController = async (
         const data = req.body;
 
         //parse the data
-        const chain = {
-            name: "0g",
-            rpc: "https://evmrpc-testnet.0g.ai"
+        const { body, params } = SwapRequestSchema.parse(req);
+        let chain
+        if (!params?.chain) {
+            chain = getChainFromName("0G")
+        } else {
+            chain = getChainFromName(params.chain as NetworkType)
         }
-
-        const provider = new JsonRpcProvider(chain.rpc)
-        const { body } = SwapRequestSchema.parse(req);
-        const { transaction } = await swapService(body, provider);
+        const provider = new JsonRpcProvider(chain.rpcUrl)
+        const { transaction } = await swapService(body, provider, params?.chain as NetworkType ?? "0G");
         console.log("Swap quote processed successfully", {
             amountOut: transaction.transactions,
         });
@@ -133,13 +138,10 @@ export const tokenListController = async (
     try {
 
         //parse the data
-        const chain = {
-            name: "0g",
-            rpc: "https://evmrpc.0g.ai"
-        }
-
-        const provider = new JsonRpcProvider(chain.rpc)
-        const result = await tokenList(provider);
+        const { params } = req
+        const chain = getChainFromName(params.chain as NetworkType ?? "0G")
+        const provider = new JsonRpcProvider(chain.rpcUrl)
+        const result = await tokenList(provider, params.chain as NetworkType ?? "0G");
 
         res.send({ result });
     } catch (error) {
@@ -157,14 +159,11 @@ export const tokenPriceController = async (
     try {
 
         //parse the data
-        const chain = {
-            name: "0g",
-            rpc: "https://evmrpc.0g.ai"
-        }
-
-        const provider = new JsonRpcProvider(chain.rpc)
         const { params } = TokenPriceRequestSchema.parse(req);
-        const result = await getTokenPriceService(params.tokenAddress, provider);
+        const chain = getChainFromName(params.chain as NetworkType ?? "0G")
+        const provider = new JsonRpcProvider(chain.rpcUrl)
+
+        const result = await getTokenPriceService(params.tokenAddress, provider, params.chain as NetworkType ?? "0G");
 
         res.send({ result });
     } catch (error) {
@@ -184,14 +183,11 @@ export const tokenDetailsController = async (
     try {
 
         //parse the data
-        const chain = {
-            name: "0g",
-            rpc: "https://evmrpc.0g.ai"
-        }
-
-        const provider = new JsonRpcProvider(chain.rpc)
         const { params } = TokenDetailsRequestSchema.parse(req);
-        const result = await getTokenDetailsService(params.tokenAddress, provider);
+        const chain = getChainFromName(params.chain as NetworkType ?? "0G")
+        const provider = new JsonRpcProvider(chain.rpcUrl)
+
+        const result = await getTokenDetailsService(params.tokenAddress, provider, params.chain as NetworkType ?? "0G");
 
         res.send({ result });
     } catch (error) {
@@ -212,13 +208,10 @@ export const tokenListWithDetailsController = async (
     try {
 
         //parse the data
-        const chain = {
-            name: "0g",
-            rpc: "https://evmrpc.0g.ai"
-        }
-
-        const provider = new JsonRpcProvider(chain.rpc)
-        const result = await tokenListWithDetailsService(provider);
+        const { params } = req
+        const chain = getChainFromName(params.chain as NetworkType ?? "0G")
+        const provider = new JsonRpcProvider(chain.rpcUrl)
+        const result = await tokenListWithDetailsService(provider, params.chain as NetworkType ?? "0G");
 
         res.send({ result });
     } catch (error) {

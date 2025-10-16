@@ -1,10 +1,11 @@
 
 import { DexCache } from "@deserialize-evm-agg/cache";
 import { ArrayBiMap, Edge, EdgeData, findBestRouteIndex } from "@deserialize-evm-agg/graph";
-import { AllRoute, DeserializeRoutePlan, DEX_IDS, dexIdList, DexIdTypes, getTokenDetails, IRoute, ZeroGRoute } from "@deserialize-evm-agg/routes-providers"
+import { getChainDexIdList, DeserializeRoutePlan, getChainAllRoute, getChainDexIds, getTokenDetails, IRoute, ZeroGRoute, AllDexIdTypes } from "@deserialize-evm-agg/routes-providers"
 import { JsonRpcApiProvider, JsonRpcProvider } from "ethers";
 import { createClient, RedisClientType } from "redis"
 import { config } from "./config";
+import { NetworkType } from "@deserialize-evm-agg/routes-providers/dist/constants";
 
 
 
@@ -15,26 +16,24 @@ import { config } from "./config";
 
 
 
-console.log(DEX_IDS); // { ZERO_G: "ZERO_G", ZIA: "ZIA", ALL: "ALL" }
-console.log(dexIdList); // ["ZERO_G", "ZIA", "ALL"]
 
 
 export interface RouteOptions {
     targetRouteNumber: number;
 }
 
-export const getRouteJsonRpcProvider = (dexId: DexIdTypes) => {
-    if (dexId === DEX_IDS.ZERO_G) {
-        return ZeroGRoute;
-    } else if (dexId === DEX_IDS.ALL) {
-        return AllRoute;
-    }
-    throw new Error(`No route provider for ${dexId}`);
-};
+// export const getRouteJsonRpcProvider = (dexId: AllDexIdTypes) => {
+//     if (dexId === DEX_IDS.ZERO_G) {
+//         return ZeroGRoute;
+//     } else if (dexId === DEX_IDS.ALL) {
+//         return AllRoute;
+//     }
+//     throw new Error(`No route provider for ${dexId}`);
+// };
 
-let cache: DexCache<DexIdTypes> | undefined = undefined
+let cache: DexCache<AllDexIdTypes> | undefined = undefined
 
-export const initAndGetCache = async (): Promise<DexCache<DexIdTypes>> => {
+export const initAndGetCache = async (): Promise<DexCache<AllDexIdTypes>> => {
     if (cache) {
         return cache
     }
@@ -57,19 +56,19 @@ export const initAndGetCache = async (): Promise<DexCache<DexIdTypes>> => {
 }
 
 export const getBestRoutes = async (
-    dexId: DexIdTypes,
+    network: NetworkType,
     fromTokenString: string,
     toTokenString: string,
     amount: number,
     _provider: JsonRpcProvider,
     options?: RouteOptions
 ): Promise<{
-    routes: DeserializeRoutePlan<DexIdTypes>[];
-    RouteJsonRpcProvider: IRoute<any, DexIdTypes>;
+    routes: DeserializeRoutePlan<AllDexIdTypes>[];
+    RouteJsonRpcProvider: IRoute<any, AllDexIdTypes>;
     bestOutcome: number;
 }> => {
     const provider = _provider
-    const RouteJsonRpcProviderClass = getRouteJsonRpcProvider(dexId);
+    const RouteJsonRpcProviderClass = getChainAllRoute(network);
     const cache = await initAndGetCache()
     const RouteJsonRpcProvider = new RouteJsonRpcProviderClass(provider, cache);
     const config = RouteJsonRpcProvider.getDexConfig()
@@ -143,24 +142,23 @@ export const getBestRoutes = async (
 
     // console.log("tokenStringPath: ", { tokenStringPath });
     // console.log("getting route plan from string...");
-    const routes: DeserializeRoutePlan<DexIdTypes>[] = await getRoutePlanFromTokenStringPath(
+    const routes: DeserializeRoutePlan<AllDexIdTypes>[] = await getRoutePlanFromTokenStringPath(
         tokenStringPath,
-        dexId
+
     );
 
-    return { routes, RouteJsonRpcProvider, bestOutcome };
+    return { routes, RouteJsonRpcProvider: RouteJsonRpcProvider as IRoute<any, AllDexIdTypes>, bestOutcome };
 };
 
 export const getRoutePlanFromTokenStringPath = async (
     tokenStringPath: string[][],
-    dexId: DexIdTypes
-): Promise<DeserializeRoutePlan<DexIdTypes>[]> => {
-    const routes: DeserializeRoutePlan<DexIdTypes>[] = [];
+): Promise<DeserializeRoutePlan<AllDexIdTypes>[]> => {
+    const routes: DeserializeRoutePlan<AllDexIdTypes>[] = [];
     for (const plan of tokenStringPath) {
-        const routePlan: DeserializeRoutePlan<DexIdTypes> = {
+        const routePlan: DeserializeRoutePlan<AllDexIdTypes> = {
             tokenA: plan[0],
             tokenB: plan[1],
-            dexId: plan[2] as DexIdTypes,
+            dexId: plan[2] as AllDexIdTypes,
             poolAddress: plan[3],
             aToB: plan[4] === "aToB" ? true : false,
             fee: parseInt(plan[5], 10)

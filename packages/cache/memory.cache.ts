@@ -1,5 +1,6 @@
 
 
+import { get } from "http";
 import { DEX_CACHE_NAMESPACE } from "./constants";
 
 import { ArrayBiMap, Graph } from "@deserialize-evm-agg/graph"
@@ -143,6 +144,21 @@ export class MemoryCacheManager<DexIdTypes> {
       DEX_CACHE_NAMESPACE.GRAPH as CacheNamespaceType,
       dexId,
       graph
+    );
+  }
+
+  getLastBlockFetchedCache(dexId: DexIdTypes): number | null {
+    return this.getNamespaceMemoryCache(
+      DEX_CACHE_NAMESPACE.LAST_BLOCK_FETCHED as CacheNamespaceType,
+      dexId
+    ) as number | null;
+  }
+
+  setLastBlockFetchedCache(dexId: DexIdTypes, blockNumber: number): void {
+    this.setNamespaceMemoryCache(
+      DEX_CACHE_NAMESPACE.LAST_BLOCK_FETCHED as CacheNamespaceType,
+      dexId,
+      blockNumber
     );
   }
 

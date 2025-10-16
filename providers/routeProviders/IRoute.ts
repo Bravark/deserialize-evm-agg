@@ -1,9 +1,8 @@
 
 import { Edge, EdgeData, FunctionToMutateTheEdgeCostType, Graph, TokenBiMap } from "@deserialize-evm-agg/graph";
-import { NetworkType } from "@deserialize-evm-agg/swap-contract-sdk/dist/interfaces/js/networkSetup";
 import { Decimal } from "decimal.js";
 import { JsonRpcProvider, TransactionRequest } from "ethers";
-import { DexConfig } from "UniswapV3Calculator";
+import { ChainConfig, DexConfig } from "UniswapV3Calculator";
 
 export interface DeserializeRoutePlan<DexIdTypes> {
     tokenA: string;
@@ -35,7 +34,8 @@ export interface SwapQuoteParamWithEdgeDataString extends EdgeData {
 
 export interface IRoute<TPool, DexIdTypes> {
     name: DexIdTypes;
-    network: NetworkType
+    network: string
+    chainConfig: ChainConfig
     getDexConfig: () => DexConfig
     getTokenBiMap: <T>(provider?: JsonRpcProvider) => Promise<TokenBiMap<T>>;
     getGraph: (

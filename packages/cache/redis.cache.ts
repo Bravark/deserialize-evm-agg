@@ -70,6 +70,7 @@ export class RedisCacheManager<DexIdTypes> {
     }
   }
 
+
   /**
    * Delete data from Redis cache
    */
@@ -213,6 +214,9 @@ export class RedisCacheManager<DexIdTypes> {
       console.error("Error clearing all prices from Redis:", error);
     }
   }
+
+
+
 
   /**
    * Get cache statistics

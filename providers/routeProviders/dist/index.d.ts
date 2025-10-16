@@ -1,5 +1,23 @@
+import { NetworkType } from "./constants";
 export * from "./0g";
+export * from "./base";
 export * from "./IRoute";
 export * from "./UniswapV3Calculator";
 export * from "./type";
 export * from "./utils";
+import { DexIdTypes0G } from "./0g";
+import { DexIdTypesBase } from "./base";
+export declare const getChainAllRoute: (chainName: NetworkType) => import("./AllContructor").AllRouteConstructor<string>;
+export declare const getChainDexIdList: (chainName: NetworkType) => string[];
+export declare const getChainDexIds: (chainName: NetworkType) => {
+    readonly ZERO_G: "ZERO_G";
+    readonly ZIA: "ZIA";
+    readonly ALL: "ALL_0G";
+} | {
+    readonly PANCAKE_V3: "PANCAKE_V3_BASE";
+    readonly UNISWAP_V3: "UNISWAP_V3_BASE";
+    readonly AERODROME_V3: "AERODROME_V3_BASE";
+    readonly ALL: "ALL_BASE";
+};
+export declare const getChainFromName: (chainName: NetworkType) => import("./UniswapV3Calculator").ChainConfig;
+export type AllDexIdTypes = DexIdTypes0G | DexIdTypesBase;

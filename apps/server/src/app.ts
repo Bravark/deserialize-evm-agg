@@ -31,6 +31,8 @@ export async function setupApp(routes: Router[]): Promise<Express> {
   // Route setup
   app.use(...routes);
 
+
+
   // 404 error route
   // app.use("*", pageNotFoundExceptionHandler);
   // console.log('routes: ', routes);

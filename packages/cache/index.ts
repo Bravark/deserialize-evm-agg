@@ -235,6 +235,37 @@ export class DexCache<DexIdTypes> {
     return null;
   }
 
+  //method to get and set LAST_BLOCK_FETCHED
+
+  async getLastBlockFetched(dexId: DexIdTypes): Promise<number | null> {
+    // Check memory cache
+    const data = this.memoryCache.getNamespaceMemoryCache(DEX_CACHE_NAMESPACE.LAST_BLOCK_FETCHED, dexId) as number;
+
+    if (data) {
+      return data;
+    }
+
+    // Not in memory, fetch from storage
+    const storageData = await this.getStoreData<number>(dexId, DEX_CACHE_NAMESPACE.LAST_BLOCK_FETCHED);
+
+    if (storageData) {
+      // Set in memory cache
+      this.memoryCache.setNamespaceMemoryCache(DEX_CACHE_NAMESPACE.LAST_BLOCK_FETCHED, dexId, storageData);
+      return storageData;
+    }
+
+    return null;
+  }
+
+  async setLastBlockFetched(dexId: DexIdTypes, blockNumber: number): Promise<void> {
+    // Set in memory cache
+    this.memoryCache.setNamespaceMemoryCache(DEX_CACHE_NAMESPACE.LAST_BLOCK_FETCHED, dexId, blockNumber);
+
+    // Save to storage
+    await this.setStoreData(dexId, DEX_CACHE_NAMESPACE.LAST_BLOCK_FETCHED, blockNumber);
+  }
+
+
   /**
    * Set token details
    */

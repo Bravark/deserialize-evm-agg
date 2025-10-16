@@ -3,14 +3,14 @@ import { constructHop, IQuoteDataWithoutAmountIn } from "./helpers/contructHop";
 import swapABI from "./interfaces/js/IMultiRouterSwapV1.json";
 import { JsonRpcProvider } from "ethers";
 import erc20ABI from "./interfaces/js/erc20.json"
-import { networkSetup, NetworkType } from "./interfaces/js/networkSetup";
+import { networkSetup } from "./interfaces/js/networkSetup";
 import BN from "bn.js";
 
 export const createSwapTX = async (
   { path, amountInRaw, minAmountOut }: IQuoteDataWithoutAmountIn,
   walletAddress: string,
   provider: JsonRpcProvider,
-  network: NetworkType,
+  network: { id: string, rpc: string },
   // isNativeIn: boolean,
   partnerFees?: { recipient: string; fee: number }
 ) => {

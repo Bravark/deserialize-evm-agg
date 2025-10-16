@@ -1,14 +1,17 @@
 import { JsonRpcProvider } from "ethers";
 import { SwapQuoteRequestType, SwapRequestType } from "./swap.schema";
-import { getBestRoutes, getRouteJsonRpcProvider, initAndGetCache } from "../index";
+import { getBestRoutes, initAndGetCache } from "../index";
 import Decimal from "decimal.js";
 import { ApiError } from "../errors/errors.api";
 import { DESERIALIZE_FEE } from "../constants";
 import { getSwapRequestFeeRate } from "../utils";
-import { DEX_IDS, getTokenDetails, UniswapV3QuoteCalculator, ZeroGRoute } from "@deserialize-evm-agg/routes-providers";
+import { AllDexIdTypes, getChainAllRoute, getTokenDetails, UniswapV3QuoteCalculator, ZeroGRoute } from "@deserialize-evm-agg/routes-providers";
+import { NetworkType } from "@deserialize-evm-agg/routes-providers/dist/constants";
 
 
-export const swapQuoteService = async (params: SwapQuoteRequestType, provider: JsonRpcProvider) => {
+
+
+export const swapQuoteService = async (params: SwapQuoteRequestType, provider: JsonRpcProvider, network: NetworkType) => {
 
     try {
         console.log("Processing swap transaction request", {
@@ -17,7 +20,7 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
 
         const { routes, bestOutcome, RouteJsonRpcProvider } = await getBestRoutes(
             //TODO: THIS IS FOR BACKWARD COMPATIBILITY, REMOVE LATER
-            DEX_IDS.ALL,
+            network,
             params.tokenA,
             params.tokenB,
             (params.amountIn),
@@ -76,7 +79,7 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
 
 }
 
-export const swapService = async (params: SwapRequestType, provider: JsonRpcProvider) => {
+export const swapService = async (params: SwapRequestType, provider: JsonRpcProvider, network: NetworkType) => {
     try {
         // Calculate fee rate
         let defaultFeeRate = DESERIALIZE_FEE // Default fee rate
@@ -91,7 +94,7 @@ export const swapService = async (params: SwapRequestType, provider: JsonRpcProv
 
 
         // const RouteJsonRpcProvider = new (getRouteJsonRpcProvider(params.quote.dexId))(provider, cache);
-        const RouteJsonRpcProvider = new (getRouteJsonRpcProvider("ALL"))(provider, cache); //TODO: THIS IS FOR BACKWARD COMPATIBILITY, REMOVE LATER
+        const RouteJsonRpcProvider = new (getChainAllRoute(network))(provider, cache); //TODO: THIS IS FOR BACKWARD COMPATIBILITY, REMOVE LATER
         // console.log("RouteProvider: ", RouteProvider);
 
         const transaction = await RouteJsonRpcProvider.getTransactionInstructionFromRoutePlan(
@@ -121,38 +124,45 @@ export const swapService = async (params: SwapRequestType, provider: JsonRpcProv
 
 
 
-export const tokenList = async (provider: JsonRpcProvider) => {
-    const router = getRouteJsonRpcProvider(DEX_IDS.ALL)
+export const tokenList = async (provider: JsonRpcProvider, network: NetworkType) => {
+    const router = getChainAllRoute(network ?? "0G")
     const cache = await initAndGetCache()
     const routeInstance = new router(provider, cache)
 
     return await routeInstance.listTokens()
 }
 
-export const tokenListWithDetailsService = async (provider: JsonRpcProvider) => {
-    const router = getRouteJsonRpcProvider(DEX_IDS.ALL)
+export const tokenListWithDetailsService = async (provider: JsonRpcProvider, network: NetworkType) => {
+    const router = getChainAllRoute(network)
     const cache = await initAndGetCache()
     const routeInstance = new router(provider, cache)
 
     const tokens = await routeInstance.listTokens()
     const detailedTokens = await Promise.all(tokens.map(async (token) => {
+        try {
+            const cacheDetails = await cache.getMintFromCache(`ALL_${network}` as AllDexIdTypes, token)
 
-        const cacheDetails = await cache.getMintFromCache("ALL", token)
+            if (!cacheDetails) {
+                const details = await getTokenDetails(token, provider);
+                await cache.setMintToCache(`ALL_${network}` as AllDexIdTypes, { ...details, contractAddress: token });
+                return details;
+            }
 
-        if (!cacheDetails) {
-            const details = await getTokenDetails(token, provider);
-            await cache.setMintToCache("ALL", { ...details, contractAddress: token });
-            return details;
+            return cacheDetails;
+        } catch (error) {
+            console.log("Error in tokenListWithDetailsService", { error });
+            return null
         }
 
-        return cacheDetails;
+
+
     }))
 
-    return detailedTokens
+    return detailedTokens.filter((token) => token !== null);
 }
 
-export const getTokenPriceService = async (tokenAddress: string, provider: JsonRpcProvider) => {
-    const router = getRouteJsonRpcProvider(DEX_IDS.ALL)
+export const getTokenPriceService = async (tokenAddress: string, provider: JsonRpcProvider, network: NetworkType) => {
+    const router = getChainAllRoute(network)
     const cache = await initAndGetCache()
     const routeInstance = new router(provider, cache)
 
@@ -160,17 +170,17 @@ export const getTokenPriceService = async (tokenAddress: string, provider: JsonR
     return await routeInstance.getSurePriceOfToken(tokenAddress);
 }
 
-export const getTokenDetailsService = async (tokenAddress: string, provider: JsonRpcProvider) => {
-    const router = getRouteJsonRpcProvider(DEX_IDS.ALL)
+export const getTokenDetailsService = async (tokenAddress: string, provider: JsonRpcProvider, network: NetworkType) => {
+    const router = getChainAllRoute(network)
     const cache = await initAndGetCache()
     const routeInstance = new router(provider, cache)
 
 
-    const cacheDetails = await cache.getMintFromCache("ALL", tokenAddress)
+    const cacheDetails = await cache.getMintFromCache(`ALL_${network}` as AllDexIdTypes, tokenAddress)
 
     if (!cacheDetails) {
         const details = await getTokenDetails(tokenAddress, provider);
-        await cache.setMintToCache("ALL", { ...details, contractAddress: tokenAddress });
+        await cache.setMintToCache(`ALL_${network}` as AllDexIdTypes, { ...details, contractAddress: tokenAddress });
         return details;
     }
 

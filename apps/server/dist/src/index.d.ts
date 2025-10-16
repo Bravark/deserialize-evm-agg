@@ -1,14 +1,14 @@
 import { DexCache } from "@deserialize-evm-agg/cache";
-import { DeserializeRoutePlan, DexIdTypes, IRoute } from "@deserialize-evm-agg/routes-providers";
+import { DeserializeRoutePlan, IRoute, AllDexIdTypes } from "@deserialize-evm-agg/routes-providers";
 import { JsonRpcProvider } from "ethers";
+import { NetworkType } from "@deserialize-evm-agg/routes-providers/dist/constants";
 export interface RouteOptions {
     targetRouteNumber: number;
 }
-export declare const getRouteJsonRpcProvider: (dexId: DexIdTypes) => (new (provider: import("ethers").JsonRpcProvider, cache: import("@deserialize-evm-agg/cache").DexCache<string>) => import("@deserialize-evm-agg/routes-providers/dist/v3Route").BaseV3Route<string>) | import("@deserialize-evm-agg/routes-providers/dist/AllContructor").AllRouteConstructor<string>;
-export declare const initAndGetCache: () => Promise<DexCache<DexIdTypes>>;
-export declare const getBestRoutes: (dexId: DexIdTypes, fromTokenString: string, toTokenString: string, amount: number, _provider: JsonRpcProvider, options?: RouteOptions) => Promise<{
-    routes: DeserializeRoutePlan<DexIdTypes>[];
-    RouteJsonRpcProvider: IRoute<any, DexIdTypes>;
+export declare const initAndGetCache: () => Promise<DexCache<AllDexIdTypes>>;
+export declare const getBestRoutes: (network: NetworkType, fromTokenString: string, toTokenString: string, amount: number, _provider: JsonRpcProvider, options?: RouteOptions) => Promise<{
+    routes: DeserializeRoutePlan<AllDexIdTypes>[];
+    RouteJsonRpcProvider: IRoute<any, AllDexIdTypes>;
     bestOutcome: number;
 }>;
-export declare const getRoutePlanFromTokenStringPath: (tokenStringPath: string[][], dexId: DexIdTypes) => Promise<DeserializeRoutePlan<DexIdTypes>[]>;
+export declare const getRoutePlanFromTokenStringPath: (tokenStringPath: string[][]) => Promise<DeserializeRoutePlan<AllDexIdTypes>[]>;

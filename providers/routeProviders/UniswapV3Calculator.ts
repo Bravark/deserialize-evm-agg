@@ -8,10 +8,10 @@
 import { ethers, Contract, JsonRpcProvider } from "ethers";
 import Decimal from "decimal.js";
 import { get0gPrice, getTokenPrice } from "./price";
-import { NetworkType } from "deserialize-evm-server-sdk";
+
 import { Token } from "./type";
-import { DexCache } from "@deserialize-evm-agg/cache";
-import { DexIdTypes } from "0g";
+
+import { NetworkType } from "./constants";
 
 // ==================== TYPES ====================
 
@@ -85,7 +85,9 @@ export interface ChainConfig {
     network: NetworkType;
     rpcUrl: string;
     wrappedNativeTokenAddress: string;
+    wrappedTokenSymbol: string;
     nativeTokenAddress: string;
+    nativeTokenSymbol: string;
     stableTokenAddress?: string; // For USD price calculations
 }
 
@@ -137,7 +139,6 @@ const POOL_ABI = [
             { internalType: "uint16", name: "observationIndex", type: "uint16" },
             { internalType: "uint16", name: "observationCardinality", type: "uint16" },
             { internalType: "uint16", name: "observationCardinalityNext", type: "uint16" },
-            { internalType: "uint8", name: "feeProtocol", type: "uint8" },
             { internalType: "bool", name: "unlocked", type: "bool" },
         ],
         stateMutability: "view",
@@ -206,20 +207,27 @@ const QUOTER_ABI = [
     },
 ] as const;
 
+
+
+
+
 // ==================== MAIN CLASS ====================
 const priceCache = new Map()
 export class UniswapV3QuoteCalculator {
-    private provider: JsonRpcProvider;
-    private config: DexConfig;
+    provider: JsonRpcProvider;
+    config: DexConfig;
+    chainConfig: ChainConfig;
     private priceCache: Map<string, { price: number; timestamp: number }>;
-    private poolCache: Map<string, PoolData>;
+    poolCache: Map<string, PoolData>;
     private readonly CACHE_DURATION = 0.5 * 60 * 1000; // 5 minutes
 
-    constructor(config: DexConfig, provider: JsonRpcProvider) {
+    constructor(config: DexConfig, chainConfig: ChainConfig, _provider?: JsonRpcProvider) {
+        const provider = _provider ? _provider : new ethers.JsonRpcProvider(chainConfig.rpcUrl);
         this.config = config;
         this.provider = provider
         this.priceCache = new Map();
         this.poolCache = new Map();
+        this.chainConfig = chainConfig
     }
     // ==================== PRICE METHODS ======================
 
@@ -339,8 +347,8 @@ export class UniswapV3QuoteCalculator {
     }
 
     private async getTokenPriceFromExternalAPI(symbol: string): Promise<number> {
-        if (symbol.toLowerCase() === "w0g") {
-            const p = (await getTokenPrice('0G')).data?.price
+        if (symbol.toLowerCase() === this.chainConfig.wrappedTokenSymbol.toLowerCase()) {
+            const p = (await getTokenPrice(this.chainConfig.nativeTokenSymbol.toUpperCase())).data?.price
             if (p) return p
         }
         const response = await fetch(
@@ -429,9 +437,7 @@ export class UniswapV3QuoteCalculator {
         }
 
     }
-
     // ==================== POOL METHODS ====================
-
     public async getPoolData(poolAddress: string): Promise<PoolData> {
         const cached = this.poolCache.get(poolAddress);
         if (cached) {
@@ -450,8 +456,8 @@ export class UniswapV3QuoteCalculator {
             pool.fee(),
         ]);
 
-        console.log('token0Address: ', token0Address);
-        console.log('token1Address: ', token1Address);
+        // console.log('token0Address: ', token0Address);
+        // console.log('token1Address: ', token1Address);
         const [token0Details, token1Details] = await Promise.all([
             this.getTokenDetails(token0Address),
             this.getTokenDetails(token1Address),
@@ -470,12 +476,19 @@ export class UniswapV3QuoteCalculator {
         this.poolCache.set(poolAddress, poolData);
         return poolData;
     }
-
-    public async findBestPool(tokenA: string, tokenB: string): Promise<PoolInfo & { poolData: PoolData }> {
+    public async findBestPool(tokenA: string, tokenB: string, feeTiers = FEE_TIERS): Promise<PoolInfo & { poolData: PoolData }> {
         const factory = new Contract(this.config.factoryAddress, FACTORY_ABI, this.provider);
         let bestPool: PoolInfo | null = null;
-
-        for (const fee of FEE_TIERS) {
+        if (tokenA.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenA = this.config.wrappedNativeTokenAddress;
+        }
+        if (tokenB.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenB = this.config.wrappedNativeTokenAddress;
+        }
+        if (tokenA.toLowerCase() === tokenB.toLowerCase()) {
+            throw new Error("TokenA and TokenB cannot be the same");
+        }
+        for (const fee of feeTiers) {
             try {
                 const poolAddress: string = await factory.getPool(tokenA, tokenB, fee);
 
@@ -495,7 +508,7 @@ export class UniswapV3QuoteCalculator {
                     };
                 }
             } catch (error) {
-                console.warn(`Error checking pool for fee ${fee}:`);
+                console.warn(`Error checking pool for fee ${fee}:`, error);
             }
         }
 
@@ -536,6 +549,7 @@ export class UniswapV3QuoteCalculator {
         const { amountInRaw, sqrtPriceX96, liquidity, fee, zeroForOne, decimalsIn, decimalsOut } = params;
 
         const feeDecimal = new Decimal(fee);
+        //!FIX : not all dexes calculate fees like this, the fee field itself might not be the fee, it might be the tick spacing, eg, aerodrome
         const feeAmount = amountInRaw.mul(feeDecimal).div(FEE_DENOMINATOR);
         const amountInAfterFee = amountInRaw.sub(feeAmount);
 
@@ -676,11 +690,9 @@ export class UniswapV3QuoteCalculator {
                 tokenIn,
                 tokenOut,
                 fee,
-                BigInt(Number(amountIn)),
+                new Decimal(amountIn).toFixed(),
                 sqrtPriceLimitX96
             );
-
-
             return amountOut.toString();
         } catch (error) {
             console.error("Quote simulation failed:", error);
@@ -699,44 +711,97 @@ export class UniswapV3QuoteCalculator {
      * @returns Promise<PoolCreatedEvent[]> - Array of pool creation events
      */
 
-    getAllPoolsFromEvents = async (
+    /**
+     * Override getAllPoolsFromEvents to batch requests for RPC providers
+     * that have block range limitations (typically 10,000 blocks per request)
+     */
+    public async getAllPoolsFromEvents(
         factoryAddress: string,
         provider: JsonRpcProvider,
         fromBlockHeight: string = this.config.fromBlock || "0",
         abi: any
-    ) => {
+    ) {
+        console.log(
+            "Getting all pools for chain:",
+            this.config.network,
+            "RPC:",
+            this.chainConfig.rpcUrl,
+            "Provider RPC:",
+            provider._getConnection().url
+        );
+
 
         const factory = new Contract(factoryAddress, abi, provider);
 
         const latestBlock = await provider.getBlockNumber();
+        console.log('latestBlock: ', latestBlock);
+        const startBlock = parseInt(fromBlockHeight);
+        console.log('fromBlockHeight: ', fromBlockHeight);
+        const BATCH_SIZE = 9999; // Stay safely under 10k block limit
 
-        // Create filter for PoolCreated events
-        // Event signature: PoolCreated(address,address,uint24,int24,int24,address)
-        const filter = factory.filters.PoolCreated();
-
-        // Get all PoolCreated events from the specified block range
-        const events = await factory.queryFilter(
-            filter,
-            parseInt(fromBlockHeight),
-            latestBlock
+        console.log(
+            `Scanning from block ${startBlock} to ${latestBlock} (${latestBlock - startBlock} blocks)`
         );
 
-        // Map events to a more convenient format
-        const pools: PoolCreatedEvent[] = events.map((event: any) => ({
-            token0: event.args.token0,
-            token1: event.args.token1,
-            fee: event.args.fee.toString(),
-            poolAddress: event.args.pool,
-            blockNumber: event.blockNumber.toString(),
-        }));
+        let allPools: any[] = [];
+        let currentBlock = startBlock;
+        let batchCount = 0;
 
-        // const dataToWrite = {
-        //     pools: pools,
-        //     lastBlockNumber: pools[pools.length - 1].blockNumber,
-        // }
+        // Batch the requests to respect RPC provider limits
+        while (currentBlock <= latestBlock) {
+            const endBlock = Math.min(currentBlock + BATCH_SIZE, latestBlock);
+            batchCount++;
 
+            console.log(
+                `Batch ${batchCount}: Fetching events from block ${currentBlock} to ${endBlock} (${endBlock - currentBlock + 1} blocks)`
+            );
 
-        return pools;
+            try {
+                const filter = factory.filters.PoolCreated();
+
+                // Get events for this batch
+                const events = await factory.queryFilter(filter, currentBlock, endBlock);
+
+                console.log(`Batch ${batchCount}: Found ${events.length} pool creation events`);
+
+                // Map events to PoolCreatedEvent format
+                const batchPools = events.map((event: any) => ({
+                    token0: event.args.token0,
+                    token1: event.args.token1,
+                    fee: event.args.fee?.toString() || event.args.tickSpacing?.toString(),
+                    poolAddress: event.args.pool,
+                    blockNumber: event.blockNumber.toString(),
+                    tickSpacing: event.args.tickSpacing?.toString(), // Aerodrome specific
+                }));
+
+                allPools = allPools.concat(batchPools);
+
+                // Add a small delay between batches to avoid rate limiting
+                if (currentBlock + BATCH_SIZE < latestBlock) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            } catch (error: any) {
+                console.error(
+                    `Error fetching events for batch ${batchCount} (blocks ${currentBlock}-${endBlock}):`,
+                    error.message
+                );
+
+                // If we still hit rate limits, add exponential backoff
+                if (error.message.includes("rate limit") || error.message.includes("429")) {
+                    console.log("Rate limit detected, waiting 2 seconds before retry...");
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    continue; // Retry this batch
+                }
+
+                // For other errors, continue to next batch
+            }
+
+            currentBlock = endBlock + 1;
+        }
+
+        console.log(`Total pools found across all batches: ${allPools.length}`);
+
+        return allPools;
     }
 
     // ==================== POOL DISCOVERY METHODS ====================
@@ -744,6 +809,7 @@ export class UniswapV3QuoteCalculator {
     public async getAllPools(abi: any, fromBlock?: string): Promise<PoolData[]> {
         // Map events to a more convenient format
         const pools: PoolCreatedEvent[] = await this.getAllPoolsFromEvents(this.config.factoryAddress, this.provider, fromBlock, abi);
+        console.log('pools: ', pools.length);
         // console.log('pools: ', pools);
         const poolsData: PoolData[] = []
         // TODO: use .map to make it faster, right now we can't because of the rpc rate limit
@@ -763,7 +829,7 @@ export class UniswapV3QuoteCalculator {
             //     await wait(5)
             //     count = 0
             // }
-            await wait(10)
+            // await wait(10)
         }
 
         // console.log('poolsData: ', poolsData);
@@ -791,50 +857,7 @@ export class UniswapV3QuoteCalculator {
     }
 }
 
-// ==================== PREDEFINED CONFIGS ====================
 
-export const DEX_CONFIGS = {
-    ZERODEX_TESTNET: {
-        name: "ZeroDEX Testnet",
-        factoryAddress: "0x7453582657F056ce5CfcEeE9E31E4BC390fa2b3c",
-        quoterAddress: "0x8d5E064d2EF44C29eE349e71CF70F751ECD62892",
-        rpcUrl: "https://evmrpc-testnet.0g.ai",
-        fromBlock: 171522,
-        stableTokenAddress: "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf", // USDT
-    },
-    UNISWAP_V3_MAINNET: {
-        name: "Uniswap V3 Mainnet",
-        factoryAddress: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-        quoterAddress: "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
-        rpcUrl: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY",
-        stableTokenAddress: "0xA0b86a33E6441b8d6c6e4fC6F120d4d5A1b9A651", // USDT
-    },
-} as const;
-
-// ==================== USAGE EXAMPLE ====================
-
-/*
-// Example usage:
-const calculator = new UniswapV3QuoteCalculator(DEX_CONFIGS.ZERODEX_TESTNET);
-
-// Get a quote
-const quote = await calculator.getQuote({
-    tokenIn: "0x...",
-    tokenOut: "0x...",
-    amountIn: 1000
-});
-
-// Get token price
-const price = await calculator.getTokenPrice("0x...");
-
-// Simulate transaction
-const amountOut = await calculator.simulateTransaction(
-    "0x...", // tokenIn
-    "0x...", // tokenOut
-    "1000000000000000000", // amountIn (1 token with 18 decimals)
-    3000 // fee tier
-);
-*/
 
 
 export const wait = (time = 2) => {

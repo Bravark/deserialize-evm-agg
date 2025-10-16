@@ -1,13 +1,14 @@
 import { DexCache } from "@deserialize-evm-agg/cache";
-import { ArrayBiMap, Edge, FunctionToMutateTheEdgeCostType, Graph, TokenBiMap } from "@deserialize-evm-agg/graph";
-import { IPath, NetworkType } from "deserialize-evm-server-sdk";
+import { ArrayBiMap, Edge, EdgeData, FunctionToMutateTheEdgeCostType, Graph, TokenBiMap } from "@deserialize-evm-agg/graph";
+import { IPath } from "deserialize-evm-server-sdk";
 import { JsonRpcProvider, TransactionRequest } from "ethers";
 
 import { DeserializeRoutePlan, IRoute } from "./IRoute";
 import Decimal from "decimal.js";
 import { RouteConstructor } from "./v3Route";
-import { UniswapV3QuoteCalculator } from "./UniswapV3Calculator";
+import { ChainConfig, UniswapV3QuoteCalculator } from "./UniswapV3Calculator";
 import { createSwapTX } from "@deserialize-evm-agg/swap-contract-sdk";
+import { NetworkType } from "./constants";
 
 export type AllRouteConstructor<DexIdTypes extends string> = new (
     provider: JsonRpcProvider,
@@ -15,36 +16,43 @@ export type AllRouteConstructor<DexIdTypes extends string> = new (
 ) => AllRoute<DexIdTypes>;
 
 export const createAllRoute = <DexIdTypes extends string>(
-    network: NetworkType,
+    name: DexIdTypes,
+    chain: ChainConfig,
     routeProviders: RouteConstructor<DexIdTypes>[]
 ): AllRouteConstructor<DexIdTypes> => {
     return class ConfiguredAllRoute extends AllRoute<DexIdTypes> {
         constructor(provider: JsonRpcProvider, cache: DexCache<DexIdTypes>) {
-            super(provider, cache, network, routeProviders);
+            super(name, provider, cache, chain, routeProviders);
         }
     };
 };
 
 export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTypes> {
-    name = "ALL" as DexIdTypes;
+    name: DexIdTypes;
     provider: JsonRpcProvider;
     cache: DexCache<DexIdTypes>;
     network: NetworkType;
+    chainConfig: ChainConfig
 
     routeProviders: RouteConstructor<DexIdTypes>[];
 
     constructor(
+        name: DexIdTypes,
         provider: JsonRpcProvider,
         cache: DexCache<DexIdTypes>,
-        network: NetworkType,
+        chainConfig: ChainConfig,
         routeProviders: RouteConstructor<DexIdTypes>[]
     ) {
+        this.name = name
         this.provider = provider;
         this.cache = cache;
-        this.network = network;
+        this.chainConfig = chainConfig;
         this.routeProviders = routeProviders;
+        this.network = chainConfig.network;
 
     }
+    getEdgeDataDirect?: (<T extends any, R extends EdgeData>(provider: JsonRpcProvider, data: T, r: boolean) => Promise<R | null>) | undefined;
+    getEdgeDataReverse?: (<T extends any, R extends EdgeData>(provider: JsonRpcProvider, data: T, r: boolean) => Promise<R | null>) | undefined;
 
     // Helper to get route provider by dexId
     getRouteProviderByDexId = (dexId: string): RouteConstructor<DexIdTypes> => {
@@ -376,7 +384,7 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
                 amountInRaw: amountFormattedToTokenDecimal.toFixed(0),
                 minAmountOut: minAmountOut.toFixed(0),
             },
-            wallet, this.provider, this.network, partnerFees
+            wallet, this.provider, { id: this.network, rpc: this.chainConfig.rpcUrl }, partnerFees
         );
 
         const transactions: TransactionRequest[] = txs.map((tx) => ({

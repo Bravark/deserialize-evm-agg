@@ -44,6 +44,15 @@ swapRouter.get("/tokenPrice/:tokenAddress", tokenPriceController);
 swapRouter.get("/tokenDetails/:tokenAddress", tokenDetailsController);
 
 
+swapRouter.post("/:chain/quote", swapQuoteController);
+swapRouter.post("/:chain/swap", swapTransactionController);
+swapRouter.get("/:chain/tokenList", tokenListController);
+swapRouter.get("/:chain/tokenListWithDetails", tokenListWithDetailsController);
+swapRouter.get("/:chain/tokenPrice/:tokenAddress", tokenPriceController);
+swapRouter.get("/:chain/tokenDetails/:tokenAddress", tokenDetailsController);
+
+
+
 swapRouter.post("/testnet/quote", swapQuoteController);
 swapRouter.post("/testnet/swap", swapTransactionController);
 

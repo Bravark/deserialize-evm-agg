@@ -52,6 +52,8 @@ export declare class DexCache<DexIdTypes> {
      * Get DEX graph cache
      */
     getDexGraphCache(dexId: DexIdTypes): Promise<Graph | null>;
+    getLastBlockFetched(dexId: DexIdTypes): Promise<number | null>;
+    setLastBlockFetched(dexId: DexIdTypes, blockNumber: number): Promise<void>;
     /**
      * Set token details
      */
