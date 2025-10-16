@@ -309,6 +309,260 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         };
         return func;
     };
+    /**
+ * Merge two token BiMaps (adds new tokens without duplicates)
+ * @param existing - Existing token BiMap
+ * @param newTokens - New tokens to add
+ * @returns Merged ArrayBiMap with all unique tokens
+ */
+    mergeTokenBiMaps(
+        existing: ArrayBiMap<string>,
+        newTokens: ArrayBiMap<string>
+    ): ArrayBiMap<string> {
+        // Start with existing tokens
+        const merged = new ArrayBiMap<string>(existing.toArray());
+
+        // Add new tokens if they don't exist
+        newTokens.toArray().forEach(token => {
+            const normalizedToken = token.toLowerCase();
+            if (merged.getByValue(normalizedToken) === undefined) {
+                merged.setArrayValue(normalizedToken);
+            }
+        });
+
+        console.log(`Merged token BiMap: ${existing.toArray().length} existing + ${newTokens.toArray().length} new = ${merged.toArray().length} total`);
+        return merged;
+    }
+
+    /**
+     * Build graph only from specific pools across all DEXes (incremental update)
+     * @param poolsByDex - Map of dexId to new pools
+     * @param tokenBiMap - Merged token index mapping
+     * @param provider - JSON RPC provider
+     * @returns Promise<Graph> - Graph with edges only for the provided pools
+     */
+    async buildGraphFromPools(
+        pools: any[],
+        tokenBiMap: ArrayBiMap<string>,
+        provider: JsonRpcProvider,
+        poolsByDex?: Map<string, any[]>,
+    ): Promise<Graph> {
+        if (!poolsByDex || poolsByDex.size === 0) {
+            throw new Error("No new pools provided for graph construction");
+        }
+
+        // Initialize empty graph with size based on tokenBiMap
+        const graph: Graph = Array.from({ length: tokenBiMap.toArray().length }, () => []);
+
+        console.log(`Building aggregated graph from ${poolsByDex.size} DEXes with new pools`);
+
+        // Process each DEX's new pools
+        await Promise.all(
+            Array.from(poolsByDex.entries()).map(async ([dexId, poolData]) => {
+                if (!poolData || poolData.length === 0) {
+                    console.log(`No new pools for DEX: ${dexId}`);
+                    return;
+                }
+
+                console.log(`Processing ${poolData.length} new pools for DEX: ${dexId}`);
+
+                try {
+                    const RouteProviderClass = this.getRouteProviderByDexId(dexId as DexIdTypes);
+                    const route = new RouteProviderClass(provider, this.cache);
+
+                    // Get the route's token BiMap (it should already have all tokens including new ones)
+                    const routeTokenBiMap = await route.getTokenBiMap<any>();
+
+                    // Build graph for only these new pools
+                    const routeGraphForNewPools = await route.buildGraphFromPools(
+                        poolData,
+                        routeTokenBiMap.tokenBiMap,
+                        provider
+                    );
+
+                    // Map edges from route-specific indices to aggregated graph indices
+                    poolData.forEach((pool: any) => {
+                        const { tokenX, tokenY } = route.getTokenXAndYFromPool(pool);
+
+                        const tokenA = tokenX.toLowerCase();
+                        const tokenB = tokenY.toLowerCase();
+
+                        // Get indices in route-specific BiMap
+                        const fromTokenIndexInRoute = routeTokenBiMap.tokenBiMap.getByValue(tokenA);
+                        const toTokenIndexInRoute = routeTokenBiMap.tokenBiMap.getByValue(tokenB);
+
+                        if (fromTokenIndexInRoute === undefined || toTokenIndexInRoute === undefined) {
+                            console.warn(`Token indices not found in route BiMap for ${tokenA}/${tokenB}`);
+                            return;
+                        }
+
+                        // Get edges from the route's graph
+                        const dexDirectEdge = routeGraphForNewPools[fromTokenIndexInRoute]?.find(
+                            (r) => r.from === fromTokenIndexInRoute && r.to === toTokenIndexInRoute
+                        );
+
+                        const dexReverseEdge = routeGraphForNewPools[toTokenIndexInRoute]?.find(
+                            (r) => r.from === toTokenIndexInRoute && r.to === fromTokenIndexInRoute
+                        );
+
+                        if (!dexDirectEdge || !dexReverseEdge) {
+                            console.warn(`Edges not found for pool ${tokenA}/${tokenB} in ${dexId}`);
+                            return;
+                        }
+
+                        // Get indices in aggregated BiMap
+                        const fromTokenIndexInAllGraph = tokenBiMap.getByValue(tokenA);
+                        const toTokenIndexInAllGraph = tokenBiMap.getByValue(tokenB);
+
+                        if (fromTokenIndexInAllGraph === undefined || toTokenIndexInAllGraph === undefined) {
+                            console.warn(`Token indices not found in aggregated BiMap for ${tokenA}/${tokenB}`);
+                            return;
+                        }
+
+                        // Create edges with aggregated graph indices
+                        const directEdge = new Edge(
+                            fromTokenIndexInAllGraph,
+                            toTokenIndexInAllGraph,
+                            dexDirectEdge.edgeData
+                        );
+
+                        const reverseEdge = new Edge(
+                            toTokenIndexInAllGraph,
+                            fromTokenIndexInAllGraph,
+                            dexReverseEdge.edgeData
+                        );
+
+                        // Add to aggregated graph
+                        graph[fromTokenIndexInAllGraph].push(directEdge);
+                        graph[toTokenIndexInAllGraph].push(reverseEdge);
+                    });
+
+                    console.log(`Successfully processed new pools for DEX: ${dexId}`);
+                } catch (error) {
+                    console.error(`Error processing new pools for DEX ${dexId}:`, error);
+                }
+            })
+        );
+
+        console.log("Aggregated graph construction from new pools complete");
+        return graph;
+    }
+
+    /**
+     * Merge two graphs (existing + new edges)
+     * @param existing - Existing graph
+     * @param newEdges - Graph with new edges to add
+     * @param tokenBiMap - Merged token BiMap for sizing
+     * @returns Merged graph with all edges
+     */
+    mergeGraphs(
+        existing: Graph,
+        newEdges: Graph,
+        tokenBiMap: ArrayBiMap<string>
+    ): Graph {
+        const targetSize = tokenBiMap.toArray().length;
+
+        // Initialize merged graph with correct size
+        const merged: Graph = Array.from({ length: targetSize }, (_, i) => {
+            // Copy existing edges if within bounds
+            return i < existing.length ? [...existing[i]] : [];
+        });
+
+        console.log(`Merging graphs: existing size=${existing.length}, new size=${newEdges.length}, target size=${targetSize}`);
+
+        let edgesAdded = 0;
+        let edgesUpdated = 0;
+
+        // Add or update edges from newEdges
+        newEdges.forEach((edges, fromIndex) => {
+            if (fromIndex >= targetSize) {
+                console.warn(`Edge index ${fromIndex} exceeds target size ${targetSize}`);
+                return;
+            }
+
+            edges.forEach(newEdge => {
+                // Check if edge already exists (same from, to, and poolAddress)
+                const existingEdgeIndex = merged[fromIndex].findIndex(
+                    e => e.to === newEdge.to &&
+                        e.edgeData.poolAddress === newEdge.edgeData.poolAddress &&
+                        e.edgeData.dexId === newEdge.edgeData.dexId
+                );
+
+                if (existingEdgeIndex >= 0) {
+                    // Update existing edge with new data
+                    merged[fromIndex][existingEdgeIndex] = newEdge;
+                    edgesUpdated++;
+                } else {
+                    // Add new edge
+                    merged[fromIndex].push(newEdge);
+                    edgesAdded++;
+                }
+            });
+        });
+
+        console.log(`Graph merge complete: ${edgesAdded} edges added, ${edgesUpdated} edges updated`);
+        return merged;
+    }
+
+    /**
+     * Get new token BiMap with only newly created pools per DEX
+     * Used for incremental updates
+     */
+    async getNewTokenBiMapIncremental(
+        provider?: JsonRpcProvider
+    ): Promise<{
+        tokenBiMap: ArrayBiMap<string>;
+        data: Map<string, any[]>; // Map of dexId to new pools only
+        tokenPoolMap: Map<string, string>;
+    }> {
+        const tokenBiMap = new ArrayBiMap<string>();
+        const tokenPoolMap = new Map<string, string>();
+        const newPoolsByDex = new Map<string, any[]>();
+
+        for (const RouteProviderClass of this.routeProviders) {
+            const route = new RouteProviderClass(
+                provider || this.provider,
+                this.cache
+            );
+
+            try {
+                // Get only NEW pools (uses lastBlock tracking)
+                const {
+                    tokenBiMap: routeTokenBiMap,
+                    tokenPoolMap: routeTokenPoolMap,
+                    data: newPools,
+                } = await route.getNewTokenBiMap(provider || this.provider);
+
+                if (!newPools || newPools.length === 0) {
+                    console.log(`No new pools for ${route.name}`);
+                    continue;
+                }
+
+                console.log(`Found ${newPools.length} new pools for ${route.name}`);
+
+                // Merge token bi-maps
+                routeTokenBiMap
+                    .toArray()
+                    .forEach((token) => tokenBiMap.setArrayValue(token.toLowerCase()));
+
+                // Merge token pool maps with dex prefix
+                routeTokenPoolMap.forEach((value, key) => {
+                    tokenPoolMap.set(`${key}:${route.name}`, value);
+                });
+
+                // Store new pools by DEX
+                newPoolsByDex.set(route.name as string, newPools);
+            } catch (error) {
+                console.error(`Error getting new pools for ${route.name}:`, error);
+            }
+        }
+
+        return {
+            data: newPoolsByDex,
+            tokenBiMap,
+            tokenPoolMap
+        };
+    }
 
     getTransactionInstructionFromRoutePlan = async (
         amountFormattedToTokenDecimal: Decimal,

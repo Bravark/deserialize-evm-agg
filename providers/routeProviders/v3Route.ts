@@ -161,6 +161,40 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         }
         return { data: data as T[], tokenBiMap, tokenPoolMap };
     };
+    mergeTokenBiMaps(existing: ArrayBiMap<string>, newTokens: ArrayBiMap<string>): ArrayBiMap<string> {
+        const merged = new ArrayBiMap<string>(existing.toArray());
+        newTokens.toArray().forEach(token => {
+            if (merged.getByValue(token) === undefined) {
+                merged.setArrayValue(token);
+            }
+        });
+        return merged;
+    }
+    mergeGraphs(existing: Graph, newEdges: Graph, tokenBiMap: ArrayBiMap<string>): Graph {
+        const merged = existing.length > 0
+            ? existing.map(edges => [...edges])
+            : Array.from({ length: tokenBiMap.toArray().length }, () => []);
+
+        newEdges.forEach((edges, fromIndex) => {
+            if (!merged[fromIndex]) {
+                merged[fromIndex] = [];
+            }
+            edges.forEach(edge => {
+                // Check if edge already exists, update or add
+                const existingIndex = merged[fromIndex].findIndex(
+                    e => e.to === edge.to && e.edgeData.poolAddress === edge.edgeData.poolAddress
+                );
+                if (existingIndex >= 0) {
+                    merged[fromIndex][existingIndex] = edge; // Update
+                } else {
+                    merged[fromIndex].push(edge); // Add new
+                }
+            });
+        });
+
+        return merged;
+    }
+
 
     listTokens = async () => {
         const routeData = await this.getTokenBiMap(this.provider);
@@ -334,6 +368,136 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
 
         return graph;
     };
+
+    /**
+ * Build graph edges only from specific pools (incremental update)
+ * @param pools - Array of pool data to process
+ * @param tokenBiMap - Token index mapping
+ * @param provider - JSON RPC provider
+ * @returns Promise<Graph> - Graph with edges only for the provided pools
+ */
+    async buildGraphFromPools(
+        pools: PoolData[],
+        tokenBiMap: ArrayBiMap<string>,
+        provider: JsonRpcProvider
+    ): Promise<Graph> {
+        // Initialize empty graph with size based on tokenBiMap
+        const graph: Graph = Array.from({ length: tokenBiMap.toArray().length }, () => []);
+
+        // Set the concurrency limit (number of pools processed concurrently)
+        const CONCURRENCY_LIMIT = 1;
+
+        console.log(`Building graph from ${pools.length} pools`);
+
+        // Ensure tokenBiMap is proper ArrayBiMap instance
+        const tokenIndexBiMap = Array.isArray(tokenBiMap)
+            ? new ArrayBiMap<string>(tokenBiMap as any as Array<string>)
+            : tokenBiMap;
+
+        // Helper: process one pool
+        const processPool = async (wp: PoolData) => {
+            console.log('Processing pool:', wp.token0.address, wp.token1.address, wp.poolAddress);
+
+            const fromTokenString = wp.token0.address.toLowerCase();
+            const fromTokenIndex = tokenIndexBiMap.getByValue(fromTokenString);
+            const toTokenString = wp.token1.address.toLowerCase();
+            const toTokenIndex = tokenIndexBiMap.getByValue(toTokenString);
+
+            if (fromTokenIndex === undefined || toTokenIndex === undefined) {
+                console.warn(`Token index not found for pool ${wp.poolAddress}`);
+                return;
+            }
+
+            try {
+                // Fetch direct edge data (token0 -> token1)
+                const directData = await this.getEdgeDataDirect<
+                    PoolData,
+                    SwapQuoteParamWithEdgeData<PoolData>
+                >(provider, wp, false).catch((err: any) => {
+                    console.error(
+                        `Error fetching direct data for ${wp.token0.address}:${wp.token1.address}:`,
+                        err
+                    );
+                    return null;
+                });
+
+                // Fetch reverse edge data (token1 -> token0)
+                const reverseData = await this.getEdgeDataDirect<
+                    PoolData,
+                    SwapQuoteParamWithEdgeData<PoolData>
+                >(provider, wp, true).catch((err) => {
+                    console.error(
+                        `Error fetching reverse data for ${wp.token1.address}:${wp.token0.address}:`,
+                        err
+                    );
+                    return null;
+                });
+
+                if (!directData || !reverseData) {
+                    console.warn(
+                        `Skipping pool ${wp.poolAddress} due to incomplete data`
+                    );
+                    return;
+                }
+
+                // Create direct edge (token0 -> token1)
+                const directEdge = new Edge<SwapQuoteParamWithEdgeDataString>(
+                    Number(fromTokenIndex),
+                    Number(toTokenIndex),
+                    {
+                        price: directData.price,
+                        fee: directData.fee,
+                        priceUsdc: directData.priceUsdc,
+                        tokenFromReserve: directData.tokenFromReserve,
+                        tokenToReserve: directData.tokenToReserve,
+                        tokenFromDecimals: directData.tokenFromDecimals,
+                        tokenToDecimals: directData.tokenToDecimals,
+                        pool: directData.pool,
+                        aToB: directData.aToB,
+                        dexId: directData.dexId,
+                        poolAddress: directData.poolAddress,
+                    }
+                );
+
+                // Create reverse edge (token1 -> token0)
+                const reverseEdge = new Edge<SwapQuoteParamWithEdgeDataString>(
+                    Number(toTokenIndex),
+                    Number(fromTokenIndex),
+                    {
+                        price: reverseData.price,
+                        priceUsdc: reverseData.priceUsdc,
+                        tokenFromReserve: reverseData.tokenToReserve,
+                        tokenToReserve: reverseData.tokenFromReserve,
+                        tokenFromDecimals: directData.tokenToDecimals,
+                        tokenToDecimals: directData.tokenFromDecimals,
+                        pool: directData.pool,
+                        fee: reverseData.fee,
+                        poolAddress: reverseData.poolAddress,
+                        aToB: reverseData.aToB,
+                        dexId: directData.dexId,
+                    }
+                );
+
+                // Add edges to the graph
+                graph[Number(fromTokenIndex)].push(directEdge);
+                graph[Number(toTokenIndex)].push(reverseEdge);
+            } catch (error) {
+                console.error("Error processing pool:", wp.poolAddress, error);
+                return;
+            }
+        };
+
+        // Process the pools in chunks to limit concurrent requests
+        let count = 0;
+        for (let i = 0; i < pools.length; i += CONCURRENCY_LIMIT) {
+            const chunk = pools.slice(i, i + CONCURRENCY_LIMIT);
+            await Promise.all(chunk.map((wp) => processPool(wp)));
+            console.log(`Processed chunk: ${count++}/${Math.ceil(pools.length / CONCURRENCY_LIMIT)}`);
+        }
+
+        console.log(`Graph building complete. Processed ${pools.length} pools`);
+        return graph;
+    }
     getEdgeDataDirect = async <T extends PoolData, R>(
         provider: JsonRpcProvider,
         data: T,

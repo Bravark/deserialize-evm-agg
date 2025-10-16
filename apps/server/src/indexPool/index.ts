@@ -154,6 +154,21 @@ function isEmptyEdgeData(edgeData: EdgeData): boolean {
     );
 }
 
+// const singleRoute = async (rpc: string) => {
+//     const provider = new JsonRpcProvider(rpc)
+//     const cache = await initAndGetCache();
+//     const pancakeRoute = new UniswapV3BaseRoute(provider, cache);
+//     const updatedTokenBiMap = await pancakeRoute.getNewTokenBiMap<any>(provider);
+//     console.log('updatedTokenBiMap: ', updatedTokenBiMap);
+//     pancakeRoute.cache.setDexTokenIndexBiMapCache(pancakeRoute.name, updatedTokenBiMap);
+//     const newGraph = await pancakeRoute.getNewGraph(updatedTokenBiMap, provider);
+//     const isGraphEmpty = checkIfGraphIsEmpty(newGraph);
+//     console.log("isGraphEmpty: ", pancakeRoute.name, isGraphEmpty);
+//     // if (!isGraphEmpty) {
+//     pancakeRoute.cache.setDexGraphCache(pancakeRoute.name as any as string, newGraph);
+
+// }
+
 // //
 // // it is after that we will update the ALL
 // const allRoute = new AllRoute(connection);
