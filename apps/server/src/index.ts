@@ -69,12 +69,13 @@ export const getBestRoutes = async (
 }> => {
     const provider = _provider
     const RouteJsonRpcProviderClass = getChainAllRoute(network);
+    console.log('network: ', network);
     const cache = await initAndGetCache()
     const RouteJsonRpcProvider = new RouteJsonRpcProviderClass(provider, cache);
     const config = RouteJsonRpcProvider.getDexConfig()
 
     const { tokenBiMap } = await RouteJsonRpcProvider.getTokenBiMap();
-    // console.log('tokenBiMap: ', tokenBiMap);
+    console.log('tokenBiMap: ', tokenBiMap);
     const graph = await RouteJsonRpcProvider.getGraph();
     let path: number[][] = [];
     let keyRate;

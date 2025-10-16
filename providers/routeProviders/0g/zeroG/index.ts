@@ -7,7 +7,7 @@ import { v3PoolAbi } from "../../v3FactoryAbi";
 import { createV3Route } from "../../v3Route";
 
 
-const config: DexConfig = {
+export const ZERO_G_CONFIG: DexConfig = {
     name: "Janie (formally Zero G)",
     factoryAddress: "0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4",
     quoterAddress: "0xd00883722cECAD3A1c60bCA611f09e1851a0bE02",
@@ -21,7 +21,7 @@ const config: DexConfig = {
 }
 
 export const ZeroGRoute = createV3Route(
-    config,
+    ZERO_G_CONFIG,
     chain,
     "ZERO_G",
 );

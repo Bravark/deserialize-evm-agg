@@ -42,7 +42,6 @@ const updateCacheData = async (rpc: string) => {
     const allRoute = new AllRoute(provider, cache);
 
     console.log("=== Starting Cache Update ===");
-
     try {
         // ========== STEP 1: Update Individual Route Caches ==========
         await Promise.all(allRoute.routeProviders.map(async (routeJsonRpcProvider) => {
