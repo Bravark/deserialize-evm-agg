@@ -119,63 +119,6 @@ export const PANCAKESWAP_V3_QUOTER_V2_ABI = [
 
 // ==================== CHAIN CONFIGURATIONS ====================
 
-export const PANCAKESWAP_V3_CONFIGS: Record<string, DexConfig> = {
-    BSC: {
-        name: "PancakeSwap V3",
-        network: Network.BSC as NetworkType,
-        factoryAddress: "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865",
-        quoterAddress: "0xB048Bbc1Ee6b733FFfCFb9e9CeF7375518e25997",
-        wrappedNativeTokenAddress: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // WBNB
-        nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-        stableTokenAddress: "0x55d398326f99059fF775485246999027B3197955", // USDT
-        fromBlock: "26956207", // PancakeSwap V3 deployment block
-        abi: PANCAKESWAP_V3_FACTORY_ABI,
-    },
-    ETH: {
-        name: "PancakeSwap V3",
-        network: Network.ETH as NetworkType,
-        factoryAddress: "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865",
-        quoterAddress: "0xB048Bbc1Ee6b733FFfCFb9e9CeF7375518e25997",
-        wrappedNativeTokenAddress: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // WETH
-        nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-        stableTokenAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
-        fromBlock: "16950686",
-        abi: PANCAKESWAP_V3_FACTORY_ABI,
-    },
-    ARBITRUM: {
-        name: "PancakeSwap V3",
-        network: Network.ARBITRUM as NetworkType,
-        factoryAddress: "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865",
-        quoterAddress: "0xB048Bbc1Ee6b733FFfCFb9e9CeF7375518e25997",
-        wrappedNativeTokenAddress: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1", // WETH
-        nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-        stableTokenAddress: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", // USDT
-        fromBlock: "84815698",
-        abi: PANCAKESWAP_V3_FACTORY_ABI,
-    },
-    BASE: {
-        name: "PancakeSwap V3",
-        network: Network.BASE as NetworkType,
-        factoryAddress: "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865",
-        quoterAddress: "0xB048Bbc1Ee6b733FFfCFb9e9CeF7375518e25997",
-        wrappedNativeTokenAddress: "0x4200000000000000000000000000000000000006", // WETH
-        nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-        stableTokenAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC
-        fromBlock: "2283190",
-        abi: PANCAKESWAP_V3_FACTORY_ABI,
-    },
-    ZKSYNC: {
-        name: "PancakeSwap V3",
-        network: Network.ZKSYNC as NetworkType,
-        factoryAddress: "0x1BB72E0CbbEA93c08f535fc7856E0338D7F7a8aB",
-        quoterAddress: "0x3d146FcE6c1006857750cBe8aF44f76a28041CCc",
-        wrappedNativeTokenAddress: "0x5AEa5775959fBC2557Cc8789bC1bf90A239D9a91", // WETH
-        nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-        stableTokenAddress: "0x3355df6D4c9C3035724Fd0e3914dE96A5a83aaf4", // USDC
-        fromBlock: "14714015",
-        abi: PANCAKESWAP_V3_FACTORY_ABI,
-    },
-};
 
 // ==================== PANCAKESWAP V3 CALCULATOR CLASS ====================
 
@@ -297,24 +240,6 @@ export class PancakeSwapV3Calculator extends UniswapV3QuoteCalculator {
 
 // ==================== HELPER FUNCTIONS ====================
 
-/**
- * Create a PancakeSwap V3 calculator instance for a specific network
- */
-export function createPancakeSwapV3Calculator(
-    network: keyof typeof PANCAKESWAP_V3_CONFIGS,
-    chain: ChainConfig
-): PancakeSwapV3Calculator {
-    const provider = new JsonRpcProvider(chain.rpcUrl);
-    const dexConfig = PANCAKESWAP_V3_CONFIGS[network];
-    return new PancakeSwapV3Calculator(dexConfig, chain, provider);
-}
-
-/**
- * Get available networks for PancakeSwap V3
- */
-export function getAvailablePancakeSwapV3Networks(): string[] {
-    return Object.keys(PANCAKESWAP_V3_CONFIGS);
-}
 
 export const wait = (time = 2) => {
     return new Promise((resolve) => setTimeout(resolve, time * 1000));
