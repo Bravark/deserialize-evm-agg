@@ -1,5 +1,5 @@
 export const Network = {
-    "0G": "0gMainnet",
+    "0G": "0G",
     BSC: "BSC",
     ETH: "ETH",
     ARBITRUM: "ARBITRUM",
