@@ -30,11 +30,11 @@ export declare const SwapQuoteRequestSchema: z.ZodObject<{
         } | undefined;
     }>;
     params: z.ZodOptional<z.ZodObject<{
-        chain: z.ZodString;
+        chain: z.ZodDefault<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         chain: string;
     }, {
-        chain: string;
+        chain?: string | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
     body: {
@@ -60,7 +60,7 @@ export declare const SwapQuoteRequestSchema: z.ZodObject<{
         } | undefined;
     };
     params?: {
-        chain: string;
+        chain?: string | undefined;
     } | undefined;
 }>;
 export type SwapQuoteRequestType = z.infer<typeof SwapQuoteRequestSchema>["body"];
@@ -201,11 +201,11 @@ export declare const SwapRequestSchema: z.ZodObject<{
         } | undefined;
     }>;
     params: z.ZodOptional<z.ZodObject<{
-        chain: z.ZodString;
+        chain: z.ZodDefault<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         chain: string;
     }, {
-        chain: string;
+        chain?: string | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
     body: {
@@ -267,25 +267,25 @@ export declare const SwapRequestSchema: z.ZodObject<{
         } | undefined;
     };
     params?: {
-        chain: string;
+        chain?: string | undefined;
     } | undefined;
 }>;
 export type SwapRequestType = z.infer<typeof SwapRequestSchema>["body"];
 export declare const TokenPriceRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
         tokenAddress: z.ZodString;
-        chain: z.ZodOptional<z.ZodString>;
+        chain: z.ZodDefault<z.ZodOptional<z.ZodString>>;
     }, "strip", z.ZodTypeAny, {
+        chain: string;
         tokenAddress: string;
-        chain?: string | undefined;
     }, {
         tokenAddress: string;
         chain?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     params: {
+        chain: string;
         tokenAddress: string;
-        chain?: string | undefined;
     };
 }, {
     params: {
@@ -297,18 +297,18 @@ export type TokenPriceRequestType = z.infer<typeof TokenPriceRequestSchema>["par
 export declare const TokenDetailsRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
         tokenAddress: z.ZodString;
-        chain: z.ZodOptional<z.ZodString>;
+        chain: z.ZodDefault<z.ZodOptional<z.ZodString>>;
     }, "strip", z.ZodTypeAny, {
+        chain: string;
         tokenAddress: string;
-        chain?: string | undefined;
     }, {
         tokenAddress: string;
         chain?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     params: {
+        chain: string;
         tokenAddress: string;
-        chain?: string | undefined;
     };
 }, {
     params: {
