@@ -48,7 +48,8 @@ export interface IRoute<TPool, DexIdTypes> {
     >() => FunctionToMutateTheEdgeCostType<T>;
 
     getNewTokenBiMap: <T>(provider: JsonRpcProvider) => Promise<TokenBiMap<T>>;
-    mergeTokenBiMaps: (existing: ArrayBiMap<string>, newTokens: ArrayBiMap<string>) => ArrayBiMap<string>;
+    mergeTokenBiMaps: (existing: TokenBiMap<TPool>,
+        newMap: TokenBiMap<TPool>) => TokenBiMap<TPool>;
     mergeGraphs: (
         existing: Graph,
         newEdges: Graph,
@@ -62,7 +63,7 @@ export interface IRoute<TPool, DexIdTypes> {
         pools: TPool[],
         tokenBiMap: ArrayBiMap<string>,
         provider: JsonRpcProvider,
-        poolsByDex?: Map<string, any[]>
+        _poolsByDex?: any[],
     ) => Promise<Graph>;
 
     getTransactionInstructionFromRoutePlan: (

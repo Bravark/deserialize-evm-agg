@@ -69,21 +69,21 @@ const updateCacheData = async (rpc: string) => {
 
                 // Merge token BiMaps
                 const mergedTokenBiMap = existingTokenBiMap
-                    ? route.mergeTokenBiMaps(existingTokenBiMap.tokenBiMap, newPoolData.tokenBiMap)
-                    : newPoolData.tokenBiMap;
+                    ? route.mergeTokenBiMaps(existingTokenBiMap, newPoolData)
+                    : newPoolData;
 
-                console.log(`Token BiMap size: ${existingTokenBiMap?.tokenBiMap.toArray().length || 0} → ${mergedTokenBiMap.toArray().length}`);
+                console.log(`Token BiMap size: ${existingTokenBiMap?.tokenBiMap.toArray().length || 0} → ${mergedTokenBiMap.tokenBiMap.toArray().length}`);
 
                 // Build graph ONLY from new pools
                 const newEdgesGraph = await route.buildGraphFromPools(
                     newPoolData.data,
-                    mergedTokenBiMap,
+                    mergedTokenBiMap.tokenBiMap,
                     provider
                 );
 
                 // Merge with existing graph
                 const updatedGraph = existingGraph
-                    ? route.mergeGraphs(existingGraph, newEdgesGraph, mergedTokenBiMap)
+                    ? route.mergeGraphs(existingGraph, newEdgesGraph, mergedTokenBiMap.tokenBiMap)
                     : newEdgesGraph;
 
                 const isGraphEmpty = checkIfGraphIsEmpty(updatedGraph);
@@ -92,7 +92,7 @@ const updateCacheData = async (rpc: string) => {
                 if (!isGraphEmpty) {
                     // Update cache with merged data
                     await cache.setDexTokenIndexBiMapCache(route.name, {
-                        tokenBiMap: mergedTokenBiMap,
+                        tokenBiMap: mergedTokenBiMap.tokenBiMap,
                         data: newPoolData.data, // Store reference to new pools
                         tokenPoolMap: newPoolData.tokenPoolMap
                     });
@@ -121,7 +121,7 @@ const updateCacheData = async (rpc: string) => {
             const existingAllGraph = await cache.getDexGraphCache(allRoute.name);
 
             // Get new pools from all DEXes
-            const allNewPoolData = await allRoute.getNewTokenBiMapIncremental(provider);
+            const allNewPoolData = await allRoute.getNewTokenBiMapIncremental<any[]>(provider);
 
             const totalNewPools = Array.from(allNewPoolData.data.values())
                 .reduce((sum, pools) => sum + pools.length, 0);
@@ -131,26 +131,26 @@ const updateCacheData = async (rpc: string) => {
                 return;
             }
 
-            console.log(`Found ${totalNewPools} new pools across ${allNewPoolData.data.size} DEXes`);
+            console.log(`Found ${totalNewPools} new pools across ${allNewPoolData.data.length} DEXes`);
 
             // Merge token BiMaps
             const mergedAllTokenBiMap = existingAllTokenBiMap
-                ? allRoute.mergeTokenBiMaps(existingAllTokenBiMap.tokenBiMap, allNewPoolData.tokenBiMap)
-                : allNewPoolData.tokenBiMap;
+                ? allRoute.mergeTokenBiMaps(existingAllTokenBiMap, allNewPoolData)
+                : allNewPoolData;
 
-            console.log(`Aggregated Token BiMap size: ${existingAllTokenBiMap?.tokenBiMap.toArray().length || 0} → ${mergedAllTokenBiMap.toArray().length}`);
+            console.log(`Aggregated Token BiMap size: ${existingAllTokenBiMap?.tokenBiMap.toArray().length || 0} → ${mergedAllTokenBiMap.tokenBiMap.toArray().length}`);
 
             // Build graph only from new pools
             const newAggregatedEdges = await allRoute.buildGraphFromPools(
                 [],
-                mergedAllTokenBiMap,
+                mergedAllTokenBiMap.tokenBiMap,
                 provider,
                 allNewPoolData.data,
             );
 
             // Merge with existing aggregated graph
             const updatedAllGraph = existingAllGraph
-                ? allRoute.mergeGraphs(existingAllGraph, newAggregatedEdges, mergedAllTokenBiMap)
+                ? allRoute.mergeGraphs(existingAllGraph, newAggregatedEdges, mergedAllTokenBiMap.tokenBiMap)
                 : newAggregatedEdges;
 
             console.log(`Aggregated graph size: ${updatedAllGraph.length}`);
@@ -163,7 +163,7 @@ const updateCacheData = async (rpc: string) => {
                 const dataEntries = Array.from(allNewPoolData.data.entries());
 
                 await cache.setDexTokenIndexBiMapCache(allRoute.name, {
-                    tokenBiMap: mergedAllTokenBiMap,
+                    tokenBiMap: mergedAllTokenBiMap.tokenBiMap,
                     data: dataEntries as any,
                     tokenPoolMap: allNewPoolData.tokenPoolMap
                 });

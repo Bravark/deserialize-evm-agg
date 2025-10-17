@@ -161,15 +161,49 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         }
         return { data: data as T[], tokenBiMap, tokenPoolMap };
     };
-    mergeTokenBiMaps(existing: ArrayBiMap<string>, newTokens: ArrayBiMap<string>): ArrayBiMap<string> {
-        const merged = new ArrayBiMap<string>(existing.toArray());
-        newTokens.toArray().forEach(token => {
-            if (merged.getByValue(token) === undefined) {
-                merged.setArrayValue(token);
+    mergeTokenBiMaps(
+        existing: TokenBiMap<PoolData>,
+        newMap: TokenBiMap<PoolData>
+    ): TokenBiMap<PoolData> {
+        // Step 1: Copy the existing tokenBiMap
+        const mergedBiMap = new ArrayBiMap<string>(existing.tokenBiMap.toArray());
+
+        // Step 2: Track existing pool addresses
+        const existingPoolAddresses = new Set(
+            (existing.data as any[]).map((d) => d.poolAddress?.toLowerCase?.())
+        );
+
+        // Step 3: Add tokens from newMap if not already present
+        newMap.tokenBiMap.toArray().forEach((token) => {
+            if (mergedBiMap.getByValue(token) === undefined) {
+                mergedBiMap.setArrayValue(token);
             }
         });
-        return merged;
+
+        // Step 4: Merge pool data — skip duplicates
+        const mergedData = [
+            ...existing.data,
+            ...(newMap.data as any[]).filter(
+                (d) => !existingPoolAddresses.has(d.poolAddress?.toLowerCase?.())
+            ),
+        ];
+
+        // Step 5: Merge tokenPoolMap
+        const mergedTokenPoolMap = new Map(existing.tokenPoolMap);
+        newMap.tokenPoolMap.forEach((value, key) => {
+            if (!mergedTokenPoolMap.has(key)) {
+                mergedTokenPoolMap.set(key, value);
+            }
+        });
+
+        // Step 6: Return new merged structure
+        return {
+            tokenBiMap: mergedBiMap,
+            data: mergedData,
+            tokenPoolMap: mergedTokenPoolMap,
+        };
     }
+
     mergeGraphs(existing: Graph, newEdges: Graph, tokenBiMap: ArrayBiMap<string>): Graph {
         const merged = existing.length > 0
             ? existing.map(edges => [...edges])
@@ -373,6 +407,7 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         const biMap = await this.getTokenBiMap<PoolData>()
         const tokenBiMap = biMap.tokenBiMap
         const tokenPoolMap = biMap.tokenPoolMap
+
         const pools = foundPools.map((pool) => pool.poolData);
         console.log('pools: ', pools);
         //update the biMap with the new tokens if any
@@ -388,9 +423,12 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
             // }
         });
         const graph = await this.buildGraphFromPools(pools, tokenBiMap, this.provider);
-        const merged = this.mergeGraphs(await this.getGraph(this.provider, biMap, false), graph, tokenBiMap)
-        await this.cache.setDexGraphCache(this.name, merged);
-        return { newGraph: merged, newTokenBiMap: tokenBiMap };
+        const mergedGraph = this.mergeGraphs(await this.getGraph(this.provider, biMap, false), graph, tokenBiMap)
+        const mergedTokenBiMap = this.mergeTokenBiMaps(biMap, { tokenBiMap: tokenBiMap, tokenPoolMap: tokenPoolMap, data: pools })
+
+        await this.cache.setDexGraphCache(this.name, mergedGraph);
+        await this.cache.setDexTokenIndexBiMapCache(this.name, mergedTokenBiMap)
+        return { newGraph: mergedGraph, newTokenBiMap: mergedTokenBiMap.tokenBiMap };
 
     };
 
@@ -406,8 +444,10 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         tokenBiMap: ArrayBiMap<string>,
         provider: JsonRpcProvider
     ): Promise<Graph> {
+
         // Initialize empty graph with size based on tokenBiMap
         const graph: Graph = Array.from({ length: tokenBiMap.toArray().length }, () => []);
+
 
         // Set the concurrency limit (number of pools processed concurrently)
         const CONCURRENCY_LIMIT = 1;
@@ -520,7 +560,9 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         }
 
         console.log(`Graph building complete. Processed ${pools.length} pools`);
+
         return graph;
+
     }
     getEdgeDataDirect = async <T extends PoolData, R>(
         provider: JsonRpcProvider,
@@ -621,8 +663,10 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
 
             const amountIn =
                 new Decimal(swapAmount)
+
             const amountBOut = amountOut
-            let amountOutInTokenA = amountBOut.div(params.price)
+
+            let amountOutInTokenA = amountBOut.div(params.price ?? 0)
             // Calculate swap impact
             const _swapImpact = (((amountIn.sub(amountOutInTokenA)).div(amountIn)).mul(100)).toNumber()
             if (isNaN(_swapImpact)) {

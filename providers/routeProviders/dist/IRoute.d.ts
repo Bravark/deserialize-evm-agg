@@ -32,10 +32,10 @@ export interface IRoute<TPool, DexIdTypes> {
     getGraph: (provider?: JsonRpcProvider, _tokenBiMap?: TokenBiMap<TPool>, ignoreCache?: boolean) => Promise<Graph>;
     getFunctionToMutateEdgeCost: <T extends EdgeData>() => FunctionToMutateTheEdgeCostType<T>;
     getNewTokenBiMap: <T>(provider: JsonRpcProvider) => Promise<TokenBiMap<T>>;
-    mergeTokenBiMaps: (existing: ArrayBiMap<string>, newTokens: ArrayBiMap<string>) => ArrayBiMap<string>;
+    mergeTokenBiMaps: (existing: TokenBiMap<TPool>, newMap: TokenBiMap<TPool>) => TokenBiMap<TPool>;
     mergeGraphs: (existing: Graph, newEdges: Graph, tokenBiMap: ArrayBiMap<string>) => Graph;
     getNewGraph: (tokenBiMap: TokenBiMap<TPool>, provider: JsonRpcProvider) => Promise<Graph>;
-    buildGraphFromPools: (pools: TPool[], tokenBiMap: ArrayBiMap<string>, provider: JsonRpcProvider, poolsByDex?: Map<string, any[]>) => Promise<Graph>;
+    buildGraphFromPools: (pools: TPool[], tokenBiMap: ArrayBiMap<string>, provider: JsonRpcProvider, _poolsByDex?: any[]) => Promise<Graph>;
     getTransactionInstructionFromRoutePlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], wallet: string, slippage: number, isNativeIn: boolean, isNativeOut: boolean, partnerFees?: {
         recipient: string;
         fee: number;

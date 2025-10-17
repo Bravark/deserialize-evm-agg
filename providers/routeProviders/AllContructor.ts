@@ -161,7 +161,7 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
                 tokenPoolMap: routeTokenPoolMap,
                 data: routeData,
             } = await route.getTokenBiMap();
-            console.log('getNewTokenBiMap tokenBiMap: ', tokenBiMap);
+            console.log('getNewTokenBiMap tokenBiMap: ', tokenBiMap.n);
 
             // Merge token bi-maps
             routeTokenBiMap
@@ -184,14 +184,20 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
     };
 
     findUpdateTokenPairPools = async (tokenA: string, tokenB: string) => {
-        console.log("NEW TOKEN BIMAP BEFORE", await this.getNewTokenBiMap())
-        console.log("TOKEN BIMAP BEFORE", await this.getTokenBiMap())
-        console.log("NEW GRAPH BEFORE", await this.getNewGraph())
-        console.log("NEW GRAPH BEFORE", await this.getGraph())
+        console.log("NEW TOKEN BIMAP BEFORE", (await this.getNewTokenBiMap()).tokenBiMap.n)
+        console.log("TOKEN BIMAP BEFORE", (await this.getTokenBiMap()).tokenBiMap.n)
+        console.log("NEW GRAPH BEFORE", (await this.getNewGraph()).length)
+        console.log("NEW GRAPH BEFORE", (await this.getGraph()).length)
         for (const RouteProviderClass of this.routeProviders) {
             const route = new RouteProviderClass(this.provider, this.cache);
             try {
-                await route.findUpdateTokenPairPools(tokenA, tokenB);
+                console.log("fresh newTokenBiMap ", (await route.getTokenBiMap()).tokenBiMap.n);
+                console.log("fresh newGraph ", (await route.getGraph()).length);
+                console.log("token Pool Map Before", (await route.getTokenBiMap()).tokenPoolMap.size)
+                const { newTokenBiMap, newGraph } = await route.findUpdateTokenPairPools(tokenA, tokenB);
+                console.log("token Pool Map After", (await route.getTokenBiMap()).tokenPoolMap.size)
+                console.log("fresh newTokenBiMap ", newTokenBiMap.n);
+                console.log("fresh newGraph ", newGraph.length);
             } catch (error) {
                 console.error(`Error updating token pair pools for ${route.name}:`, error);
             }
@@ -199,11 +205,13 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         }
         //we will now force the update of the all route to add this new information to the all route
         console.log("getting new tokendBiMap and new graph for AllRoute");
-        const newTokenBiMap = await this.getTokenBiMap()
-        console.log('newTokenBiMap: ', newTokenBiMap);
+        const newTokenBiMap = await this.getNewTokenBiMap<any>()
+        console.log('newTokenBiMap: ', newTokenBiMap.tokenBiMap.n);
         console.log("got new tokendBiMap for AllRoute");
-        const newGraph = await this.getGraph()
-        console.log('newGraph: ', newGraph);
+        const newGraph = await this.getNewGraph(newTokenBiMap)
+        await this.cache.setDexTokenIndexBiMapCache(this.name, newTokenBiMap);
+        await this.cache.setDexGraphCache(this.name, newGraph);
+        console.log('newGraph: ', newGraph.length);
         console.log("got the new graph")
 
 
@@ -345,23 +353,48 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
     * @returns Merged ArrayBiMap with all unique tokens
     */
     mergeTokenBiMaps(
-        existing: ArrayBiMap<string>,
-        newTokens: ArrayBiMap<string>
-    ): ArrayBiMap<string> {
-        // Start with existing tokens
-        const merged = new ArrayBiMap<string>(existing.toArray());
+        existing: TokenBiMap<any>,
+        newMap: TokenBiMap<any>
+    ): TokenBiMap<any> {
+        // Step 1: Copy the existing tokenBiMap
+        const mergedBiMap = new ArrayBiMap<string>(existing.tokenBiMap.toArray());
 
-        // Add new tokens if they don't exist
-        newTokens.toArray().forEach(token => {
-            const normalizedToken = token.toLowerCase();
-            if (merged.getByValue(normalizedToken) === undefined) {
-                merged.setArrayValue(normalizedToken);
+        // Step 2: Track existing pool addresses
+        const existingPoolAddresses = new Set(
+            (existing.data as any[]).map((d) => d.poolAddress?.toLowerCase?.())
+        );
+
+        // Step 3: Add tokens from newMap if not already present
+        newMap.tokenBiMap.toArray().forEach((token) => {
+            if (mergedBiMap.getByValue(token) === undefined) {
+                mergedBiMap.setArrayValue(token);
             }
         });
 
-        console.log(`Merged token BiMap: ${existing.toArray().length} existing + ${newTokens.toArray().length} new = ${merged.toArray().length} total`);
-        return merged;
+        // Step 4: Merge pool data — skip duplicates
+        const mergedData = [
+            ...existing.data,
+            ...(newMap.data as any[]).filter(
+                (d) => !existingPoolAddresses.has(d.poolAddress?.toLowerCase?.())
+            ),
+        ];
+
+        // Step 5: Merge tokenPoolMap
+        const mergedTokenPoolMap = new Map(existing.tokenPoolMap);
+        newMap.tokenPoolMap.forEach((value, key) => {
+            if (!mergedTokenPoolMap.has(key)) {
+                mergedTokenPoolMap.set(key, value);
+            }
+        });
+
+        // Step 6: Return new merged structure
+        return {
+            tokenBiMap: mergedBiMap,
+            data: mergedData,
+            tokenPoolMap: mergedTokenPoolMap,
+        };
     }
+
 
     /**
      * Build graph only from specific pools across all DEXes (incremental update)
@@ -374,10 +407,14 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         pools: any[],
         tokenBiMap: ArrayBiMap<string>,
         provider: JsonRpcProvider,
-        poolsByDex?: Map<string, any[]>,
+        _poolsByDex?: any[],
     ): Promise<Graph> {
-        if (!poolsByDex || poolsByDex.size === 0) {
+        if (!_poolsByDex) {
             throw new Error("No new pools provided for graph construction");
+        }
+        const poolsByDex = new Map(_poolsByDex) as Map<string, any[]>
+        if (poolsByDex.size === 0) {
+            throw new Error("The Pool By Dex is not formatted well")
         }
 
         // Initialize empty graph with size based on tokenBiMap
@@ -537,11 +574,11 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
      * Get new token BiMap with only newly created pools per DEX
      * Used for incremental updates
      */
-    async getNewTokenBiMapIncremental(
+    async getNewTokenBiMapIncremental<T>(
         provider?: JsonRpcProvider
     ): Promise<{
         tokenBiMap: ArrayBiMap<string>;
-        data: Map<string, any[]>; // Map of dexId to new pools only
+        data: T;
         tokenPoolMap: Map<string, string>;
     }> {
         const tokenBiMap = new ArrayBiMap<string>();
@@ -587,7 +624,7 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         }
 
         return {
-            data: newPoolsByDex,
+            data: Array.from(newPoolsByDex.entries()) as T,
             tokenBiMap,
             tokenPoolMap
         };
