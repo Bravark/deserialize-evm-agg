@@ -1,4 +1,4 @@
-import { JsonRpcProvider } from "ethers";
+import { Contract, JsonRpcProvider } from "ethers";
 import { ChainConfig, DexConfig, UniswapV3QuoteCalculator } from "./UniswapV3Calculator";
 import Decimal from "decimal.js";
 
@@ -46,12 +46,13 @@ export class UniswapV3QuoteCalculatorV2 extends UniswapV3QuoteCalculator {
         fee: number,
         sqrtPriceLimitX96: string = "0"
     ): Promise<string> {
+        console.log('fee: ', fee);
         const config = this.getConfig();
         if (!config.quoterAddress) {
             throw new Error("Quoter address not configured for PancakeSwap V3");
         }
 
-        const { Contract } = await import("ethers");
+
         const quoter = new Contract(
             config.quoterAddress,
             UNISWAP_V3_QUOTER_V2_ABI,
@@ -59,18 +60,37 @@ export class UniswapV3QuoteCalculatorV2 extends UniswapV3QuoteCalculator {
         );
 
         try {
+            console.log('fee: ', fee);
+            console.log({
+                tokenIn,
+                tokenOut,
+                amountIn: new Decimal(amountIn).toFixed(),
+                fee: new Decimal(fee).toFixed(),
+                sqrtPriceLimitX96: sqrtPriceLimitX96 || "0",
+            });
+            console.log("typeof fee:", typeof fee, "fee:", fee);
+            console.log("fee as hex:", Number(fee).toString(16));
+            const data = quoter.interface.encodeFunctionData("quoteExactInputSingle", [{
+                tokenIn,
+                tokenOut,
+                amountIn: new Decimal(amountIn).toFixed(),
+                fee: new Decimal(fee).toFixed(),
+                sqrtPriceLimitX96: sqrtPriceLimitX96 || "0",
+            }]);
+            console.log("encoded data:", data);
             const result = await quoter.quoteExactInputSingle.staticCall({
                 tokenIn,
                 tokenOut,
                 amountIn: new Decimal(amountIn).toFixed(),
-                fee,
+                fee: new Decimal(fee).toFixed(),
                 sqrtPriceLimitX96: sqrtPriceLimitX96 || "0",
             });
+
 
             return result[0].toString();
 
         } catch (error) {
-            console.error("PancakeSwap V3 QuoterV2 simulation failed:", error);
+            console.error("UniswapV3 QuoterV2 simulation failed:", error);
             throw error;
         }
     }

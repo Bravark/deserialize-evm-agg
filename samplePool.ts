@@ -1,4 +1,4 @@
-import { OgChain, PANCAKE_BASE_CONFIG, UNISWAP_V3_BASE_CONFIG, UniswapV3QuoteCalculator, ZERO_G_CONFIG, ZIA_CONFIG } from "@deserialize-evm-agg/routes-providers";
+import { BaseChain, PANCAKE_BASE_CONFIG, UNISWAP_V3_BASE_CONFIG, UniswapV3QuoteCalculator } from "@deserialize-evm-agg/routes-providers";
 import { AerodromeV3QuoteCalculator } from "@deserialize-evm-agg/routes-providers/Aerodromev3Calculator";
 import { AERODROME_BASE_CONFIG } from "@deserialize-evm-agg/routes-providers/base/aerodrome";
 import { chain } from "@deserialize-evm-agg/routes-providers/base/chain";
@@ -14,20 +14,18 @@ export async function exampleUsage() {
     // Initialize calculator with default Base configuration
     // const calculator = new AerodromeV3QuoteCalculator(AERODROME_BASE_CONFIG, chain);
     // const calculator = new PancakeSwapV3Calculator(PANCAKE_BASE_CONFIG, chain);
-    const calculator = new UniswapV3QuoteCalculator(ZERO_G_CONFIG, OgChain);
+    const calculator = new UniswapV3QuoteCalculatorV2(UNISWAP_V3_BASE_CONFIG, BaseChain);
 
     // Example: Get quote for swapping 1 ETH to USDC
     const WETH = "0x4200000000000000000000000000000000000006";
     const USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
-    const tokenA = "0x7bbc63d01ca42491c3e084c941c3e86e55951404";
-    const tokenB = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
+    const tokenA = "0x4200000000000000000000000000000000000006";
+    const tokenB = "0x8a910ea80fc09d5b5a2120521a39b67980df0bc4"
     const amount = "292300000000000000"
 
     try {
         //simulate transaction 
-        const simulation = await calculator.simulateTransaction(tokenA, tokenB, amount, 3000)
-        console.log("Simulation Result:", simulation);
 
         // return
 
@@ -44,6 +42,8 @@ export async function exampleUsage() {
             poolAddress: quote.poolAddress,
             fee: quote.fee.toString(),
         });
+        const simulation = await calculator.simulateTransaction(tokenA, tokenB, amount, 10000)
+        console.log("Simulation Result:", simulation);
 
 
         // // Get token price

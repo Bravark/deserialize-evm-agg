@@ -199,10 +199,10 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         }
         //we will now force the update of the all route to add this new information to the all route
         console.log("getting new tokendBiMap and new graph for AllRoute");
-        const newTokenBiMap = await this.getNewTokenBiMap()
+        const newTokenBiMap = await this.getTokenBiMap()
         console.log('newTokenBiMap: ', newTokenBiMap);
         console.log("got new tokendBiMap for AllRoute");
-        const newGraph = await this.getNewGraph()
+        const newGraph = await this.getGraph()
         console.log('newGraph: ', newGraph);
         console.log("got the new graph")
 
