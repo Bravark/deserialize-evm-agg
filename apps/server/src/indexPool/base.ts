@@ -50,7 +50,6 @@ const updateCacheData = async (rpc: string) => {
 
             try {
                 const route = new routeJsonRpcProvider(provider, cache);
-
                 // Get existing data from cache
                 const existingTokenBiMap = await cache.getDexTokenIndexBiMapCache(
                     route.name,

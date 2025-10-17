@@ -74,16 +74,12 @@ export const getBestRoutes = async (
     const RouteJsonRpcProvider = new RouteJsonRpcProviderClass(provider, cache);
     const config = RouteJsonRpcProvider.getDexConfig()
 
-    const { tokenBiMap } = await RouteJsonRpcProvider.getTokenBiMap();
+    let { tokenBiMap } = await RouteJsonRpcProvider.getTokenBiMap();
     console.log('tokenBiMap: ', tokenBiMap);
-    const graph = await RouteJsonRpcProvider.getGraph();
+    let graph = await RouteJsonRpcProvider.getGraph();
+    console.log('graph: ', graph.length);
     let path: number[][] = [];
     let keyRate;
-    // let tokenAUsdRate = await RouteJsonRpcProvider.getTokenPairEdgeData(
-    //   new PublicKey(fromTokenString),
-    //   new PublicKey(toTokenString)
-    // );
-    // if (!tokenAUsdRate) {
 
     keyRate = await RouteJsonRpcProvider.getSurePriceOfToken((fromTokenString));
 
@@ -103,18 +99,25 @@ export const getBestRoutes = async (
 
         toTokenString = config.wrappedNativeTokenAddress
     }
-    const fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
+    let fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
     console.log('fromTokenString: ', fromTokenString);
     console.log('fromIndex: ', fromIndex);
-    const toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
+    let toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
     console.log('toTokenString: ', toTokenString);
     console.log('toIndex: ', toIndex);
     if (fromIndex === undefined || toIndex === undefined) {
         console.log(
             "Token not found in the tokenBiMap: Token Not yet Supported by the Selected Dex"
         );
-
-        throw new Error("DEX_ERRORS.PAIR_NOT_AVAILABLE_ON_DEX");
+        //TRYING TO ADD THE TOKEN PAIR TO THE GRAPH
+        const { newGraph, newTokenBiMap } = await RouteJsonRpcProvider.findUpdateTokenPairPools(fromTokenString, toTokenString)
+        tokenBiMap = newTokenBiMap
+        graph = newGraph
+        fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
+        toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
+        if (fromIndex === undefined || toIndex === undefined) {
+            throw new Error("Token Not yet Supported by the Selected Dex");
+        }
     }
     const func = RouteJsonRpcProvider.getFunctionToMutateEdgeCost();
     const token = await getTokenDetails(

@@ -13,8 +13,8 @@ export const PANCAKE_BASE_CONFIG: DexConfig = {
     name: "PancakeSwap V3",
     factoryAddress: "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865",
     quoterAddress: "0xB048Bbc1Ee6b733FFfCFb9e9CeF7375518e25997",
-    fromBlock: "5189173", //original origin block
-    // fromBlock: "36666314",
+    // fromBlock: "5189173", //original origin block
+    fromBlock: "36666314",
     network: "BASE",
     abi: v3PoolAbi,
     stableTokenAddress: chain.stableTokenAddress,

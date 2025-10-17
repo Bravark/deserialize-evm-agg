@@ -138,6 +138,9 @@ export declare class UniswapV3QuoteCalculator {
     findBestPool(tokenA: string, tokenB: string, feeTiers?: number[]): Promise<PoolInfo & {
         poolData: PoolData;
     }>;
+    findAllPools(tokenA: string, tokenB: string, feeTiers?: number[]): Promise<(PoolInfo & {
+        poolData: PoolData;
+    })[]>;
     calculateSpotPrice(sqrtPriceX96: Decimal, decimals0: number, decimals1: number, token0IsInput: boolean): number;
     private calculateSwapOutput;
     getQuote(params: QuoteParams): Promise<QuoteResult>;

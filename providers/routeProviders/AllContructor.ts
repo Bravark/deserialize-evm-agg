@@ -161,6 +161,7 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
                 tokenPoolMap: routeTokenPoolMap,
                 data: routeData,
             } = await route.getTokenBiMap();
+            console.log('getNewTokenBiMap tokenBiMap: ', tokenBiMap);
 
             // Merge token bi-maps
             routeTokenBiMap
@@ -181,6 +182,34 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
             tokenPoolMap
         };
     };
+
+    findUpdateTokenPairPools = async (tokenA: string, tokenB: string) => {
+        console.log("NEW TOKEN BIMAP BEFORE", await this.getNewTokenBiMap())
+        console.log("TOKEN BIMAP BEFORE", await this.getTokenBiMap())
+        console.log("NEW GRAPH BEFORE", await this.getNewGraph())
+        console.log("NEW GRAPH BEFORE", await this.getGraph())
+        for (const RouteProviderClass of this.routeProviders) {
+            const route = new RouteProviderClass(this.provider, this.cache);
+            try {
+                await route.findUpdateTokenPairPools(tokenA, tokenB);
+            } catch (error) {
+                console.error(`Error updating token pair pools for ${route.name}:`, error);
+            }
+            // now all the routes have updated their tokenBiMaps and Graph with this new token pair
+        }
+        //we will now force the update of the all route to add this new information to the all route
+        console.log("getting new tokendBiMap and new graph for AllRoute");
+        const newTokenBiMap = await this.getNewTokenBiMap()
+        console.log('newTokenBiMap: ', newTokenBiMap);
+        console.log("got new tokendBiMap for AllRoute");
+        const newGraph = await this.getNewGraph()
+        console.log('newGraph: ', newGraph);
+        console.log("got the new graph")
+
+
+        return { newGraph, newTokenBiMap: newTokenBiMap.tokenBiMap }
+    };
+
 
     getGraph = async (
         provider?: JsonRpcProvider,
@@ -242,7 +271,7 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
                 const routeGraph = await route.getGraph(
                     provider,
                     routeTokenBiMap,
-                    true
+                    false
                 );
 
                 poolData.forEach((pool: any) => {
@@ -310,11 +339,11 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         return func;
     };
     /**
- * Merge two token BiMaps (adds new tokens without duplicates)
- * @param existing - Existing token BiMap
- * @param newTokens - New tokens to add
- * @returns Merged ArrayBiMap with all unique tokens
- */
+    * Merge two token BiMaps (adds new tokens without duplicates)
+    * @param existing - Existing token BiMap
+    * @param newTokens - New tokens to add
+    * @returns Merged ArrayBiMap with all unique tokens
+    */
     mergeTokenBiMaps(
         existing: ArrayBiMap<string>,
         newTokens: ArrayBiMap<string>

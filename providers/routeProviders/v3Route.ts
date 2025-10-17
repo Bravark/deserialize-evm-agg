@@ -4,7 +4,7 @@ import Decimal from "decimal.js";
 import { NetworkType } from "deserialize-evm-server-sdk";
 import { JsonRpcProvider, TransactionRequest } from "ethers";
 import { DeserializeRoutePlan, IRoute, SwapQuoteParamWithEdgeData, SwapQuoteParamWithEdgeDataString } from "./IRoute";
-import { ChainConfig, DexConfig, PoolData, UniswapV3QuoteCalculator, ZeroDexQuoteParams } from "./UniswapV3Calculator";
+import { ChainConfig, DexConfig, PoolData, PoolInfo, UniswapV3QuoteCalculator, ZeroDexQuoteParams } from "./UniswapV3Calculator";
 import { ArrayBiMap, Edge, EdgeData, FunctionToMutateTheEdgeCostType, Graph, TokenBiMap } from "@deserialize-evm-agg/graph";
 import { transformRoutePlanToIPath } from "./utils";
 
@@ -368,6 +368,31 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
 
         return graph;
     };
+    findUpdateTokenPairPools = async (tokenA: string, tokenB: string): Promise<{ newGraph: Graph, newTokenBiMap: ArrayBiMap<string> }> => {
+        const foundPools = await this.calculator.findAllPools(tokenA, tokenB);
+        const biMap = await this.getTokenBiMap<PoolData>()
+        const tokenBiMap = biMap.tokenBiMap
+        const tokenPoolMap = biMap.tokenPoolMap
+        const pools = foundPools.map((pool) => pool.poolData);
+        console.log('pools: ', pools);
+        //update the biMap with the new tokens if any
+        pools.forEach((_pool: PoolData) => {
+            const pool = _pool;
+            const { token0, token1, poolAddress, fee } = pool;
+            tokenBiMap.setArrayValue(token0.address.toLowerCase());
+            tokenBiMap.setArrayValue(token1.address.toLowerCase());
+
+            tokenPoolMap.set(
+                `${token0.address.toLowerCase()}:${fee}:${token1.address.toLowerCase()}`,
+                poolAddress);
+            // }
+        });
+        const graph = await this.buildGraphFromPools(pools, tokenBiMap, this.provider);
+        const merged = this.mergeGraphs(await this.getGraph(this.provider, biMap, false), graph, tokenBiMap)
+        await this.cache.setDexGraphCache(this.name, merged);
+        return { newGraph: merged, newTokenBiMap: tokenBiMap };
+
+    };
 
     /**
  * Build graph edges only from specific pools (incremental update)
@@ -420,7 +445,6 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
                     );
                     return null;
                 });
-
                 // Fetch reverse edge data (token1 -> token0)
                 const reverseData = await this.getEdgeDataDirect<
                     PoolData,

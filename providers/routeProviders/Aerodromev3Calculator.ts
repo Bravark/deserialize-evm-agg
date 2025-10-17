@@ -5,7 +5,7 @@
  * Aerodrome V3 uses Uniswap V3's core logic with some modifications
  */
 
-import { UniswapV3QuoteCalculator, DexConfig, ChainConfig, PoolCreatedEvent } from "./UniswapV3Calculator";
+import { UniswapV3QuoteCalculator, DexConfig, ChainConfig, PoolCreatedEvent, PoolInfo, PoolData } from "./UniswapV3Calculator";
 import { Contract, JsonRpcProvider } from "ethers";
 import { NetworkType } from "./constants";
 
@@ -267,6 +267,10 @@ export class AerodromeV3QuoteCalculator extends UniswapV3QuoteCalculator {
     public async getAllPools(abi = AERODROME_V3_FACTORY_ABI, fromBlock?: string) {
         return super.getAllPools(abi, fromBlock);
     }
+    async findAllPools(tokenA: string, tokenB: string, feeTiers?: number[]): Promise<(PoolInfo & { poolData: PoolData })[]> {
+        return super.findAllPools(tokenA, tokenB, feeTiers);
+    }
+
     getAllPoolsFromEvents = async (
         factoryAddress: string,
         provider: JsonRpcProvider,

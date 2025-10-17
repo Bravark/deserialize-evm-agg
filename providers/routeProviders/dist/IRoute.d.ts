@@ -45,6 +45,10 @@ export interface IRoute<TPool, DexIdTypes> {
         feeAmount?: Decimal;
     }>;
     listTokens: () => Promise<string[]>;
+    findUpdateTokenPairPools: (tokenA: string, tokenB: string) => Promise<{
+        newGraph: Graph;
+        newTokenBiMap: ArrayBiMap<string>;
+    }>;
     getAmountOutFromPlan: (amountFormattedToTokenDecimal: Decimal, routePlan: DeserializeRoutePlan<DexIdTypes>[], devFeeRate: number, provider?: JsonRpcProvider) => Promise<{
         amountOut: Decimal;
     }>;

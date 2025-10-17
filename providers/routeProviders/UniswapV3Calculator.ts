@@ -508,7 +508,7 @@ export class UniswapV3QuoteCalculator {
                     };
                 }
             } catch (error) {
-                console.warn(`Error checking pool for fee ${fee}:`, error);
+                console.warn(`Error checking pool for fee ${fee}: FOR DEX {${this.config.name}}`, error);
             }
         }
 
@@ -517,8 +517,73 @@ export class UniswapV3QuoteCalculator {
         }
 
         const poolData = await this.getPoolData(bestPool.address);
-        return { ...bestPool, poolData };
+        const res = { ...bestPool, poolData };
+        return res
     }
+
+    public async findAllPools(
+        tokenA: string,
+        tokenB: string,
+        feeTiers = FEE_TIERS
+    ): Promise<(PoolInfo & { poolData: PoolData })[]> {
+        const factory = new Contract(this.config.factoryAddress, FACTORY_ABI, this.provider);
+
+        // Normalize wrapped/native
+        if (tokenA.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenA = this.config.wrappedNativeTokenAddress;
+        }
+        if (tokenB.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenB = this.config.wrappedNativeTokenAddress;
+        }
+        if (tokenA.toLowerCase() === tokenB.toLowerCase()) {
+            throw new Error("TokenA and TokenB cannot be the same");
+        }
+
+        const foundPools = await Promise.all(
+            feeTiers.map(async (fee) => {
+                try {
+                    const poolAddress: string = await factory.getPool(tokenA, tokenB, fee);
+
+                    // 🧠 Early skip for zero address
+                    if (
+                        !poolAddress ||
+                        poolAddress.toLowerCase() === "0x0000000000000000000000000000000000000000"
+                    ) {
+                        return null;
+                    }
+
+                    const pool = new Contract(poolAddress, POOL_ABI, this.provider);
+
+                    // ⚠️ If this throws for non-existent pools, it'll be caught below
+                    const liquidityRaw = await pool.liquidity();
+                    const liquidity = new Decimal(liquidityRaw.toString());
+
+                    if (liquidity.lte(0)) return null;
+
+                    // only now fetch poolData since it's a heavier call
+                    const poolData = await this.getPoolData(poolAddress);
+
+                    const res = {
+                        pool,
+                        fee,
+                        liquidity,
+                        address: poolAddress,
+                        poolData,
+                    };
+
+
+                    return res;
+                } catch (error) {
+                    console.warn(`Error checking pool for fee ${fee} on DEX {${this.config.name}}`);
+                    return null;
+                }
+            })
+        );
+
+        const clean = foundPools.filter((p): p is PoolInfo & { poolData: PoolData } => p !== null);
+        return clean;
+    }
+
 
     // ==================== CALCULATION METHODS ====================
 
@@ -825,6 +890,7 @@ export class UniswapV3QuoteCalculator {
                 console.log('error: ', error);
                 console.error(`Error fetching data for pool ${pool.poolAddress}: ${error.message}`);
             }
+
             // if (count > 9) {
             //     await wait(5)
             //     count = 0
