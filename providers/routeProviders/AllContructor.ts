@@ -74,9 +74,8 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
             return tempInstance.name;
         });
     };
-
+    //0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c
     static formatPool = (data: [string, any], routeProviders: RouteConstructor<any>[]) => {
-        console.log('data: ', data);
         const formattedPoolData: any[] = [];
         let dexId: string
         let poolData
