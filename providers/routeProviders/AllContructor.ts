@@ -76,6 +76,7 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
     };
 
     static formatPool = (data: [string, any], routeProviders: RouteConstructor<any>[]) => {
+        console.log('data: ', data);
         const formattedPoolData: any[] = [];
         const [dexId, poolData] = data;
 
