@@ -60,24 +60,8 @@ export class UniswapV3QuoteCalculatorV2 extends UniswapV3QuoteCalculator {
         );
 
         try {
-            console.log('fee: ', fee);
-            console.log({
-                tokenIn,
-                tokenOut,
-                amountIn: new Decimal(amountIn).toFixed(),
-                fee: new Decimal(fee).toFixed(),
-                sqrtPriceLimitX96: sqrtPriceLimitX96 || "0",
-            });
-            console.log("typeof fee:", typeof fee, "fee:", fee);
-            console.log("fee as hex:", Number(fee).toString(16));
-            const data = quoter.interface.encodeFunctionData("quoteExactInputSingle", [{
-                tokenIn,
-                tokenOut,
-                amountIn: new Decimal(amountIn).toFixed(),
-                fee: new Decimal(fee).toFixed(),
-                sqrtPriceLimitX96: sqrtPriceLimitX96 || "0",
-            }]);
-            console.log("encoded data:", data);
+
+
             const result = await quoter.quoteExactInputSingle.staticCall({
                 tokenIn,
                 tokenOut,

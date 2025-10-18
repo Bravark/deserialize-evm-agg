@@ -142,6 +142,7 @@ export class DexCache<DexIdTypes> {
     const data = this.memoryCache.getNamespaceMemoryCache(namespace, dexId);
     if (data) {
       const res = typeof data === "string" ? JSON.parse(data) : data
+
       const formattedObject = {
         tokenBiMap: res.tokenBiMap instanceof ArrayBiMap ? res.tokenBiMap : new ArrayBiMap<string>(res.tokenBiMap),
         tokenPoolMap: res.tokenPoolMap instanceof Map ? res.tokenPoolMap : new Map<string, string>(res.tokenPoolMap),
@@ -155,6 +156,7 @@ export class DexCache<DexIdTypes> {
     persistenceStorage = typeof persistenceStorage === "string" ? JSON.parse(persistenceStorage) : persistenceStorage
     if (persistenceStorage && !isEmptyObject(persistenceStorage)) {
       // Convert raw data to objects
+
       const formattedObject = {
         tokenBiMap: new ArrayBiMap<string>(persistenceStorage.tokenBiMap),
         tokenPoolMap: new Map<string, string>(persistenceStorage.tokenPoolMap),

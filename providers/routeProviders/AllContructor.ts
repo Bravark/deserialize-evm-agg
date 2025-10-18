@@ -111,7 +111,7 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
     };
 
     formatPool = (pool: any) => {
-        return new this.routeProviders[0](new JsonRpcProvider(), {} as any).formatPool(pool)
+        return AllRoute.formatPool(pool, this.routeProviders);
     };
 
     listTokens = async () => {
