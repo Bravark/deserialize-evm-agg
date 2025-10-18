@@ -4,6 +4,7 @@ import { config } from "../config";
 import { JsonRpcProvider } from "ethers";
 import { createClient, RedisClientType } from "redis";
 import { checkIfGraphIsEmpty, Edge, EdgeData, Graph } from "@deserialize-evm-agg/graph";
+import { AllRoute } from "@deserialize-evm-agg/routes-providers/dist/AllContructor";
 
 
 
@@ -35,165 +36,319 @@ const initAndGetCache = async <T>(): Promise<DexCache<T>> => {
 
 }
 
-const updateCacheData = async (rpc: string) => {
+/**
+ * COMPREHENSIVE UPDATE STRATEGY
+ * 
+ * This handles three types of updates:
+ * 1. NEW POOLS: Add new pools discovered since last update
+ * 2. EDGE REFRESH: Update existing pool state (liquidity, prices, etc.)
+ * 3. HYBRID: Combine both for optimal performance
+ */
+
+// Configuration
+const UPDATE_CONFIG = {
+    // How often to check for new pools (minutes)
+    NEW_POOLS_INTERVAL: 1,
+
+    // How often to refresh existing edge data (minutes)
+    EDGE_REFRESH_INTERVAL: 5,
+
+    // Full rebuild interval as safety fallback (minutes)
+    FULL_REBUILD_INTERVAL: 60,
+
+    // Batch size for edge refreshes
+    REFRESH_BATCH_SIZE: 10,
+};
+
+let lastNewPoolsUpdate = 0;
+let lastEdgeRefresh = 0;
+let lastFullRebuild = 0;
+
+/**
+ * Smart update that decides what needs to be done
+ */
+const updateCacheDataSmart = async (rpc: string) => {
     const provider = new JsonRpcProvider(rpc);
     const cache = await initAndGetCache();
     const AllRoute = getChainAllRoute("0G");
     const allRoute = new AllRoute(provider, cache);
 
-    console.log("=== Starting Cache Update ===");
+    const now = Date.now();
+    const shouldCheckNewPools = (now - lastNewPoolsUpdate) >= UPDATE_CONFIG.NEW_POOLS_INTERVAL * 60 * 1000;
+    const shouldRefreshEdges = (now - lastEdgeRefresh) >= UPDATE_CONFIG.EDGE_REFRESH_INTERVAL * 60 * 1000;
+    const shouldFullRebuild = (now - lastFullRebuild) >= UPDATE_CONFIG.FULL_REBUILD_INTERVAL * 60 * 1000;
+
+    console.log("=== Smart Cache Update ===");
+    console.log(`Check new pools: ${shouldCheckNewPools}`);
+    console.log(`Refresh edges: ${shouldRefreshEdges}`);
+    console.log(`Full rebuild: ${shouldFullRebuild}`);
+
     try {
-        // ========== STEP 1: Update Individual Route Caches ==========
-        await Promise.all(allRoute.routeProviders.map(async (routeJsonRpcProvider) => {
-            const routeName = new routeJsonRpcProvider(provider, cache).name;
-            console.log(`\n--- Processing route: ${routeName} ---`);
+        if (shouldFullRebuild) {
+            // Safety fallback: complete rebuild
+            await fullRebuildCache(allRoute, provider, cache);
+            lastFullRebuild = now;
+            lastNewPoolsUpdate = now;
+            lastEdgeRefresh = now;
+            return;
+        }
 
-            try {
-                const route = new routeJsonRpcProvider(provider, cache);
-                // Get existing data from cache
-                const existingTokenBiMap = await cache.getDexTokenIndexBiMapCache(
-                    route.name,
-                    route.formatPool
-                );
-                const existingGraph = await cache.getDexGraphCache(route.name);
+        // Strategy: Do new pools first, then refresh edges
+        let hasNewPools = false;
 
-                // Get ONLY new pools since last block
-                const newPoolData = await route.getNewTokenBiMap(provider);
+        if (shouldCheckNewPools) {
+            hasNewPools = await addNewPoolsToCache(allRoute, provider, cache);
+            lastNewPoolsUpdate = now;
+        }
 
-                if (!newPoolData.data || newPoolData.data.length === 0) {
-                    console.log(`No new pools found for ${route.name}, skipping update`);
-                    return;
-                }
+        if (shouldRefreshEdges) {
+            await refreshExistingEdges(allRoute, provider, cache);
+            lastEdgeRefresh = now;
+        }
 
-                console.log(`Found ${newPoolData.data.length} new pools for ${route.name}`);
+        // If we only did one operation, log it
+        if (!shouldCheckNewPools && !shouldRefreshEdges) {
+            console.log("No updates needed at this time");
+        }
 
-                // Merge token BiMaps
-                const mergedTokenBiMap = existingTokenBiMap
-                    ? route.mergeTokenBiMaps(existingTokenBiMap, newPoolData)
-                    : newPoolData;
+    } catch (error) {
+        console.error("Error in smart cache update:", error);
+        throw error;
+    }
+};
 
-                console.log(`Token BiMap size: ${existingTokenBiMap?.tokenBiMap.toArray().length || 0} → ${mergedTokenBiMap.tokenBiMap.toArray().length}`);
+/**
+ * Add only new pools to the cache (incremental)
+ */
+const addNewPoolsToCache = async (
+    allRoute: AllRoute<any>,
+    provider: JsonRpcProvider,
+    cache: DexCache<any>
+): Promise<boolean> => {
+    console.log("\n--- Adding New Pools ---");
+    let hasNewPools = false;
 
-                // Build graph ONLY from new pools
-                const newEdgesGraph = await route.buildGraphFromPools(
-                    newPoolData.data,
-                    mergedTokenBiMap.tokenBiMap,
-                    provider
-                );
-
-                // Merge with existing graph
-                const updatedGraph = existingGraph
-                    ? route.mergeGraphs(existingGraph, newEdgesGraph, mergedTokenBiMap.tokenBiMap)
-                    : newEdgesGraph;
-
-                const isGraphEmpty = checkIfGraphIsEmpty(updatedGraph);
-                console.log(`Graph empty check for ${route.name}:`, isGraphEmpty);
-
-                if (!isGraphEmpty) {
-                    // Update cache with merged data
-                    await cache.setDexTokenIndexBiMapCache(route.name, {
-                        tokenBiMap: mergedTokenBiMap.tokenBiMap,
-                        data: newPoolData.data, // Store reference to new pools
-                        tokenPoolMap: newPoolData.tokenPoolMap
-                    });
-                    await cache.setDexGraphCache(route.name, updatedGraph);
-                    console.log(`✓ Successfully updated cache for ${route.name}`);
-                } else {
-                    console.warn(`✗ Graph is empty for ${route.name}, not updating cache`);
-                }
-
-            } catch (error) {
-                console.error(`Error updating route ${routeName}:`, error);
-            }
-        }));
-
-        console.log("\n=== Individual Routes Updated ===");
-
-        // ========== STEP 2: Update Aggregated Route Cache ==========
-        console.log("\n--- Updating aggregated route ---");
+    // Update individual routes
+    await Promise.all(allRoute.routeProviders.map(async (RouteProviderClass) => {
+        const route = new RouteProviderClass(provider, cache);
 
         try {
-            // Get existing aggregated data
+            const existingTokenBiMap = await cache.getDexTokenIndexBiMapCache(
+                route.name,
+                route.formatPool
+            );
+            const existingGraph = await cache.getDexGraphCache(route.name);
+
+            // Get ONLY new pools
+            const newPoolData = await route.getNewTokenBiMap(provider);
+
+            if (!newPoolData.data || newPoolData.data.length === 0) {
+                console.log(`No new pools for ${route.name}`);
+                return;
+            }
+
+            hasNewPools = true;
+            console.log(`Found ${newPoolData.data.length} new pools for ${route.name}`);
+
+            // Merge token BiMaps
+            const mergedTokenBiMap = existingTokenBiMap
+                ? route.mergeTokenBiMaps(existingTokenBiMap, newPoolData)
+                : newPoolData;
+
+            // Build edges for new pools only
+            const newEdgesGraph = await route.buildGraphFromPools(
+                newPoolData.data,
+                mergedTokenBiMap.tokenBiMap,
+                provider
+            );
+
+            // Merge with existing graph
+            const updatedGraph = existingGraph
+                ? route.mergeGraphs(existingGraph, newEdgesGraph, mergedTokenBiMap.tokenBiMap)
+                : newEdgesGraph;
+
+            if (!checkIfGraphIsEmpty(updatedGraph)) {
+                await cache.setDexTokenIndexBiMapCache(route.name, {
+                    tokenBiMap: mergedTokenBiMap.tokenBiMap,
+                    data: existingTokenBiMap
+                        ? [...existingTokenBiMap.data, ...newPoolData.data] // Accumulate all pools
+                        : newPoolData.data,
+                    tokenPoolMap: newPoolData.tokenPoolMap
+                });
+                await cache.setDexGraphCache(route.name, updatedGraph);
+                console.log(`✓ Added ${newPoolData.data.length} new pools to ${route.name}`);
+            }
+        } catch (error) {
+            console.error(`Error adding new pools for ${route.name}:`, error);
+        }
+    }));
+
+    // Update aggregated route if we have new pools
+    if (hasNewPools) {
+        try {
             const existingAllTokenBiMap = await cache.getDexTokenIndexBiMapCache(
                 allRoute.name,
                 allRoute.formatPool
             );
             const existingAllGraph = await cache.getDexGraphCache(allRoute.name);
 
-            // Get new pools from all DEXes
-            const allNewPoolData = await allRoute.getNewTokenBiMapIncremental<any[]>(provider);
+            const allNewPoolData = await allRoute.getNewTokenBiMapIncremental<any>(provider);
 
-            const totalNewPools = Array.from(allNewPoolData.data.values())
-                .reduce((sum, pools) => sum + pools.length, 0);
-
-            if (totalNewPools === 0) {
-                console.log("No new pools found across all DEXes, skipping aggregated update");
-                return;
-            }
-
-            console.log(`Found ${totalNewPools} new pools across ${allNewPoolData.data.length} DEXes`);
-
-            // Merge token BiMaps
             const mergedAllTokenBiMap = existingAllTokenBiMap
                 ? allRoute.mergeTokenBiMaps(existingAllTokenBiMap, allNewPoolData)
                 : allNewPoolData;
 
-            console.log(`Aggregated Token BiMap size: ${existingAllTokenBiMap?.tokenBiMap.toArray().length || 0} → ${mergedAllTokenBiMap.tokenBiMap.toArray().length}`);
-
-            // Build graph only from new pools
             const newAggregatedEdges = await allRoute.buildGraphFromPools(
-                [],
-                mergedAllTokenBiMap.tokenBiMap,
-                provider,
                 allNewPoolData.data,
+                mergedAllTokenBiMap.tokenBiMap,
+                provider
             );
 
-            // Merge with existing aggregated graph
             const updatedAllGraph = existingAllGraph
                 ? allRoute.mergeGraphs(existingAllGraph, newAggregatedEdges, mergedAllTokenBiMap.tokenBiMap)
                 : newAggregatedEdges;
 
-            console.log(`Aggregated graph size: ${updatedAllGraph.length}`);
-
-            const isAllGraphEmpty = checkIfGraphIsEmpty(updatedAllGraph);
-            console.log("Aggregated graph empty check:", isAllGraphEmpty);
-
-            if (!isAllGraphEmpty) {
-                // Convert Map to entries for storage
-                const dataEntries = Array.from(allNewPoolData.data.entries());
-
+            if (!checkIfGraphIsEmpty(updatedAllGraph)) {
                 await cache.setDexTokenIndexBiMapCache(allRoute.name, {
                     tokenBiMap: mergedAllTokenBiMap.tokenBiMap,
-                    data: dataEntries as any,
+                    data: Array.from(allNewPoolData.data.entries()) as any,
                     tokenPoolMap: allNewPoolData.tokenPoolMap
                 });
                 await cache.setDexGraphCache(allRoute.name, updatedAllGraph);
-                console.log("✓ Successfully updated aggregated cache");
-            } else {
-                console.warn("✗ Aggregated graph is empty, not updating cache");
+                console.log("✓ Updated aggregated route with new pools");
             }
-
         } catch (error) {
             console.error("Error updating aggregated route:", error);
         }
+    }
 
-        console.log("\n=== Cache Update Complete ===");
+    return hasNewPools;
+};
 
+/**
+ * Refresh existing edges with current pool state
+ */
+const refreshExistingEdges = async (
+    allRoute: AllRoute<any>,
+    provider: JsonRpcProvider,
+    cache: DexCache<any>
+): Promise<void> => {
+    console.log("\n--- Refreshing Edge Data ---");
+
+    // Refresh individual routes
+    await Promise.all(allRoute.routeProviders.map(async (RouteProviderClass) => {
+        const route = new RouteProviderClass(provider, cache);
+
+        try {
+            const existingGraph = await cache.getDexGraphCache(route.name);
+            const existingTokenBiMap = await cache.getDexTokenIndexBiMapCache(
+                route.name,
+                route.formatPool
+            );
+
+            if (!existingGraph || !existingTokenBiMap) {
+                console.log(`No existing data to refresh for ${route.name}`);
+                return;
+            }
+
+            // Get current state of all existing pools
+            const existingPools = await route.getAllExistingPoolData(provider);
+
+            if (existingPools.length === 0) {
+                console.log(`No pools to refresh for ${route.name}`);
+                return;
+            }
+
+            console.log(`Refreshing ${existingPools.length} pools for ${route.name}`);
+
+            // Refresh edge data
+            const refreshedGraph = await route.refreshGraphEdges(
+                existingGraph,
+                existingTokenBiMap.tokenBiMap,
+                existingPools,
+                provider
+            );
+
+            await cache.setDexGraphCache(route.name, refreshedGraph);
+            console.log(`✓ Refreshed ${existingPools.length} pools for ${route.name}`);
+        } catch (error) {
+            console.error(`Error refreshing edges for ${route.name}:`, error);
+        }
+    }));
+
+    // Refresh aggregated route
+    try {
+        const existingAllGraph = await cache.getDexGraphCache(allRoute.name);
+        const existingAllTokenBiMap = await cache.getDexTokenIndexBiMapCache(
+            allRoute.name,
+            allRoute.formatPool
+        );
+
+        if (!existingAllGraph || !existingAllTokenBiMap) {
+            console.log("No aggregated data to refresh");
+            return;
+        }
+
+        console.log("Refreshing aggregated graph edges");
+
+        const refreshedAllGraph = await allRoute.refreshGraphEdges(
+            existingAllGraph,
+            existingAllTokenBiMap.tokenBiMap,
+            provider
+        );
+
+        await cache.setDexGraphCache(allRoute.name, refreshedAllGraph);
+        console.log("✓ Refreshed aggregated graph");
     } catch (error) {
-        console.error("Critical error in updateCacheData:", error);
+        console.error("Error refreshing aggregated edges:", error);
+    }
+};
+
+/**
+ * Full rebuild of the cache (safety fallback)
+ */
+const fullRebuildCache = async (
+    allRoute: AllRoute<any>,
+    provider: JsonRpcProvider,
+    cache: DexCache<any>
+): Promise<void> => {
+    console.log("\n--- Full Cache Rebuild ---");
+
+    try {
+        // Clear existing caches
+        for (const RouteProviderClass of allRoute.routeProviders) {
+            const route = new RouteProviderClass(provider, cache);
+            await cache.setLastBlockFetched(route.name, 0); // Reset block tracking
+        }
+
+        // Rebuild from scratch
+        const allUpdatedTokenBiMap = await allRoute.getNewTokenBiMap<any>(provider);
+        const allUpdatedGraph = await allRoute.getNewGraph(
+            allUpdatedTokenBiMap,
+            provider
+        );
+
+        if (!checkIfGraphIsEmpty(allUpdatedGraph)) {
+            await cache.setDexTokenIndexBiMapCache(allRoute.name, allUpdatedTokenBiMap as any);
+            await cache.setDexGraphCache(allRoute.name, allUpdatedGraph);
+            console.log("✓ Full rebuild complete");
+        }
+    } catch (error) {
+        console.error("Error in full rebuild:", error);
         throw error;
     }
 };
 
-const CacheInterval = 1;
+// ========== Execution Setup ==========
+
 const chain = {
-    name: "0g",
-    rpc: "https://evmrpc.0g.ai"
-}
+    name: "0G",
+    rpc: "https://base-mainnet.g.alchemy.com/v2/Afwsc8tOtKoTwYvd4M4UeyIOFTrKt-fy"
+};
+
 let isUpdating = false;
 let intervalId: NodeJS.Timeout | null = null;
 
-// Wrapper to prevent overlapping updates
 const safeUpdateCacheData = async (rpc: string) => {
     if (isUpdating) {
         console.log("Update already in progress, skipping...");
@@ -202,7 +357,7 @@ const safeUpdateCacheData = async (rpc: string) => {
 
     isUpdating = true;
     try {
-        await updateCacheData(rpc);
+        await updateCacheDataSmart(rpc);
     } catch (error) {
         console.error("Error during cache update:", error);
     } finally {
@@ -214,15 +369,19 @@ const safeUpdateCacheData = async (rpc: string) => {
 console.log("Running initial cache update...");
 safeUpdateCacheData(chain.rpc).catch(console.error);
 
-// Set up interval
+// Use the most frequent interval (checks will decide what to do)
+const CHECK_INTERVAL = Math.min(
+    UPDATE_CONFIG.NEW_POOLS_INTERVAL,
+    UPDATE_CONFIG.EDGE_REFRESH_INTERVAL
+);
+
 intervalId = setInterval(async () => {
     console.log(`\n${'='.repeat(60)}`);
-    console.log(`Scheduled cache update - ${new Date().toISOString()}`);
+    console.log(`Cache Update Check - ${new Date().toISOString()}`);
     console.log('='.repeat(60));
     await safeUpdateCacheData(chain.rpc);
-}, CacheInterval * 60 * 1000);
+}, CHECK_INTERVAL * 60 * 1000);
 
-// Cleanup function (call this when shutting down)
 export const stopCacheUpdates = () => {
     if (intervalId) {
         clearInterval(intervalId);
@@ -231,7 +390,6 @@ export const stopCacheUpdates = () => {
     }
 };
 
-// Handle graceful shutdown
 process.on('SIGINT', () => {
     console.log('\nShutting down gracefully...');
     stopCacheUpdates();

@@ -126,6 +126,132 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         });
     };
 
+    /**
+     * Refresh aggregated graph edges with current pool state
+     */
+    async refreshGraphEdges(
+        graph: Graph,
+        tokenBiMap: ArrayBiMap<string>,
+        poolData: any = [],
+        _provider?: JsonRpcProvider
+    ): Promise<Graph> {
+        console.log("Refreshing aggregated graph edges");
+        const provider = _provider || this.provider
+        const refreshedGraph: Graph = graph.map(edges => [...edges]);
+
+        await Promise.all(
+            this.routeProviders.map(async (RouteProviderClass) => {
+                const route = new RouteProviderClass(provider, this.cache);
+
+                try {
+                    // Get existing pool data for this DEX
+                    const existingPools = await route.getAllExistingPoolData(provider);
+
+                    if (existingPools.length === 0) {
+                        console.log(`No pools to refresh for ${route.name}`);
+                        return;
+                    }
+
+                    console.log(`Refreshing ${existingPools.length} pools for ${route.name}`);
+
+                    // Get route's token BiMap
+                    const routeTokenBiMap = await route.getTokenBiMap<any>();
+
+                    // Get refreshed route graph
+                    const routeGraphCache = await this.cache.getDexGraphCache(route.name);
+                    if (!routeGraphCache) {
+                        console.log(`No cached graph found for ${route.name}`);
+                        return;
+                    }
+
+                    const refreshedRouteGraph = await route.refreshGraphEdges(
+                        routeGraphCache,
+                        routeTokenBiMap.tokenBiMap,
+                        existingPools,
+                        provider
+                    );
+
+                    // Update route cache with refreshed graph
+                    await this.cache.setDexGraphCache(route.name, refreshedRouteGraph);
+
+                    // Map refreshed edges to aggregated graph
+                    existingPools.forEach((pool: any) => {
+                        const { tokenX, tokenY } = route.getTokenXAndYFromPool(pool);
+                        const tokenA = tokenX.toLowerCase();
+                        const tokenB = tokenY.toLowerCase();
+
+                        const fromTokenIndexInRoute = routeTokenBiMap.tokenBiMap.getByValue(tokenA);
+                        const toTokenIndexInRoute = routeTokenBiMap.tokenBiMap.getByValue(tokenB);
+
+                        if (fromTokenIndexInRoute === undefined || toTokenIndexInRoute === undefined) {
+                            return;
+                        }
+
+                        const fromTokenIndexInAllGraph = tokenBiMap.getByValue(tokenA);
+                        const toTokenIndexInAllGraph = tokenBiMap.getByValue(tokenB);
+
+                        if (fromTokenIndexInAllGraph === undefined || toTokenIndexInAllGraph === undefined) {
+                            return;
+                        }
+
+                        // Find and update edges in aggregated graph
+                        const directEdgeInRoute = refreshedRouteGraph[fromTokenIndexInRoute]?.find(
+                            e => e.to === toTokenIndexInRoute && e.edgeData.poolAddress === pool.poolAddress
+                        );
+
+                        const reverseEdgeInRoute = refreshedRouteGraph[toTokenIndexInRoute]?.find(
+                            e => e.to === fromTokenIndexInRoute && e.edgeData.poolAddress === pool.poolAddress
+                        );
+
+                        if (directEdgeInRoute) {
+                            const existingIndex = refreshedGraph[fromTokenIndexInAllGraph].findIndex(
+                                e => e.to === toTokenIndexInAllGraph &&
+                                    e.edgeData.poolAddress === pool.poolAddress &&
+                                    e.edgeData.dexId === route.name
+                            );
+
+                            if (existingIndex >= 0) {
+                                refreshedGraph[fromTokenIndexInAllGraph][existingIndex] = new Edge(
+                                    fromTokenIndexInAllGraph,
+                                    toTokenIndexInAllGraph,
+                                    directEdgeInRoute.edgeData
+                                );
+                            }
+                        }
+
+                        if (reverseEdgeInRoute) {
+                            const existingIndex = refreshedGraph[toTokenIndexInAllGraph].findIndex(
+                                e => e.to === fromTokenIndexInAllGraph &&
+                                    e.edgeData.poolAddress === pool.poolAddress &&
+                                    e.edgeData.dexId === route.name
+                            );
+
+                            if (existingIndex >= 0) {
+                                refreshedGraph[toTokenIndexInAllGraph][existingIndex] = new Edge(
+                                    toTokenIndexInAllGraph,
+                                    fromTokenIndexInAllGraph,
+                                    reverseEdgeInRoute.edgeData
+                                );
+                            }
+                        }
+                    });
+
+                    console.log(`Successfully refreshed edges for ${route.name} in aggregated graph`);
+                } catch (error) {
+                    console.error(`Error refreshing edges for ${route.name}:`, error);
+                }
+            })
+        );
+
+        console.log("Aggregated graph edge refresh complete");
+        return refreshedGraph;
+    }
+
+    async getAllExistingPoolData(provider?: JsonRpcProvider): Promise<any[]> {
+        throw new Error("Not implemented for All route")
+    }
+
+
     formatPool = (pool: any) => {
         return AllRoute.formatPool(pool, this.routeProviders);
     };

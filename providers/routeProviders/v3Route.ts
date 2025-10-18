@@ -431,6 +431,180 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         return { newGraph: mergedGraph, newTokenBiMap: mergedTokenBiMap.tokenBiMap };
 
     };
+    /**
+ * Refresh edge data for existing pools to get updated liquidity, prices, etc.
+ * This is separate from adding new pools - it updates the state of existing pools
+ */
+
+    // ============== For BaseV3Route ==============
+
+    /**
+     * Refresh all edges in the graph with current pool state
+     * @param graph - Existing graph to refresh
+     * @param tokenBiMap - Token BiMap for lookups
+     * @param provider - JSON RPC provider
+     * @param poolData - All pool data (existing + new)
+     * @returns Updated graph with refreshed edge data
+     */
+    async refreshGraphEdges(
+        graph: Graph,
+        tokenBiMap: ArrayBiMap<string>,
+        poolData: PoolData[],
+        _provider?: JsonRpcProvider
+    ): Promise<Graph> {
+        console.log(`Refreshing ${poolData.length} pools for ${this.name}`);
+        const provider = _provider || this.provider
+        const CONCURRENCY_LIMIT = 5; // Can be higher for refreshes
+        const refreshedGraph: Graph = graph.map(edges => [...edges]); // Deep copy
+
+        // Create a map of poolAddress -> edges for quick lookup
+        const poolAddressToEdges = new Map<string, {
+            directEdgeIndex: { fromIndex: number; edgeIndex: number } | null;
+            reverseEdgeIndex: { fromIndex: number; edgeIndex: number } | null;
+        }>();
+
+        // Build lookup map
+        graph.forEach((edges, fromIndex) => {
+            edges.forEach((edge, edgeIndex) => {
+                const poolAddress = edge.edgeData.poolAddress.toLowerCase();
+                const existing = poolAddressToEdges.get(poolAddress) || {
+                    directEdgeIndex: null,
+                    reverseEdgeIndex: null
+                };
+
+                // Determine if this is direct or reverse based on aToB
+                if (edge.edgeData.aToB) {
+                    existing.directEdgeIndex = { fromIndex, edgeIndex };
+                } else {
+                    existing.reverseEdgeIndex = { fromIndex, edgeIndex };
+                }
+
+                poolAddressToEdges.set(poolAddress, existing);
+            });
+        });
+
+        const processPool = async (pool: PoolData) => {
+            const poolAddress = pool.poolAddress.toLowerCase();
+            const edgeLocations = poolAddressToEdges.get(poolAddress);
+
+            if (!edgeLocations) {
+                // This is a new pool, not a refresh
+                return;
+            }
+
+            try {
+                // Fetch fresh edge data
+                const directData = await this.getEdgeDataDirect<
+                    PoolData,
+                    SwapQuoteParamWithEdgeData<PoolData>
+                >(provider, pool, false).catch(() => null);
+
+                const reverseData = await this.getEdgeDataDirect<
+                    PoolData,
+                    SwapQuoteParamWithEdgeData<PoolData>
+                >(provider, pool, true).catch(() => null);
+
+                if (!directData || !reverseData) {
+                    console.warn(`Failed to refresh data for pool ${poolAddress}`);
+                    return;
+                }
+
+                // Update direct edge if it exists
+                if (edgeLocations.directEdgeIndex) {
+                    const { fromIndex, edgeIndex } = edgeLocations.directEdgeIndex;
+                    const existingEdge = refreshedGraph[fromIndex][edgeIndex];
+
+                    refreshedGraph[fromIndex][edgeIndex] = new Edge(
+                        existingEdge.from,
+                        existingEdge.to,
+                        {
+                            price: directData.price,
+                            fee: directData.fee,
+                            priceUsdc: directData.priceUsdc,
+                            tokenFromReserve: directData.tokenFromReserve,
+                            tokenToReserve: directData.tokenToReserve,
+                            tokenFromDecimals: directData.tokenFromDecimals,
+                            tokenToDecimals: directData.tokenToDecimals,
+                            pool: directData.pool,
+                            aToB: directData.aToB,
+                            dexId: directData.dexId,
+                            poolAddress: directData.poolAddress,
+                        }
+                    );
+                }
+
+                // Update reverse edge if it exists
+                if (edgeLocations.reverseEdgeIndex) {
+                    const { fromIndex, edgeIndex } = edgeLocations.reverseEdgeIndex;
+                    const existingEdge = refreshedGraph[fromIndex][edgeIndex];
+
+                    refreshedGraph[fromIndex][edgeIndex] = new Edge(
+                        existingEdge.from,
+                        existingEdge.to,
+                        {
+                            price: reverseData.price,
+                            priceUsdc: reverseData.priceUsdc,
+                            tokenFromReserve: reverseData.tokenToReserve,
+                            tokenToReserve: reverseData.tokenFromReserve,
+                            tokenFromDecimals: directData.tokenToDecimals,
+                            tokenToDecimals: directData.tokenFromDecimals,
+                            pool: directData.pool,
+                            fee: reverseData.fee,
+                            poolAddress: reverseData.poolAddress,
+                            aToB: reverseData.aToB,
+                            dexId: directData.dexId,
+                        }
+                    );
+                }
+            } catch (error) {
+                console.error(`Error refreshing pool ${poolAddress}:`, error);
+            }
+        };
+
+        // Process in batches
+        let count = 0;
+        for (let i = 0; i < poolData.length; i += CONCURRENCY_LIMIT) {
+            const chunk = poolData.slice(i, i + CONCURRENCY_LIMIT);
+            await Promise.all(chunk.map(pool => processPool(pool)));
+            count++;
+            if (count % 10 === 0) {
+                console.log(`Refreshed ${Math.min(i + CONCURRENCY_LIMIT, poolData.length)}/${poolData.length} pools`);
+            }
+        }
+
+        console.log(`Edge refresh complete for ${this.name}`);
+        return refreshedGraph;
+    }
+
+    /**
+     * Get all existing pool data (for refresh)
+     * This fetches current state of all known pools
+     */
+    async getAllExistingPoolData(provider?: JsonRpcProvider): Promise<PoolData[]> {
+        const cachedTokenBiMap = await this.cache.getDexTokenIndexBiMapCache(
+            this.name,
+            this.formatPool
+        );
+
+        if (!cachedTokenBiMap || !cachedTokenBiMap.data) {
+            console.log("No existing pool data found in cache");
+            return [];
+        }
+
+        console.log(`Fetching current state for ${cachedTokenBiMap.data.length} existing pools`);
+
+        const poolDataPromises = cachedTokenBiMap.data.map(async (pool: PoolData) => {
+            try {
+                // Fetch fresh pool data from blockchain
+                return await this.calculator.getPoolData(pool.poolAddress);
+            } catch (error) {
+                console.error(`Error fetching pool data for ${pool.poolAddress}:`, error);
+                return pool; // Fallback to cached data
+            }
+        });
+
+        return await Promise.all(poolDataPromises);
+    }
 
     /**
  * Build graph edges only from specific pools (incremental update)
