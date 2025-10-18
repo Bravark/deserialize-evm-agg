@@ -88,7 +88,7 @@ export interface ChainConfig {
     wrappedTokenSymbol: string;
     nativeTokenAddress: string;
     nativeTokenSymbol: string;
-    stableTokenAddress?: string; // For USD price calculations
+    stableTokenAddress: string; // For USD price calculations
 }
 
 export interface QuoteParams {

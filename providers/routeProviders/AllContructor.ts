@@ -204,21 +204,34 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         console.log("TOKEN BIMAP BEFORE", (await this.getTokenBiMap()).tokenBiMap.n)
         console.log("NEW GRAPH BEFORE", (await this.getNewGraph()).length)
         console.log("NEW GRAPH BEFORE", (await this.getGraph()).length)
-        for (const RouteProviderClass of this.routeProviders) {
+
+        await Promise.all(this.routeProviders.map(async (RouteProviderClass) => {
             const route = new RouteProviderClass(this.provider, this.cache);
             try {
-                console.log("fresh newTokenBiMap ", (await route.getTokenBiMap()).tokenBiMap.n);
-                console.log("fresh newGraph ", (await route.getGraph()).length);
-                console.log("token Pool Map Before", (await route.getTokenBiMap()).tokenPoolMap.size)
-                const { newTokenBiMap, newGraph } = await route.findUpdateTokenPairPools(tokenA, tokenB);
-                console.log("token Pool Map After", (await route.getTokenBiMap()).tokenPoolMap.size)
-                console.log("fresh newTokenBiMap ", newTokenBiMap.n);
-                console.log("fresh newGraph ", newGraph.length);
+                // console.log("fresh newTokenBiMap ", (await route.getTokenBiMap()).tokenBiMap.n);
+                // console.log("fresh newGraph ", (await route.getGraph()).length);
+                // console.log("token Pool Map Before", (await route.getTokenBiMap()).tokenPoolMap.size)
+                const [{ newTokenBiMap, newGraph }] = await Promise.all(
+                    [
+                        await route.findUpdateTokenPairPools(tokenA, tokenB),
+                        await route.findUpdateTokenPairPools(this.chainConfig.wrappedNativeTokenAddress, tokenB),
+                        await route.findUpdateTokenPairPools(this.chainConfig.stableTokenAddress, tokenB),
+                        await route.findUpdateTokenPairPools(tokenA, this.chainConfig.wrappedNativeTokenAddress),
+                        await route.findUpdateTokenPairPools(tokenA, this.chainConfig.stableTokenAddress),
+
+                    ]
+                )
+
+
+                // console.log("token Pool Map After", (await route.getTokenBiMap()).tokenPoolMap.size)
+                // console.log("fresh newTokenBiMap ", newTokenBiMap.n);
+                // console.log("fresh newGraph ", newGraph.length);
             } catch (error) {
                 console.error(`Error updating token pair pools for ${route.name}:`, error);
             }
-            // now all the routes have updated their tokenBiMaps and Graph with this new token pair
-        }
+        }))
+        // now all the routes have updated their tokenBiMaps and Graph with this new token pair
+
         //we will now force the update of the all route to add this new information to the all route
         console.log("getting new tokendBiMap and new graph for AllRoute");
         const newTokenBiMap = await this.getNewTokenBiMap<any>()

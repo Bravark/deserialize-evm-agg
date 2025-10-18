@@ -7,5 +7,6 @@ export const chain: ChainConfig = {
     wrappedTokenSymbol: "W0G",
     nativeTokenSymbol: "0G",
     wrappedNativeTokenAddress: "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c",
-    nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+    nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    stableTokenAddress: "0x1f3aa82227281ca364bfb3d253b0f1af1da6473e",
 }

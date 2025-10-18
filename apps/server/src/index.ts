@@ -75,7 +75,7 @@ export const getBestRoutes = async (
     const config = RouteJsonRpcProvider.getDexConfig()
 
     let { tokenBiMap } = await RouteJsonRpcProvider.getTokenBiMap();
-    console.log('tokenBiMap: ', tokenBiMap);
+
     let graph = await RouteJsonRpcProvider.getGraph();
     console.log('graph: ', graph.length);
     let path: number[][] = [];

@@ -74,7 +74,7 @@ export interface ChainConfig {
     wrappedTokenSymbol: string;
     nativeTokenAddress: string;
     nativeTokenSymbol: string;
-    stableTokenAddress?: string;
+    stableTokenAddress: string;
 }
 export interface QuoteParams {
     tokenIn: string;
