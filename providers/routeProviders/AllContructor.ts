@@ -78,7 +78,23 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
     static formatPool = (data: [string, any], routeProviders: RouteConstructor<any>[]) => {
         console.log('data: ', data);
         const formattedPoolData: any[] = [];
-        const [dexId, poolData] = data;
+        let dexId: string
+        let poolData
+        const [_dexId, _poolData] = data;
+
+        if (isNaN(Number(_dexId))) {
+            dexId = _dexId
+            poolData = _poolData
+
+        } else {
+            const [_dexId, _poolDat] = _poolData
+            dexId = _dexId
+            poolData = _poolDat
+        }
+
+        //for some reason i am getting a map of a map so it just handle for it
+
+
 
         // Find the appropriate route provider
         const RouteProviderClass = routeProviders.find((RouteClass) => {
