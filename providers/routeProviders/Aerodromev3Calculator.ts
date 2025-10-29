@@ -8,6 +8,7 @@
 import { UniswapV3QuoteCalculator, DexConfig, ChainConfig, PoolCreatedEvent, PoolInfo, PoolData } from "./UniswapV3Calculator";
 import { Contract, JsonRpcProvider } from "ethers";
 import { NetworkType } from "./constants";
+import Decimal from "decimal.js";
 
 // ==================== AERODROME V3 ABI DEFINITIONS ====================
 
@@ -39,6 +40,7 @@ export const AERODROME_V3_FACTORY_ABI = [
         type: "event",
     },
 ] as const;
+
 
 /**
  * Aerodrome V3 Pool ABI
@@ -175,6 +177,7 @@ export const AERODROME_V3_QUOTER_ABI = [
  */
 export const AERODROME_TICK_SPACINGS = [1, 50, 100, 200];
 
+
 /**
  * Fee calculation from tick spacing
  * Aerodrome uses: fee = tickSpacing * 100
@@ -252,7 +255,6 @@ export class AerodromeV3QuoteCalculator extends UniswapV3QuoteCalculator {
                 console.warn(`Error checking pool for tick spacing ${tickSpacing}:`, error);
             }
         }
-
         if (!bestPool) {
             throw new Error(`No viable Aerodrome pool found for token pair ${tokenA}/${tokenB}`);
         }
@@ -337,6 +339,7 @@ export class AerodromeV3QuoteCalculator extends UniswapV3QuoteCalculator {
 
         try {
 
+            console.log('sqrtPriceLimitX96: ', sqrtPriceLimitX96);
             const result = await quoter.quoteExactInputSingle.staticCall(
                 { tokenIn, tokenOut, amountIn: BigInt(amountIn), tickSpacing, sqrtPriceLimitX96: BigInt(sqrtPriceLimitX96) }
             );

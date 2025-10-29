@@ -344,7 +344,7 @@ const fullRebuildCache = async (
 
 const chain = {
     name: "BASE",
-    rpc: "https://base-mainnet.g.alchemy.com/v2/Afwsc8tOtKoTwYvd4M4UeyIOFTrKt-fy"
+    rpc: "https://base-mainnet.g.alchemy.com/v2/pwvhaDUZ4qZ8Oy2QcyWfCQa_avpkVPnL"
 };
 
 let isUpdating = false;

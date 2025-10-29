@@ -343,7 +343,7 @@ const fullRebuildCache = async (
 
 const chain = {
     name: "0G",
-    rpc: "https://base-mainnet.g.alchemy.com/v2/Afwsc8tOtKoTwYvd4M4UeyIOFTrKt-fy"
+    rpc: "https://evmrpc.0g.ai"
 };
 
 let isUpdating = false;

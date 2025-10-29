@@ -6,6 +6,7 @@ import { JsonRpcApiProvider, JsonRpcProvider } from "ethers";
 import { createClient, RedisClientType } from "redis"
 import { config } from "./config";
 import { NetworkType } from "@deserialize-evm-agg/routes-providers/dist/constants";
+import { ApiError } from "./errors/errors.api";
 
 
 
@@ -118,7 +119,22 @@ export const getBestRoutes = async (
         if (fromIndex === undefined || toIndex === undefined) {
             throw new Error("Token Not yet Supported by the Selected Dex");
         }
+
     }
+    //sometimes the token might be in the token bi map but does not have any graph edges 
+    //verify that
+    const fromEdges = graph[fromIndex];
+    const toEdges = graph[toIndex]
+
+    if (fromEdges.length === 0 || toEdges.length === 0) {
+        const { newGraph, newTokenBiMap } = await RouteJsonRpcProvider.findUpdateTokenPairPools(fromTokenString, toTokenString)
+        tokenBiMap = newTokenBiMap
+        graph = newGraph
+        if (fromEdges.length === 0 || toEdges.length === 0) {
+            throw new ApiError(400, "No Route found for this token Pair")
+        }
+    }
+
     const func = RouteJsonRpcProvider.getFunctionToMutateEdgeCost();
     const token = await getTokenDetails(
         (fromTokenString), provider
