@@ -48,13 +48,13 @@ const initAndGetCache = async <T>(): Promise<DexCache<T>> => {
 // Configuration
 const UPDATE_CONFIG = {
     // How often to check for new pools (minutes)
-    NEW_POOLS_INTERVAL: 1,
+    NEW_POOLS_INTERVAL: 10,
 
     // How often to refresh existing edge data (minutes)
-    EDGE_REFRESH_INTERVAL: 5,
+    EDGE_REFRESH_INTERVAL: 50,
 
     // Full rebuild interval as safety fallback (minutes)
-    FULL_REBUILD_INTERVAL: 60,
+    FULL_REBUILD_INTERVAL: 600,
 
     // Batch size for edge refreshes
     REFRESH_BATCH_SIZE: 10,
