@@ -12,6 +12,7 @@ import { get0gPrice, getTokenPrice } from "./price";
 import { Token } from "./type";
 
 import { NetworkType } from "./constants";
+import { createPublicClient, http, PublicClient } from "viem";
 
 // ==================== TYPES ====================
 
@@ -83,6 +84,7 @@ export interface DexConfig {
 export interface ChainConfig {
     name: string;
     network: NetworkType;
+    chainId: number;
     rpcUrl: string;
     wrappedNativeTokenAddress: string;
     wrappedTokenSymbol: string;
@@ -217,6 +219,7 @@ export class UniswapV3QuoteCalculator {
     provider: JsonRpcProvider;
     config: DexConfig;
     chainConfig: ChainConfig;
+    client: PublicClient
     private priceCache: Map<string, { price: number; timestamp: number }>;
     poolCache: Map<string, PoolData>;
     private readonly CACHE_DURATION = 0.5 * 60 * 1000; // 5 minutes
@@ -228,6 +231,30 @@ export class UniswapV3QuoteCalculator {
         this.priceCache = new Map();
         this.poolCache = new Map();
         this.chainConfig = chainConfig
+        this.client = createPublicClient(
+            {
+                chain: {
+                    rpcUrls: {
+                        default: {
+                            http: [chainConfig.rpcUrl]
+                        }
+                    },
+                    id: chainConfig.chainId,
+                    name: config.name,
+                    nativeCurrency: {
+                        name: chainConfig.nativeTokenSymbol,
+                        symbol: chainConfig.nativeTokenSymbol,
+                        decimals: 18
+                    },
+
+
+
+                },
+                transport: http(chainConfig.rpcUrl)
+            },
+
+        )
+
     }
     // ==================== PRICE METHODS ======================
 
@@ -736,6 +763,7 @@ export class UniswapV3QuoteCalculator {
         tokenIn: string,
         tokenOut: string,
         amountIn: string,
+        pool: string,
         fee: number,
         sqrtPriceLimitX96: string = "0"
     ): Promise<string> {

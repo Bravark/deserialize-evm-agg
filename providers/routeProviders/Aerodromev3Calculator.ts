@@ -9,6 +9,10 @@ import { UniswapV3QuoteCalculator, DexConfig, ChainConfig, PoolCreatedEvent, Poo
 import { Contract, JsonRpcProvider } from "ethers";
 import { NetworkType } from "./constants";
 import Decimal from "decimal.js";
+import { Address } from "viem";
+
+
+
 
 // ==================== AERODROME V3 ABI DEFINITIONS ====================
 
@@ -323,28 +327,42 @@ export class AerodromeV3QuoteCalculator extends UniswapV3QuoteCalculator {
         tokenIn: string,
         tokenOut: string,
         amountIn: string,
+        pool: string,
         tickSpacing: number = 100,
         sqrtPriceLimitX96: string = "0"
     ): Promise<string> {
+        const config = this.getConfig();
         if (!this.config.quoterAddress) {
             throw new Error("Quoter address not configured for Aerodrome");
         }
 
-        const { Contract } = await import("ethers");
-        const quoter = new Contract(
-            this.config.quoterAddress,
-            AERODROME_V3_QUOTER_ABI,
-            this.provider
-        );
+        const client = this.client
 
         try {
 
-            console.log('sqrtPriceLimitX96: ', sqrtPriceLimitX96);
-            const result = await quoter.quoteExactInputSingle.staticCall(
-                { tokenIn, tokenOut, amountIn: BigInt(amountIn), tickSpacing, sqrtPriceLimitX96: BigInt(sqrtPriceLimitX96) }
-            );
 
-            return result.amountOut.toString(); // amountOut
+            const poolContract = new Contract(
+                pool,
+                AERODROME_V3_POOL_ABI,
+                this.provider
+            );
+            const poolTickSpacing = await poolContract.tickSpacing();
+
+
+            const result = await client.readContract({
+                address: config.quoterAddress as Address,
+                abi: AERODROME_V3_QUOTER_ABI,
+                functionName: 'quoteExactInputSingle',
+                args: [{
+                    tokenIn: tokenIn as Address,
+                    tokenOut: tokenOut as Address,
+                    amountIn: BigInt(amountIn),
+                    tickSpacing: poolTickSpacing,
+                    sqrtPriceLimitX96: BigInt(sqrtPriceLimitX96),
+                }],
+            });
+
+            return result[0]; // amountOut
         } catch (error) {
             console.error("Aerodrome quote simulation failed:", error);
             return "0";

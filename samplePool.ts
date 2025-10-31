@@ -38,11 +38,13 @@ import { v3PoolAbi } from "@deserialize-evm-agg/routes-providers/v3FactoryAbi";
         fee: 2500
     }
 ]
+
+
 export async function exampleUsage() {
     // Initialize calculator with default Base configuration
-    // const calculator = new AerodromeV3QuoteCalculator(AERODROME_BASE_CONFIG, chain);
+    const calculator = new AerodromeV3QuoteCalculator(AERODROME_BASE_CONFIG, chain);
     // const calculator = new PancakeSwapV3Calculator(PANCAKE_BASE_CONFIG, chain);
-    const calculator = new AerodromeV3QuoteCalculator(AERODROME_BASE_CONFIG, BaseChain);
+    // const calculator = new UniswapV3QuoteCalculatorV2(UNISWAP_V3_BASE_CONFIG, BaseChain);
 
     // Example: Get quote for swapping 1 ETH to USDC
     const WETH = "0x4200000000000000000000000000000000000006";
@@ -71,7 +73,7 @@ export async function exampleUsage() {
             poolAddress: quote.poolAddress,
             fee: quote.fee.toString(),
         });
-        const simulation = await calculator.simulateTransaction(tokenA, tokenB, amount, 100)
+        const simulation = await calculator.simulateTransaction(tokenA, tokenB, amount, quote.poolAddress)
         console.log("Simulation Result:", simulation);
 
 

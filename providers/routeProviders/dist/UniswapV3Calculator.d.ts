@@ -8,6 +8,7 @@ import { ethers, Contract, JsonRpcProvider } from "ethers";
 import Decimal from "decimal.js";
 import { Token } from "./type";
 import { NetworkType } from "./constants";
+import { PublicClient } from "viem";
 export interface PoolInfo {
     pool: Contract;
     fee: number;
@@ -69,6 +70,7 @@ export interface DexConfig {
 export interface ChainConfig {
     name: string;
     network: NetworkType;
+    chainId: number;
     rpcUrl: string;
     wrappedNativeTokenAddress: string;
     wrappedTokenSymbol: string;
@@ -119,6 +121,7 @@ export declare class UniswapV3QuoteCalculator {
     provider: JsonRpcProvider;
     config: DexConfig;
     chainConfig: ChainConfig;
+    client: PublicClient;
     private priceCache;
     poolCache: Map<string, PoolData>;
     private readonly CACHE_DURATION;
@@ -149,7 +152,7 @@ export declare class UniswapV3QuoteCalculator {
         amountInFormattedInDecimal: Decimal;
         pool: PoolData;
     }): QuoteResult;
-    simulateTransaction(tokenIn: string, tokenOut: string, amountIn: string, fee: number, sqrtPriceLimitX96?: string): Promise<string>;
+    simulateTransaction(tokenIn: string, tokenOut: string, amountIn: string, pool: string, fee: number, sqrtPriceLimitX96?: string): Promise<string>;
     /**
      * Initializes and fetches all pool creation events from the factory
      * This function scans the blockchain for PoolCreated events to build a pool registry

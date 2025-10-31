@@ -1,6 +1,7 @@
 import { Contract, JsonRpcProvider } from "ethers";
 import { ChainConfig, DexConfig, UniswapV3QuoteCalculator } from "./UniswapV3Calculator";
 import Decimal from "decimal.js";
+import { Address } from "viem";
 
 export const UNISWAP_V3_QUOTER_V2_ABI = [
     {
@@ -43,6 +44,7 @@ export class UniswapV3QuoteCalculatorV2 extends UniswapV3QuoteCalculator {
         tokenIn: string,
         tokenOut: string,
         amountIn: string,
+        pool: string,
         fee: number,
         sqrtPriceLimitX96: string = "0"
     ): Promise<string> {
@@ -51,27 +53,34 @@ export class UniswapV3QuoteCalculatorV2 extends UniswapV3QuoteCalculator {
         if (!config.quoterAddress) {
             throw new Error("Quoter address not configured for PancakeSwap V3");
         }
+        const client = this.client
 
 
-        const quoter = new Contract(
-            config.quoterAddress,
-            UNISWAP_V3_QUOTER_V2_ABI,
-            this.getProvider()
-        );
 
         try {
 
 
-            const result = await quoter.quoteExactInputSingle.staticCall({
-                tokenIn,
-                tokenOut,
-                amountIn: new Decimal(amountIn).toFixed(),
-                fee: new Decimal(fee).toFixed(),
-                sqrtPriceLimitX96: sqrtPriceLimitX96 || "0",
+            // Convert amountIn to bigint
+            const amountInBN = BigInt(new Decimal(amountIn).toFixed(0));
+            const sqrtPriceLimitBN = BigInt(sqrtPriceLimitX96 || "0");
+
+            // Call the quoter contract
+            const result = await client.readContract({
+                address: config.quoterAddress as Address,
+                abi: UNISWAP_V3_QUOTER_V2_ABI,
+                functionName: 'quoteExactInputSingle',
+                args: [{
+                    tokenIn: tokenIn as Address,
+                    tokenOut: tokenOut as Address,
+                    amountIn: amountInBN,
+                    fee: fee,
+                    sqrtPriceLimitX96: sqrtPriceLimitBN,
+                }],
             });
 
-
-            return result[0].toString();
+            console.log('result: ', result);
+            // result is a tuple: [amountOut, sqrtPriceX96After, initializedTicksCrossed, gasEstimate]
+            return result[0];
 
         } catch (error) {
             console.error("UniswapV3 QuoterV2 simulation failed:", error);

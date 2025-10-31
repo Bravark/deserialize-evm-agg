@@ -171,6 +171,7 @@ export class PancakeSwapV3Calculator extends UniswapV3QuoteCalculator {
         tokenIn: string,
         tokenOut: string,
         amountIn: string,
+        pool: string,
         fee: number,
         sqrtPriceLimitX96: string = "0"
     ): Promise<string> {

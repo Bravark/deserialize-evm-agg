@@ -958,6 +958,7 @@ export const getTransactionInstructionFromRoutePlanV3 = async <DexIdTypes>(
             route.tokenA,
             route.tokenB,
             currentAmountIn.toString(),
+            route.poolAddress,
             route.fee,
         );
 
