@@ -134,7 +134,7 @@ export const tokenListController = async (
     res: Response,
     next: NextFunction
 ) => {
-    console.log("Token List accessed");
+    // console.log("Token List accessed");
     try {
 
         //parse the data
@@ -155,7 +155,7 @@ export const tokenPriceController = async (
     res: Response,
     next: NextFunction
 ) => {
-    console.log("Token List accessed");
+    // console.log("Token List accessed");
     try {
 
         //parse the data
@@ -179,7 +179,7 @@ export const tokenDetailsController = async (
     res: Response,
     next: NextFunction
 ) => {
-    console.log("Token List accessed");
+    // console.log("Token List accessed");
     try {
 
         //parse the data
