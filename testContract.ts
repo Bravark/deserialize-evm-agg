@@ -104,4 +104,4 @@ async function testMultiRouteSwap() {
 
 
 // Run the function
-testMultiRouteSwap().catch(console.error);
+// testMultiRouteSwap().catch(console.error);

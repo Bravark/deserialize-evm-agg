@@ -70,7 +70,7 @@ export const getBestRoutes = async (
 }> => {
     const provider = _provider
     const RouteJsonRpcProviderClass = getChainAllRoute(network);
-    console.log('network: ', network);
+
     const cache = await initAndGetCache()
     const RouteJsonRpcProvider = new RouteJsonRpcProviderClass(provider, cache);
     const config = RouteJsonRpcProvider.getDexConfig()
@@ -78,7 +78,7 @@ export const getBestRoutes = async (
     let { tokenBiMap } = await RouteJsonRpcProvider.getTokenBiMap();
 
     let graph = await RouteJsonRpcProvider.getGraph();
-    console.log('graph: ', graph.length);
+
     let path: number[][] = [];
     let keyRate;
 
@@ -101,11 +101,9 @@ export const getBestRoutes = async (
         toTokenString = config.wrappedNativeTokenAddress
     }
     let fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
-    console.log('fromTokenString: ', fromTokenString);
-    console.log('fromIndex: ', fromIndex);
+
     let toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
-    console.log('toTokenString: ', toTokenString);
-    console.log('toIndex: ', toIndex);
+
     if (fromIndex === undefined || toIndex === undefined) {
         console.log(
             "Token not found in the tokenBiMap: Token Not yet Supported by the Selected Dex"
@@ -152,7 +150,7 @@ export const getBestRoutes = async (
         options?.targetRouteNumber,
         func
     );
-    console.log('_path: ', _path);
+
     path = _path;
     if (path.length < 1) {
         console.log("No route found");

@@ -39,11 +39,14 @@ if (!parsedEnv.success) {
 }
 const host = process.env.HOST || "localhost";
 
+const hostToUse = "18.135.119.216"
+
+
 const env = parsedEnv.data;
 
 const config = {
 
-  REDIS_URL: `redis://${env.REDIS_USER}:${env.REDIS_PASSWORD}@${host}:${env.REDIS_PORT}`,
+  REDIS_URL: `redis://${env.REDIS_USER}:${env.REDIS_PASSWORD}@${hostToUse}:${env.REDIS_PORT}`,
 
 
 };

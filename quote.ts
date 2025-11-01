@@ -34,5 +34,5 @@ const testQuote = async () => {
     console.log('graph:', newGraph);
 }
 
-testQuote()
+// testQuote()
 

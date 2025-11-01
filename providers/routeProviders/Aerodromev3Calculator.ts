@@ -347,6 +347,7 @@ export class AerodromeV3QuoteCalculator extends UniswapV3QuoteCalculator {
                 this.provider
             );
             const poolTickSpacing = await poolContract.tickSpacing();
+            console.log('poolTickSpacing: ', poolTickSpacing);
 
 
             const result = await client.readContract({

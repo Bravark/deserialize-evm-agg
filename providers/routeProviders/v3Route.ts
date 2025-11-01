@@ -746,7 +746,7 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
         const priceUsdc = await this.getSurePriceOfToken(
             data.token0.address,
         );
-        console.log('priceUsdc: ', priceUsdc);
+        // console.log('priceUsdc: ', priceUsdc);
 
         const rPriceUsdc = await this.getSurePriceOfToken(
             data.token1.address,
@@ -758,7 +758,7 @@ export class BaseV3Route<DexIdTypes> implements IRoute<PoolData, DexIdTypes> {
             data.token1.decimals,
             !r
         );
-        console.log('price: ', price);
+        // console.log('price: ', price);
         const res: SwapQuoteParamWithEdgeData<PoolData> = {
             price,
             priceUsdc: r ? rPriceUsdc : priceUsdc,
@@ -951,7 +951,7 @@ export const getTransactionInstructionFromRoutePlanV3 = async <DexIdTypes>(
 
     for (let i = 0; i < routePlan.length; i++) {
         const route = routePlan[i];
-        console.log("currentAmountIn: ", currentAmountIn);
+
 
 
         const amountOut = await calculator.simulateTransaction(
