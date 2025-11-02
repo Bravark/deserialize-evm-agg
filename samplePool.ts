@@ -39,18 +39,18 @@ import { v3PoolAbi } from "@deserialize-evm-agg/routes-providers/v3FactoryAbi";
     }
 ]
 
-const i = {
+const t = {
     tokenA: '0x4200000000000000000000000000000000000006',
-    tokenB: '0x226a2fa2556c48245e57cd1cba4c6c9e67077dd2',
-    dexId: 'AERODROME_V3_BASE',
-    poolAddress: '0xaAe3e524D8f36C472011BD6F7d9B73BA1afBC79f',
+    tokenB: '0x1bc0c42215582d5a085795f4badbac3ff36d1bcb',
+    dexId: 'PANCAKE_V3_BASE',
+    poolAddress: '0x6e3d4EE4f11E3351B0Ef917d4a41d8f3442be2e4',
     aToB: false,
-    fee: 3000
+    fee: 10000
 }
 
 export async function exampleUsage() {
     // Initialize calculator with default Base configuration
-    const calculator = new AerodromeV3QuoteCalculator(AERODROME_BASE_CONFIG, chain);
+    const calculator = new PancakeSwapV3Calculator(PANCAKE_BASE_CONFIG, chain);
     // const calculator = new PancakeSwapV3Calculator(PANCAKE_BASE_CONFIG, chain);
     // const calculator = new UniswapV3QuoteCalculatorV2(UNISWAP_V3_BASE_CONFIG, BaseChain);
 
@@ -59,8 +59,8 @@ export async function exampleUsage() {
     const USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
     const tokenA = "0x4200000000000000000000000000000000000006";
-    const tokenB = "0x226a2fa2556c48245e57cd1cba4c6c9e67077dd2"
-    const pool = "0xaAe3e524D8f36C472011BD6F7d9B73BA1afBC79f"
+    const tokenB = "0x1bc0c42215582d5a085795f4badbac3ff36d1bcb"
+    const pool = "0x6e3d4EE4f11E3351B0Ef917d4a41d8f3442be2e4"
     const amount = "292300000000000000"
 
     try {
@@ -83,7 +83,7 @@ export async function exampleUsage() {
             poolAddress: quote.poolAddress,
             fee: quote.fee.toString(),
         });
-        const simulation = await calculator.simulateTransaction(tokenA, tokenB, amount, pool, 200)
+        const simulation = await calculator.simulateTransaction(tokenA, tokenB, amount, pool, 10000)
         console.log("Simulation Result:", simulation);
 
 

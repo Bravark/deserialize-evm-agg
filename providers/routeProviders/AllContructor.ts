@@ -9,6 +9,7 @@ import { RouteConstructor } from "./v3Route";
 import { ChainConfig, UniswapV3QuoteCalculator } from "./UniswapV3Calculator";
 import { createSwapTX } from "@deserialize-evm-agg/swap-contract-sdk";
 import { NetworkType } from "./constants";
+import { wrap } from "module";
 
 export type AllRouteConstructor<DexIdTypes extends string> = new (
     provider: JsonRpcProvider,
@@ -945,8 +946,20 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
     };
 
     getDexConfig = () => {
-        console.warn("dexConfig is ment for individual route providers, not the aggregator, please work on this, this will just return the first route provider config");
-        return new this.routeProviders[0](this.provider, this.cache).getDexConfig();
+        return {
+            wrappedNativeTokenAddress: this.chainConfig.wrappedNativeTokenAddress,
+            nativeTokenAddress: this.chainConfig.nativeTokenAddress,
+            stableTokenAddress: this.chainConfig.stableTokenAddress,
+            factoryAddress: "",
+            routerAddress: "",
+            name: "ALL",
+            dexId: "ALL" as DexIdTypes,
+            supportsNativeToken: true,
+            logoURI: "",
+            quoterAddress: "",
+            network: this.network,
+            abi: []
+        }
     };
 
     getSurePriceOfToken = async (tokenAddress: string) => {

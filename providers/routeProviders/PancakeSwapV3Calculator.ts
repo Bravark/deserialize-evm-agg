@@ -201,8 +201,21 @@ export class PancakeSwapV3Calculator extends UniswapV3QuoteCalculator {
             return res
 
         } catch (error) {
-            console.error("PancakeSwap V3 QuoterV2 simulation failed:", error);
-            throw error;
+            console.warn("PancakeSwap V3 QuoterV2 simulation failed:, i will fall back to finding the best pool for this pair");
+            //we will try to find the best pool for the pair here
+            const bestPool = await this.findBestPool(tokenIn, tokenOut, this.getFeeTiers())
+            console.log('bestPool: ', bestPool.address);
+            const result = await quoter.quoteExactInputSingle.staticCall({
+                tokenIn,
+                tokenOut,
+                amountIn: new Decimal(amountIn).toFixed(),
+                fee: bestPool.fee,
+                sqrtPriceLimitX96: sqrtPriceLimitX96 || "0",
+            });
+            const res = result[0].toString();
+            console.log('current amount out: ', res);
+            return res
+
         }
     }
 
