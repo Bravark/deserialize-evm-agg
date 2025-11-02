@@ -39,6 +39,14 @@ import { v3PoolAbi } from "@deserialize-evm-agg/routes-providers/v3FactoryAbi";
     }
 ]
 
+const i = {
+    tokenA: '0x4200000000000000000000000000000000000006',
+    tokenB: '0x226a2fa2556c48245e57cd1cba4c6c9e67077dd2',
+    dexId: 'AERODROME_V3_BASE',
+    poolAddress: '0xaAe3e524D8f36C472011BD6F7d9B73BA1afBC79f',
+    aToB: false,
+    fee: 3000
+}
 
 export async function exampleUsage() {
     // Initialize calculator with default Base configuration
@@ -51,7 +59,8 @@ export async function exampleUsage() {
     const USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
     const tokenA = "0x4200000000000000000000000000000000000006";
-    const tokenB = "0x6f8c1de07c9e59a8289705b1033af383dc3681b1"
+    const tokenB = "0x226a2fa2556c48245e57cd1cba4c6c9e67077dd2"
+    const pool = "0xaAe3e524D8f36C472011BD6F7d9B73BA1afBC79f"
     const amount = "292300000000000000"
 
     try {
@@ -64,6 +73,7 @@ export async function exampleUsage() {
             tokenOut: tokenB,
             amountIn: Number(amount),
 
+
         });
 
         console.log("Quote Result:", {
@@ -73,7 +83,7 @@ export async function exampleUsage() {
             poolAddress: quote.poolAddress,
             fee: quote.fee.toString(),
         });
-        const simulation = await calculator.simulateTransaction(tokenA, tokenB, amount, quote.poolAddress)
+        const simulation = await calculator.simulateTransaction(tokenA, tokenB, amount, pool, 200)
         console.log("Simulation Result:", simulation);
 
 
@@ -89,4 +99,4 @@ export async function exampleUsage() {
         console.error("Error:", error);
     }
 }
-// exampleUsage()
+exampleUsage()

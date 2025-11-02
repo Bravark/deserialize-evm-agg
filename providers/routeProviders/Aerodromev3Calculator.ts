@@ -247,10 +247,10 @@ export class AerodromeV3QuoteCalculator extends UniswapV3QuoteCalculator {
                 const liquidity = new Decimal((await pool.liquidity()).toString());
 
                 if (liquidity.gt(0) && (!bestPool || liquidity.gt(bestPool.liquidity))) {
-                    const fee = calculateFeeFromTickSpacing(tickSpacing);
+
                     bestPool = {
                         pool,
-                        fee,
+                        fee: tickSpacing,
                         liquidity,
                         address: poolAddress,
                     };
@@ -273,8 +273,70 @@ export class AerodromeV3QuoteCalculator extends UniswapV3QuoteCalculator {
     public async getAllPools(abi = AERODROME_V3_FACTORY_ABI, fromBlock?: string) {
         return super.getAllPools(abi, fromBlock);
     }
-    async findAllPools(tokenA: string, tokenB: string, feeTiers?: number[]): Promise<(PoolInfo & { poolData: PoolData })[]> {
-        return super.findAllPools(tokenA, tokenB, feeTiers);
+
+    public async findAllPools(
+        tokenA: string,
+        tokenB: string,
+        feeTiers = AERODROME_TICK_SPACINGS
+    ): Promise<(PoolInfo & { poolData: PoolData })[]> {
+        const factory = new Contract(this.config.factoryAddress, AERODROME_V3_FACTORY_ABI, this.provider);
+
+        // Normalize wrapped/native
+        if (tokenA.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenA = this.config.wrappedNativeTokenAddress;
+        }
+        if (tokenB.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenB = this.config.wrappedNativeTokenAddress;
+        }
+        if (tokenA.toLowerCase() === tokenB.toLowerCase()) {
+            throw new Error("TokenA and TokenB cannot be the same");
+        }
+
+        const foundPools = await Promise.all(
+            feeTiers.map(async (fee) => {
+                try {
+                    const poolAddress: string = await factory.getPool(tokenA, tokenB, fee);
+
+                    // 🧠 Early skip for zero address
+                    if (
+                        !poolAddress ||
+                        poolAddress.toLowerCase() === "0x0000000000000000000000000000000000000000"
+                    ) {
+                        return null;
+                    }
+
+                    const pool = new Contract(poolAddress, AERODROME_V3_POOL_ABI, this.provider);
+
+                    // ⚠️ If this throws for non-existent pools, it'll be caught below
+                    const liquidityRaw = await pool.liquidity();
+                    const liquidity = new Decimal(liquidityRaw.toString());
+
+
+
+                    if (liquidity.lte(0)) return null;
+
+                    // only now fetch poolData since it's a heavier call
+                    const poolData = await this.getPoolData(poolAddress);
+
+                    const res = {
+                        pool,
+                        fee,
+                        liquidity,
+                        address: poolAddress,
+                        poolData,
+                    };
+
+
+                    return res;
+                } catch (error) {
+                    console.warn(`Error checking pool for fee ${fee} on DEX {${this.config.name}}`);
+                    return null;
+                }
+            })
+        );
+
+        const clean = foundPools.filter((p): p is PoolInfo & { poolData: PoolData } => p !== null);
+        return clean;
     }
 
     getAllPoolsFromEvents = async (

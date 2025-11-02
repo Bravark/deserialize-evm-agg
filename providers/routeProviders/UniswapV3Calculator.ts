@@ -585,6 +585,11 @@ export class UniswapV3QuoteCalculator {
                     const liquidityRaw = await pool.liquidity();
                     const liquidity = new Decimal(liquidityRaw.toString());
 
+                    if (!liquidity) {
+                        console.warn(`Liquidity fetch failed for pool at ${poolAddress} on DEX {${this.config.name}}`);
+                        return null;
+                    }
+
                     if (liquidity.lte(0)) return null;
 
                     // only now fetch poolData since it's a heavier call
@@ -861,7 +866,7 @@ export class UniswapV3QuoteCalculator {
                 const batchPools = events.map((event: any) => ({
                     token0: event.args.token0,
                     token1: event.args.token1,
-                    fee: event.args.fee?.toString() || event.args.tickSpacing?.toString(),
+                    fee: event.args.fee?.toString(),
                     poolAddress: event.args.pool,
                     blockNumber: event.blockNumber.toString(),
                     tickSpacing: event.args.tickSpacing?.toString(), // Aerodrome specific
@@ -910,7 +915,23 @@ export class UniswapV3QuoteCalculator {
         for (const pool of pools) {
             try {
                 // Fetch pool data for each created pool
+                //verify liquidity first before fetching full data
+                const poolContract = new Contract(pool.poolAddress, POOL_ABI, this.provider);
+                const liquidityRaw = await poolContract.liquidity();
+                const liquidity = new Decimal(liquidityRaw.toString());
+
+
+                if (liquidity.lte(0)) {
+                    console.log(`Liquidity is zero for pool at ${pool.poolAddress}`);
+                    continue; // skip pools with zero liquidity
+                }
+
+
                 const poolData = await this.getPoolData(pool.poolAddress);
+                if (poolData.liquidity === '0') {
+                    continue; // skip pools with zero liquidity
+                }
+
                 console.log('poolData: ', poolData.poolAddress);
                 poolData.blockNumber = pool.blockNumber.toString()
                 poolsData.push(poolData);
