@@ -882,22 +882,24 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         provider?: JsonRpcProvider
     ) => {
         let currentAmountIn = new Decimal(amountFormattedToTokenDecimal);
-
+        const changedPoolList = []
         for (const plan of routePlan) {
             const RouteProviderClass = this.getRouteProviderByDexId(plan.dexId as string);
             const route = new RouteProviderClass(provider || this.provider, this.cache);
 
-            const { amountOut } = await route.getAmountOutFromPlan(
+            const { amountOut, pools } = await route.getAmountOutFromPlan(
                 currentAmountIn,
-                [plan],
+                [plan], //that is because of this
                 devFeeRate,
                 provider
             );
 
+            console.log('this has to be one item or else the logic breaks pools: ', pools);
             currentAmountIn = amountOut;
+            changedPoolList.push(pools[0])
         }
 
-        return { amountOut: currentAmountIn };
+        return { amountOut: currentAmountIn, pools: changedPoolList };
     };
 
     getTokenPairEdgeData = async (tokenA: string, tokenB: string) => {

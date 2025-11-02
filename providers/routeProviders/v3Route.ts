@@ -948,13 +948,12 @@ export const getTransactionInstructionFromRoutePlanV3 = async <DexIdTypes>(
     // });
 
     let currentAmountIn = new Decimal(amountFormattedToTokenDecimal);
+    const changedPoolList = []
 
     for (let i = 0; i < routePlan.length; i++) {
         const route = routePlan[i];
 
-
-
-        const amountOut = await calculator.simulateTransaction(
+        const { amountOut, pool } = await calculator.simulateTransaction(
             route.tokenA,
             route.tokenB,
             currentAmountIn.toString(),
@@ -963,10 +962,12 @@ export const getTransactionInstructionFromRoutePlanV3 = async <DexIdTypes>(
         );
 
         currentAmountIn = new Decimal(amountOut)
+        changedPoolList.push(pool)
     }
 
-    return { amountOut: currentAmountIn };
+    return { amountOut: currentAmountIn, pools: changedPoolList };
 };
+
 
 export const getTransactionFromRoutePlanZeroG = async <DexIdTypes>(
     dexConfig: DexConfig,

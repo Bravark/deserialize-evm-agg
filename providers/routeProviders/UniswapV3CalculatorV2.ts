@@ -47,7 +47,7 @@ export class UniswapV3QuoteCalculatorV2 extends UniswapV3QuoteCalculator {
         pool: string,
         fee: number,
         sqrtPriceLimitX96: string = "0"
-    ): Promise<string> {
+    ): Promise<{ amountOut: string, pool: string }> {
         console.log('fee: ', fee);
         const config = this.getConfig();
         if (!config.quoterAddress) {
@@ -80,7 +80,7 @@ export class UniswapV3QuoteCalculatorV2 extends UniswapV3QuoteCalculator {
 
             console.log('result: ', result);
             // result is a tuple: [amountOut, sqrtPriceX96After, initializedTicksCrossed, gasEstimate]
-            return result[0];
+            return { amountOut: result[0], pool };
 
         } catch (error) {
             console.error("UniswapV3 QuoterV2 simulation failed:", error);

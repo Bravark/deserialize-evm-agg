@@ -152,7 +152,10 @@ export declare class UniswapV3QuoteCalculator {
         amountInFormattedInDecimal: Decimal;
         pool: PoolData;
     }): QuoteResult;
-    simulateTransaction(tokenIn: string, tokenOut: string, amountIn: string, pool: string, fee: number, sqrtPriceLimitX96?: string): Promise<string>;
+    simulateTransaction(tokenIn: string, tokenOut: string, amountIn: string, pool: string, fee: number, sqrtPriceLimitX96?: string): Promise<{
+        amountOut: string;
+        pool: string;
+    }>;
     /**
      * Initializes and fetches all pool creation events from the factory
      * This function scans the blockchain for PoolCreated events to build a pool registry

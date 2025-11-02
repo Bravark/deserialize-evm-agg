@@ -174,7 +174,7 @@ export class PancakeSwapV3Calculator extends UniswapV3QuoteCalculator {
         pool: string,
         fee: number,
         sqrtPriceLimitX96: string = "0"
-    ): Promise<string> {
+    ): Promise<{ amountOut: string, pool: string }> {
         const config = this.getConfig();
         if (!config.quoterAddress) {
             throw new Error("Quoter address not configured for PancakeSwap V3");
@@ -198,7 +198,7 @@ export class PancakeSwapV3Calculator extends UniswapV3QuoteCalculator {
             });
             const res = result[0].toString();
             console.log('current amount out: ', res);
-            return res
+            return { amountOut: res, pool }
 
         } catch (error) {
             console.warn("PancakeSwap V3 QuoterV2 simulation failed:, i will fall back to finding the best pool for this pair");
@@ -214,7 +214,7 @@ export class PancakeSwapV3Calculator extends UniswapV3QuoteCalculator {
             });
             const res = result[0].toString();
             console.log('current amount out: ', res);
-            return res
+            return { amountOut: res, pool: bestPool.address }
 
         }
     }

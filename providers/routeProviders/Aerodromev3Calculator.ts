@@ -392,7 +392,7 @@ export class AerodromeV3QuoteCalculator extends UniswapV3QuoteCalculator {
         pool: string,
         tickSpacing: number = 100,
         sqrtPriceLimitX96: string = "0"
-    ): Promise<string> {
+    ): Promise<{ amountOut: string, pool: string }> {
         const config = this.getConfig();
         if (!this.config.quoterAddress) {
             throw new Error("Quoter address not configured for Aerodrome");
@@ -425,10 +425,10 @@ export class AerodromeV3QuoteCalculator extends UniswapV3QuoteCalculator {
                 }],
             });
 
-            return result[0]; // amountOut
+            return { amountOut: result[0], pool }; // amountOut
         } catch (error) {
             console.error("Aerodrome quote simulation failed:", error);
-            return "0";
+            return { amountOut: "0", pool };
         }
     }
 

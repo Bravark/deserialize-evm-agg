@@ -771,7 +771,7 @@ export class UniswapV3QuoteCalculator {
         pool: string,
         fee: number,
         sqrtPriceLimitX96: string = "0"
-    ): Promise<string> {
+    ): Promise<{ amountOut: string, pool: string }> {
         if (!this.config.quoterAddress) {
             throw new Error("Quoter address not configured for this DEX");
         }
@@ -791,10 +791,10 @@ export class UniswapV3QuoteCalculator {
                 new Decimal(amountIn).toFixed(),
                 sqrtPriceLimitX96
             );
-            return amountOut.toString();
+            return { amountOut: amountOut.toString(), pool: pool };
         } catch (error) {
             console.error("Quote simulation failed:", error);
-            return "0"
+            return { amountOut: "0", pool }
         }
     }
     // ==================== POOL DISCOVERY ====================

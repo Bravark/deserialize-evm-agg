@@ -33,7 +33,7 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
         const isNativeOut = params.tokenB.toLowerCase() === RouteJsonRpcProvider.getDexConfig().nativeTokenAddress.toLowerCase()
         console.log('routes: ', routes);
 
-        const { amountOut } =
+        const { amountOut, pools } =
             await RouteJsonRpcProvider.getAmountOutFromPlan(
                 new Decimal(params.amountIn),
                 routes,
@@ -43,9 +43,17 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
             );
         // Get token price
         let tokenPrice = new Decimal(0);
+
+        const finalRoutes = routes.map((r, i) => {
+            return {
+                ...r,
+                poolAddress: pools[i]
+            }
+        })
+
         try {
 
-            const p = await RouteJsonRpcProvider.calculateRoutePrice(routes);
+            const p = await RouteJsonRpcProvider.calculateRoutePrice(finalRoutes);
             tokenPrice = new Decimal(p)
         } catch (error) {
 
@@ -61,7 +69,7 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
             // priceImpact: priceImpact.toFixed(2),
             // priceImpactInUsd: priceImpactInUsd,
             // feeRate: feeRate.toString(),
-            routePlan: routes,
+            routePlan: finalRoutes,
             dexId: params.dexId,
             dexFactory: dexConfig.factoryAddress,
             isNativeIn,

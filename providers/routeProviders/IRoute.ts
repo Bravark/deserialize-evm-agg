@@ -88,6 +88,7 @@ export interface IRoute<TPool, DexIdTypes> {
         provider?: JsonRpcProvider
     ) => Promise<{
         amountOut: Decimal;
+        pools: string[]
     }>;
     refreshGraphEdges: (graph: Graph, tokenBiMap: ArrayBiMap<string>, poolData: TPool[], _provider?: JsonRpcProvider) => Promise<Graph>
     getAllExistingPoolData: (provider?: JsonRpcProvider) => Promise<TPool[]>

@@ -1,8 +1,10 @@
 import { ethers } from "ethers";
+import { BaseChain } from "./providers/routeProviders";
 
 
+const privateKey = "0xcd90354282b35344616d6b53684684bef6e8673ed601d562a5866dc67fafd1ef"
 
-(async () => {
+const test0g = async () => {
     // const W0G = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
     const NATIVE = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
     const W0G = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
@@ -10,7 +12,6 @@ import { ethers } from "ethers";
     const local = "http://localhost:3735"
     const prod = "http://evm-api.deserialize.xyz"
     const baseUrl = prod
-    const privateKey = "0xcd90354282b35344616d6b53684684bef6e8673ed601d562a5866dc67fafd1ef"
     const provider = new ethers.JsonRpcProvider("https://evmrpc.0g.ai");
     const wallet = new ethers.Wallet(privateKey, provider);
 
@@ -73,10 +74,81 @@ import { ethers } from "ethers";
     //you can sign and send the transaction here
 
 
-})
+}
+const testBase = async () => {
+    // const W0G = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
+    const NATIVE = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
+    const WETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
 
-"
+    const local = "http://localhost:3735"
+    const prod = "http://evm-api.deserialize.xyz/BASE"
+    const baseUrl = prod
+    const provider = new ethers.JsonRpcProvider(BaseChain.rpcUrl);
+    const wallet = new ethers.Wallet(privateKey, provider);
 
+    const userInput = {
+        tokenA: WETH,
+        tokenB: "0x1bc0c42215582d5A085795f4baDbaC3ff36d1Bcb",
+        amountIn: (0.00001 * (10 ** 18)).toString(),
+        dexId: "ALL_BASE"
+    }
+
+    // const userInput = {
+    //     tokenA: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
+    //     tokenB: W0G,
+    //     amountIn: "100000000000",
+    //     dexId: "ALL"
+    // }
+
+    const res = await fetch(`${baseUrl}/quote`, {
+        method: "POST",
+        body: JSON.stringify(userInput),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+
+    const data = await res.json()
+    console.log("data: ", data)
+
+    const quote = { ...data, dexId: "ALL" }
+    const quoteData = {
+        quote, publicKey: wallet.address, slippage: 0.5,
+        // partnerFees: { recipient: "0x3766c4a45e7a73874dbcaa51b1d73627cb9b9c1b", fee: 1 }
+    }
+
+
+    const swapRes = await fetch(`${baseUrl}/swap`, {
+        method: "POST",
+        body: JSON.stringify(quoteData),
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+
+    const swapData = await swapRes.json()
+    console.log("swapData: ", swapData)
+
+    for (const tx of swapData.transactions) {
+        // const signedTx = await wallet.signTransaction(tx);
+        //send transaction
+        console.log("tx: ", tx);
+
+        // return
+        const txResponse = await wallet.sendTransaction({ ...tx })
+        console.log("txResponse: ", txResponse);
+        const receipt = await txResponse.wait();
+        console.log("Transaction was mined in block ", await receipt?.getTransaction());
+
+    }
+
+    //you can sign and send the transaction here
+
+
+}
+
+
+testBase()
 
 //       poolAddress: '0x9851711E9F9d5e4f5959daD835556c0BfbdB0e63',
 
