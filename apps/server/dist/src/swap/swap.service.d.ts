@@ -9,7 +9,14 @@ export declare const swapQuoteService: (params: SwapQuoteRequestType, provider: 
     amountIn: string;
     amountOut: Decimal;
     tokenPrice: string;
-    routePlan: import("@deserialize-evm-agg/routes-providers").DeserializeRoutePlan<AllDexIdTypes>[];
+    routePlan: {
+        poolAddress: string;
+        tokenA: string;
+        tokenB: string;
+        fee: number;
+        aToB: boolean;
+        dexId: AllDexIdTypes;
+    }[];
     dexId: string;
     dexFactory: any;
     isNativeIn: boolean;
