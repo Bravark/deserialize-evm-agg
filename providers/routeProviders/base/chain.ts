@@ -3,7 +3,7 @@ import { ChainConfig } from "../UniswapV3Calculator";
 export const chain: ChainConfig = {
     name: "Base",
     network: "BASE",
-    rpcUrl: "https://base-mainnet.g.alchemy.com/v2/BJ3c0bm5npmsKZ6oAdHPU",
+    rpcUrl: "https://base-mainnet.g.alchemy.com/v2/nhjW11pbrLjj0j3VaFMvz",
     wrappedNativeTokenAddress: "0x4200000000000000000000000000000000000006",
     wrappedTokenSymbol: "WETH",
     nativeTokenAddress: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
