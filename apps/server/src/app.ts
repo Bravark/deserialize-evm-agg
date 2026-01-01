@@ -1,9 +1,12 @@
 // app.ts
 import express, { Express, Router } from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
 import { pageNotFoundExceptionHandler } from "./errors/notFoundExceptionHandler";
 import { errorConverter, errorHandler } from "./middleware/errorMiddleware";
 import { initAndGetCache } from ".";
+import { swaggerOptions } from "./swagger/swagger.config";
 
 
 
@@ -26,7 +29,19 @@ export async function setupApp(routes: Router[]): Promise<Express> {
   app.use(cors());
   app.use(express.json());
 
+  // Swagger documentation setup
+  const swaggerSpec = swaggerJsdoc(swaggerOptions);
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'EVM Aggregator API Documentation',
+  }));
 
+  // Expose Swagger JSON
+  app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
 
   // Route setup
   app.use(...routes);

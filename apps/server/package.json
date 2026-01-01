@@ -14,12 +14,16 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "http-errors": "^2.0.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/http-errors": "^2.0.5",
-    "@types/lodash": "^4.17.20"
+    "@types/lodash": "^4.17.20",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8"
   }
 }
