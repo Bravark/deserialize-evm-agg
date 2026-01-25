@@ -10,6 +10,7 @@ export * from "./utils"
 
 import { AllRoute0G, DEX_IDS_0G, dexIdList0G, DexIdTypes0G, OgChain } from "./0g"
 import { AllRouteBase, dexIdListBase, DEX_IDS_BASE, DexIdTypesBase, BaseChain } from "./base"
+import { AllRouteArbitrum, DEX_IDS_ARBITRUM } from "arbitrum"
 
 
 export const getChainAllRoute = (chainName: NetworkType) => {
@@ -18,6 +19,8 @@ export const getChainAllRoute = (chainName: NetworkType) => {
             return AllRoute0G
         case "BASE":
             return AllRouteBase
+        case "ARBITRUM":
+            return AllRouteArbitrum
         default:
             throw new Error(`Unsupported chain: ${chainName}`);
     }
@@ -43,6 +46,8 @@ export const getChainDexIds = (chainName: NetworkType) => {
             return DEX_IDS_0G;
         case "BASE":
             return DEX_IDS_BASE;
+        case "ARBITRUM":
+            return DEX_IDS_ARBITRUM
         default:
             throw new Error(`Unsupported chain: ${chainName}`);
     }

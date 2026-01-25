@@ -23,11 +23,11 @@ export const PANCAKE_BASE_CONFIG: DexConfig = {
 }
 const calculator = new PancakeSwapV3Calculator(PANCAKE_BASE_CONFIG, chain);
 
-export const PancakeV3BaseRoute = createV3Route(
+export const PancakeV3ArbitrumRoute = createV3Route(
     PANCAKE_BASE_CONFIG,
     chain,
     "PANCAKE_V3_BASE",
     calculator
 );
 // Export type for convenience
-export type PancakeV3BaseRouteType = InstanceType<typeof PancakeV3BaseRoute>;
+export type PancakeV3ArbitrumRouteType = InstanceType<typeof PancakeV3ArbitrumRoute>;

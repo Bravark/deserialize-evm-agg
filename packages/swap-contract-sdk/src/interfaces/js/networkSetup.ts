@@ -1,7 +1,7 @@
 
 
 export const networkSetup = (network: { id: string, rpc: string }) => {
-    const config = { rpc: "", addresses: { adapterTracker: "", swapProxy: "", nativeToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" } }
+    let config = { rpc: "", addresses: { adapterTracker: "", swapProxy: "", nativeToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" } }
     if (network.id == "0G") {
         config.rpc = network.rpc;
         config.addresses.adapterTracker = "0xc4b688854e870408E82519204918c8130Fbe4764";
@@ -14,5 +14,11 @@ export const networkSetup = (network: { id: string, rpc: string }) => {
         config.addresses.swapProxy = "0xADb0018bCF10b7dD84B7C3e2D92889185DA41f45";
         return config
     }
-    return config
+    // if (network.id == "ARBITRUM") {
+    //     config.rpc = network.rpc;
+    //     config.addresses.adapterTracker = "";
+    //     config.addresses.swapProxy = "";
+    //     return config
+    // }
+    throw new Error("Chain not supported")
 }
