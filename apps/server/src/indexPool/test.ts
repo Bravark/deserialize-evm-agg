@@ -96,6 +96,6 @@ const updateCacheData = async (rpc: string) => {
 const CacheInterval = 1;
 const chain = {
     name: "BASE",
-    rpc: "https://base-mainnet.g.alchemy.com/v2/nhjW11pbrLjj0j3VaFMvz"
+    rpc: "https://base-mainnet.g.alchemy.com/v2/GhfzutibWR1GT8N3aRI_H"
 }
 updateCacheData(chain.rpc);
