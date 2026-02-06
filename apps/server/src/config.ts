@@ -39,7 +39,7 @@ if (!parsedEnv.success) {
 }
 const host = process.env.HOST || "localhost";
 
-const hostToUse = "18.135.119.216"
+const hostToUse = host
 
 
 const env = parsedEnv.data;
