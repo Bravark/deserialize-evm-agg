@@ -80,7 +80,7 @@ class RedisCacheManager {
     /**
      * Set token price in Redis with expiration
      */
-    async setPriceToRedis(token, price, expiryInSeconds = 3600) {
+    async setPriceToRedis(token, price, expiryInSeconds = 60) {
         try {
             const key = this.getPriceKey(token);
             await this.redisClient.setEx(key, expiryInSeconds, price.toString());

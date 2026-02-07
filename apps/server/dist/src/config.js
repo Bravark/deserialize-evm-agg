@@ -36,9 +36,10 @@ if (!parsedEnv.success) {
     process.exit(1); // Exit the application if environment validation fails
 }
 const host = process.env.HOST || "localhost";
+const hostToUse = host;
 const env = parsedEnv.data;
 exports.env = env;
 const config = {
-    REDIS_URL: `redis://${env.REDIS_USER}:${env.REDIS_PASSWORD}@${host}:${env.REDIS_PORT}`,
+    REDIS_URL: `redis://${env.REDIS_USER}:${env.REDIS_PASSWORD}@${hostToUse}:${env.REDIS_PORT}`,
 };
 exports.config = config;

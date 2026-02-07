@@ -14,6 +14,57 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-__exportStar(require("./zeroG"), exports);
+exports.getChainFromName = exports.getChainDexIds = exports.getChainDexIdList = exports.getChainAllRoute = void 0;
+__exportStar(require("./0g"), exports);
+__exportStar(require("./base"), exports);
 __exportStar(require("./IRoute"), exports);
 __exportStar(require("./UniswapV3Calculator"), exports);
+__exportStar(require("./type"), exports);
+__exportStar(require("./utils"), exports);
+const _0g_1 = require("./0g");
+const base_1 = require("./base");
+const getChainAllRoute = (chainName) => {
+    switch (chainName) {
+        case "0G":
+            return _0g_1.AllRoute0G;
+        case "BASE":
+            return base_1.AllRouteBase;
+        default:
+            throw new Error(`Unsupported chain: ${chainName}`);
+    }
+};
+exports.getChainAllRoute = getChainAllRoute;
+const getChainDexIdList = (chainName) => {
+    switch (chainName) {
+        case "0G":
+            return _0g_1.dexIdList0G;
+        case "BASE":
+            return base_1.dexIdListBase;
+        default:
+            throw new Error(`Unsupported chain: ${chainName}`);
+    }
+};
+exports.getChainDexIdList = getChainDexIdList;
+//get DEX_IDS type based on chain name
+const getChainDexIds = (chainName) => {
+    switch (chainName) {
+        case "0G":
+            return _0g_1.DEX_IDS_0G;
+        case "BASE":
+            return base_1.DEX_IDS_BASE;
+        default:
+            throw new Error(`Unsupported chain: ${chainName}`);
+    }
+};
+exports.getChainDexIds = getChainDexIds;
+const getChainFromName = (chainName) => {
+    switch (chainName) {
+        case "0G":
+            return _0g_1.OgChain;
+        case "BASE":
+            return base_1.BaseChain;
+        default:
+            throw new Error(`Unsupported chain: ${chainName}`);
+    }
+};
+exports.getChainFromName = getChainFromName;

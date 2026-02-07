@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TokenDetailsRequestSchema = exports.TokenPriceRequestSchema = exports.SwapRequestSchema = exports.SwapQuoteRequestSchema = void 0;
-const index_1 = require("../index");
 const zod_1 = require("zod");
 exports.SwapQuoteRequestSchema = zod_1.z.object({
     body: zod_1.z.object({
@@ -10,15 +9,16 @@ exports.SwapQuoteRequestSchema = zod_1.z.object({
         amountIn: zod_1.z.string().transform((arg) => {
             return parseFloat(arg);
         }),
-        dexId: zod_1.z.enum([
-            index_1.DEX_IDS.ZERO_G
-        ]),
+        dexId: zod_1.z.string(),
         options: zod_1.z
             .object({
             targetRouteNumber: zod_1.z.number(),
         })
             .optional(),
     }),
+    params: zod_1.z.object({
+        chain: zod_1.z.string().default("0G"),
+    }).optional(),
 });
 exports.SwapRequestSchema = zod_1.z.object({
     body: zod_1.z.object({
@@ -44,14 +44,10 @@ exports.SwapRequestSchema = zod_1.z.object({
                 poolAddress: zod_1.z.string(),
                 fee: zod_1.z.number(),
                 aToB: zod_1.z.boolean(),
-                dexId: zod_1.z.enum([
-                    index_1.DEX_IDS.ZERO_G
-                ]),
+                dexId: zod_1.z.string(),
             })),
             // dexFactory: z.string(),
-            dexId: zod_1.z.enum([
-                index_1.DEX_IDS.ALL
-            ]),
+            dexId: zod_1.z.string(),
             isNativeIn: zod_1.z.boolean(),
             isNativeOut: zod_1.z.boolean(),
         }),
@@ -66,14 +62,19 @@ exports.SwapRequestSchema = zod_1.z.object({
             fee: zod_1.z.number().min(0),
         }).optional()
     }),
+    params: zod_1.z.object({
+        chain: zod_1.z.string().default("0G"),
+    }).optional(),
 });
 exports.TokenPriceRequestSchema = zod_1.z.object({
     params: zod_1.z.object({
         tokenAddress: zod_1.z.string(),
+        chain: zod_1.z.string().optional().default("0G"),
     }),
 });
 exports.TokenDetailsRequestSchema = zod_1.z.object({
     params: zod_1.z.object({
         tokenAddress: zod_1.z.string(),
+        chain: zod_1.z.string().optional().default("0G"),
     }),
 });

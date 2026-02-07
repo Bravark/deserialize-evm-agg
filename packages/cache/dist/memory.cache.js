@@ -90,6 +90,12 @@ class MemoryCacheManager {
     setGraphMemoryCache(dexId, graph) {
         this.setNamespaceMemoryCache(constants_1.DEX_CACHE_NAMESPACE.GRAPH, dexId, graph);
     }
+    getLastBlockFetchedCache(dexId) {
+        return this.getNamespaceMemoryCache(constants_1.DEX_CACHE_NAMESPACE.LAST_BLOCK_FETCHED, dexId);
+    }
+    setLastBlockFetchedCache(dexId, blockNumber) {
+        this.setNamespaceMemoryCache(constants_1.DEX_CACHE_NAMESPACE.LAST_BLOCK_FETCHED, dexId, blockNumber);
+    }
     /**
      * Clear all cache for a specific dex
      */

@@ -9,10 +9,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.wait = exports.DEX_CONFIGS = exports.UniswapV3QuoteCalculator = void 0;
+exports.wait = exports.UniswapV3QuoteCalculator = exports.ERC20_ABI = void 0;
 const ethers_1 = require("ethers");
 const decimal_js_1 = __importDefault(require("decimal.js"));
 const price_1 = require("./price");
+const viem_1 = require("viem");
 // ==================== CONSTANTS ====================
 const FEE_TIERS = [100, 500, 3000, 10000];
 const FEE_DENOMINATOR = new decimal_js_1.default(1000000);
@@ -48,7 +49,6 @@ const POOL_ABI = [
             { internalType: "uint16", name: "observationIndex", type: "uint16" },
             { internalType: "uint16", name: "observationCardinality", type: "uint16" },
             { internalType: "uint16", name: "observationCardinalityNext", type: "uint16" },
-            { internalType: "uint8", name: "feeProtocol", type: "uint8" },
             { internalType: "bool", name: "unlocked", type: "bool" },
         ],
         stateMutability: "view",
@@ -76,7 +76,7 @@ const POOL_ABI = [
         type: "function",
     },
 ];
-const ERC20_ABI = [
+exports.ERC20_ABI = [
     {
         inputs: [],
         name: "decimals",
@@ -117,7 +117,7 @@ const QUOTER_ABI = [
 // ==================== MAIN CLASS ====================
 const priceCache = new Map();
 class UniswapV3QuoteCalculator {
-    constructor(config, provider) {
+    constructor(config, chainConfig, _provider) {
         this.CACHE_DURATION = 0.5 * 60 * 1000; // 5 minutes
         // ==================== PRICE METHODS ======================
         this.getPriceFromPriceMap = (tokenAddress) => {
@@ -130,42 +130,29 @@ class UniswapV3QuoteCalculator {
         this.setPriceInPriceMap = (tokenAddress, price) => {
             priceCache.set(tokenAddress, { price, timestamp: Date.now() });
         };
-        // ==================== POOL DISCOVERY ====================
-        /**
-         * Initializes and fetches all pool creation events from the factory
-         * This function scans the blockchain for PoolCreated events to build a pool registry
-         *
-         * @param factoryAddress - Address of the Uniswap V3 factory
-         * @param fromBlockHeight - Starting block height for event scanning
-         * @param provider - blockchain connection
-         * @returns Promise<PoolCreatedEvent[]> - Array of pool creation events
-         */
-        this.getAllPoolsFromEvents = async (factoryAddress, provider, fromBlockHeight = this.config.fromBlock || "0", abi) => {
-            const factory = new ethers_1.Contract(factoryAddress, abi, provider);
-            const latestBlock = await provider.getBlockNumber();
-            // Create filter for PoolCreated events
-            // Event signature: PoolCreated(address,address,uint24,int24,int24,address)
-            const filter = factory.filters.PoolCreated();
-            // Get all PoolCreated events from the specified block range
-            const events = await factory.queryFilter(filter, parseInt(fromBlockHeight), latestBlock);
-            // Map events to a more convenient format
-            const pools = events.map((event) => ({
-                token0: event.args.token0,
-                token1: event.args.token1,
-                fee: event.args.fee.toString(),
-                poolAddress: event.args.pool,
-                blockNumber: event.blockNumber.toString(),
-            }));
-            // const dataToWrite = {
-            //     pools: pools,
-            //     lastBlockNumber: pools[pools.length - 1].blockNumber,
-            // }
-            return pools;
-        };
+        const provider = _provider ? _provider : new ethers_1.ethers.JsonRpcProvider(chainConfig.rpcUrl);
         this.config = config;
         this.provider = provider;
         this.priceCache = new Map();
         this.poolCache = new Map();
+        this.chainConfig = chainConfig;
+        this.client = (0, viem_1.createPublicClient)({
+            chain: {
+                rpcUrls: {
+                    default: {
+                        http: [chainConfig.rpcUrl]
+                    }
+                },
+                id: chainConfig.chainId,
+                name: config.name,
+                nativeCurrency: {
+                    name: chainConfig.nativeTokenSymbol,
+                    symbol: chainConfig.nativeTokenSymbol,
+                    decimals: 18
+                },
+            },
+            transport: (0, viem_1.http)(chainConfig.rpcUrl)
+        });
     }
     async getSureTokenPrice(tokenAddress, _provider = this.provider) {
         // we should add the cache here
@@ -218,7 +205,7 @@ class UniswapV3QuoteCalculator {
         // console.log('tokenAddress: ', tokenAddress);
         // console.log('tokenAddress: ', tokenAddress);
         // console.log('tokenAddress: ', tokenAddress);
-        const tokenContract = new ethers_1.Contract(tokenAddress, ERC20_ABI, provider);
+        const tokenContract = new ethers_1.Contract(tokenAddress, exports.ERC20_ABI, provider);
         const [decimals, symbol, name] = await Promise.all([
             tokenContract.decimals(),
             tokenContract.symbol(),
@@ -261,8 +248,8 @@ class UniswapV3QuoteCalculator {
         }
     }
     async getTokenPriceFromExternalAPI(symbol) {
-        if (symbol.toLowerCase() === "w0g") {
-            const p = (await (0, price_1.getTokenPrice)('0G')).data?.price;
+        if (symbol.toLowerCase() === this.chainConfig.wrappedTokenSymbol.toLowerCase()) {
+            const p = (await (0, price_1.getTokenPrice)(this.chainConfig.nativeTokenSymbol.toUpperCase())).data?.price;
             if (p)
                 return p;
         }
@@ -337,8 +324,8 @@ class UniswapV3QuoteCalculator {
             pool.token1(),
             pool.fee(),
         ]);
-        console.log('token0Address: ', token0Address);
-        console.log('token1Address: ', token1Address);
+        // console.log('token0Address: ', token0Address);
+        // console.log('token1Address: ', token1Address);
         const [token0Details, token1Details] = await Promise.all([
             this.getTokenDetails(token0Address),
             this.getTokenDetails(token1Address),
@@ -355,10 +342,19 @@ class UniswapV3QuoteCalculator {
         this.poolCache.set(poolAddress, poolData);
         return poolData;
     }
-    async findBestPool(tokenA, tokenB) {
+    async findBestPool(tokenA, tokenB, feeTiers = FEE_TIERS) {
         const factory = new ethers_1.Contract(this.config.factoryAddress, FACTORY_ABI, this.provider);
         let bestPool = null;
-        for (const fee of FEE_TIERS) {
+        if (tokenA.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenA = this.config.wrappedNativeTokenAddress;
+        }
+        if (tokenB.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenB = this.config.wrappedNativeTokenAddress;
+        }
+        if (tokenA.toLowerCase() === tokenB.toLowerCase()) {
+            throw new Error("TokenA and TokenB cannot be the same");
+        }
+        for (const fee of feeTiers) {
             try {
                 const poolAddress = await factory.getPool(tokenA, tokenB, fee);
                 if (poolAddress === "0x0000000000000000000000000000000000000000") {
@@ -376,14 +372,64 @@ class UniswapV3QuoteCalculator {
                 }
             }
             catch (error) {
-                console.warn(`Error checking pool for fee ${fee}:`);
+                console.warn(`Error checking pool for fee ${fee}: FOR DEX {${this.config.name}}`, error);
             }
         }
         if (!bestPool) {
             throw new Error(`No viable pool found for token pair ${tokenA}/${tokenB}`);
         }
         const poolData = await this.getPoolData(bestPool.address);
-        return { ...bestPool, poolData };
+        const res = { ...bestPool, poolData };
+        return res;
+    }
+    async findAllPools(tokenA, tokenB, feeTiers = FEE_TIERS) {
+        const factory = new ethers_1.Contract(this.config.factoryAddress, FACTORY_ABI, this.provider);
+        // Normalize wrapped/native
+        if (tokenA.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenA = this.config.wrappedNativeTokenAddress;
+        }
+        if (tokenB.toLowerCase() === this.config.nativeTokenAddress.toLowerCase()) {
+            tokenB = this.config.wrappedNativeTokenAddress;
+        }
+        if (tokenA.toLowerCase() === tokenB.toLowerCase()) {
+            throw new Error("TokenA and TokenB cannot be the same");
+        }
+        const foundPools = await Promise.all(feeTiers.map(async (fee) => {
+            try {
+                const poolAddress = await factory.getPool(tokenA, tokenB, fee);
+                // 🧠 Early skip for zero address
+                if (!poolAddress ||
+                    poolAddress.toLowerCase() === "0x0000000000000000000000000000000000000000") {
+                    return null;
+                }
+                const pool = new ethers_1.Contract(poolAddress, POOL_ABI, this.provider);
+                // ⚠️ If this throws for non-existent pools, it'll be caught below
+                const liquidityRaw = await pool.liquidity();
+                const liquidity = new decimal_js_1.default(liquidityRaw.toString());
+                if (!liquidity) {
+                    console.warn(`Liquidity fetch failed for pool at ${poolAddress} on DEX {${this.config.name}}`);
+                    return null;
+                }
+                if (liquidity.lte(0))
+                    return null;
+                // only now fetch poolData since it's a heavier call
+                const poolData = await this.getPoolData(poolAddress);
+                const res = {
+                    pool,
+                    fee,
+                    liquidity,
+                    address: poolAddress,
+                    poolData,
+                };
+                return res;
+            }
+            catch (error) {
+                console.warn(`Error checking pool for fee ${fee} on DEX {${this.config.name}}`);
+                return null;
+            }
+        }));
+        const clean = foundPools.filter((p) => p !== null);
+        return clean;
     }
     // ==================== CALCULATION METHODS ====================
     calculateSpotPrice(sqrtPriceX96, decimals0, decimals1, token0IsInput) {
@@ -396,6 +442,7 @@ class UniswapV3QuoteCalculator {
     calculateSwapOutput(params) {
         const { amountInRaw, sqrtPriceX96, liquidity, fee, zeroForOne, decimalsIn, decimalsOut } = params;
         const feeDecimal = new decimal_js_1.default(fee);
+        //!FIX : not all dexes calculate fees like this, the fee field itself might not be the fee, it might be the tick spacing, eg, aerodrome
         const feeAmount = amountInRaw.mul(feeDecimal).div(FEE_DENOMINATOR);
         const amountInAfterFee = amountInRaw.sub(feeAmount);
         let sqrtPNext;
@@ -420,18 +467,8 @@ class UniswapV3QuoteCalculator {
             const delta = sqrtPriceX96.sub(sqrtPNext);
             amountOut = liquidity.mul(delta).div(Q96);
         }
-        // Adjust for decimals
-        let adjustedAmountOut = amountOut;
-        if (decimalsIn > decimalsOut) {
-            const diff = new decimal_js_1.default(10).pow(new decimal_js_1.default(decimalsIn - decimalsOut));
-            adjustedAmountOut = amountOut.div(diff);
-        }
-        else if (decimalsOut > decimalsIn) {
-            const diff = new decimal_js_1.default(10).pow(new decimal_js_1.default(decimalsOut - decimalsIn));
-            adjustedAmountOut = amountOut.mul(diff);
-        }
         return {
-            amountOut: adjustedAmountOut,
+            amountOut,
             sqrtPNext,
             feeAmount,
             amountInAfterFee,
@@ -485,7 +522,7 @@ class UniswapV3QuoteCalculator {
         return {
             price: spotPrice,
             amountIn: amountInFormattedInDecimal,
-            amountOut,
+            amountOut: amountOut,
             poolAddress,
             fee: feeAmount,
             sqrtPriceStart: new decimal_js_1.default(sqrtPriceX96),
@@ -497,7 +534,7 @@ class UniswapV3QuoteCalculator {
         };
     }
     // ==================== QUOTER CONTRACT METHODS ====================
-    async simulateTransaction(tokenIn, tokenOut, amountIn, fee, sqrtPriceLimitX96 = "0") {
+    async simulateTransaction(tokenIn, tokenOut, amountIn, pool, fee, sqrtPriceLimitX96 = "0") {
         if (!this.config.quoterAddress) {
             throw new Error("Quoter address not configured for this DEX");
         }
@@ -508,18 +545,85 @@ class UniswapV3QuoteCalculator {
         // console.log('tokenOut: ', tokenOut);
         // console.log('amountIn: ', amountIn);
         try {
-            const amountOut = await quoter.quoteExactInputSingle(tokenIn, tokenOut, fee, BigInt(Number(amountIn)), sqrtPriceLimitX96);
-            return amountOut.toString();
+            const amountOut = await quoter.quoteExactInputSingle(tokenIn, tokenOut, fee, new decimal_js_1.default(amountIn).toFixed(), sqrtPriceLimitX96);
+            return { amountOut: amountOut.toString(), pool: pool };
         }
         catch (error) {
             console.error("Quote simulation failed:", error);
-            return "0";
+            return { amountOut: "0", pool };
         }
+    }
+    // ==================== POOL DISCOVERY ====================
+    /**
+     * Initializes and fetches all pool creation events from the factory
+     * This function scans the blockchain for PoolCreated events to build a pool registry
+     *
+     * @param factoryAddress - Address of the Uniswap V3 factory
+     * @param fromBlockHeight - Starting block height for event scanning
+     * @param provider - blockchain connection
+     * @returns Promise<PoolCreatedEvent[]> - Array of pool creation events
+     */
+    /**
+     * Override getAllPoolsFromEvents to batch requests for RPC providers
+     * that have block range limitations (typically 10,000 blocks per request)
+     */
+    async getAllPoolsFromEvents(factoryAddress, provider, fromBlockHeight = this.config.fromBlock || "0", abi) {
+        console.log("Getting all pools for chain:", this.config.network, "RPC:", this.chainConfig.rpcUrl, "Provider RPC:", provider._getConnection().url);
+        const factory = new ethers_1.Contract(factoryAddress, abi, provider);
+        const latestBlock = await provider.getBlockNumber();
+        console.log('latestBlock: ', latestBlock);
+        const startBlock = parseInt(fromBlockHeight);
+        console.log('fromBlockHeight: ', fromBlockHeight);
+        const BATCH_SIZE = 9999; // Stay safely under 10k block limit
+        console.log(`Scanning from block ${startBlock} to ${latestBlock} (${latestBlock - startBlock} blocks)`);
+        let allPools = [];
+        let currentBlock = startBlock;
+        let batchCount = 0;
+        // Batch the requests to respect RPC provider limits
+        while (currentBlock <= latestBlock) {
+            const endBlock = Math.min(currentBlock + BATCH_SIZE, latestBlock);
+            batchCount++;
+            console.log(`Batch ${batchCount}: Fetching events from block ${currentBlock} to ${endBlock} (${endBlock - currentBlock + 1} blocks)`);
+            try {
+                const filter = factory.filters.PoolCreated();
+                // Get events for this batch
+                const events = await factory.queryFilter(filter, currentBlock, endBlock);
+                console.log(`Batch ${batchCount}: Found ${events.length} pool creation events`);
+                // Map events to PoolCreatedEvent format
+                const batchPools = events.map((event) => ({
+                    token0: event.args.token0,
+                    token1: event.args.token1,
+                    fee: event.args.fee?.toString(),
+                    poolAddress: event.args.pool,
+                    blockNumber: event.blockNumber.toString(),
+                    tickSpacing: event.args.tickSpacing?.toString(), // Aerodrome specific
+                }));
+                allPools = allPools.concat(batchPools);
+                // Add a small delay between batches to avoid rate limiting
+                if (currentBlock + BATCH_SIZE < latestBlock) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+            catch (error) {
+                console.error(`Error fetching events for batch ${batchCount} (blocks ${currentBlock}-${endBlock}):`, error.message);
+                // If we still hit rate limits, add exponential backoff
+                if (error.message.includes("rate limit") || error.message.includes("429")) {
+                    console.log("Rate limit detected, waiting 2 seconds before retry...");
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    continue; // Retry this batch
+                }
+                // For other errors, continue to next batch
+            }
+            currentBlock = endBlock + 1;
+        }
+        console.log(`Total pools found across all batches: ${allPools.length}`);
+        return allPools;
     }
     // ==================== POOL DISCOVERY METHODS ====================
     async getAllPools(abi, fromBlock) {
         // Map events to a more convenient format
         const pools = await this.getAllPoolsFromEvents(this.config.factoryAddress, this.provider, fromBlock, abi);
+        console.log('pools: ', pools.length);
         // console.log('pools: ', pools);
         const poolsData = [];
         // TODO: use .map to make it faster, right now we can't because of the rpc rate limit
@@ -527,7 +631,18 @@ class UniswapV3QuoteCalculator {
         for (const pool of pools) {
             try {
                 // Fetch pool data for each created pool
+                //verify liquidity first before fetching full data
+                const poolContract = new ethers_1.Contract(pool.poolAddress, POOL_ABI, this.provider);
+                const liquidityRaw = await poolContract.liquidity();
+                const liquidity = new decimal_js_1.default(liquidityRaw.toString());
+                if (liquidity.lte(0)) {
+                    console.log(`Liquidity is zero for pool at ${pool.poolAddress}`);
+                    continue; // skip pools with zero liquidity
+                }
                 const poolData = await this.getPoolData(pool.poolAddress);
+                if (poolData.liquidity === '0') {
+                    continue; // skip pools with zero liquidity
+                }
                 console.log('poolData: ', poolData.poolAddress);
                 poolData.blockNumber = pool.blockNumber.toString();
                 poolsData.push(poolData);
@@ -540,7 +655,7 @@ class UniswapV3QuoteCalculator {
             //     await wait(5)
             //     count = 0
             // }
-            await (0, exports.wait)(10);
+            // await wait(10)
         }
         // console.log('poolsData: ', poolsData);
         return poolsData; // no longer filtering by liquidity
@@ -562,47 +677,6 @@ class UniswapV3QuoteCalculator {
     }
 }
 exports.UniswapV3QuoteCalculator = UniswapV3QuoteCalculator;
-// ==================== PREDEFINED CONFIGS ====================
-exports.DEX_CONFIGS = {
-    ZERODEX_TESTNET: {
-        name: "ZeroDEX Testnet",
-        factoryAddress: "0x7453582657F056ce5CfcEeE9E31E4BC390fa2b3c",
-        quoterAddress: "0x8d5E064d2EF44C29eE349e71CF70F751ECD62892",
-        rpcUrl: "https://evmrpc-testnet.0g.ai",
-        fromBlock: 171522,
-        stableTokenAddress: "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf", // USDT
-    },
-    UNISWAP_V3_MAINNET: {
-        name: "Uniswap V3 Mainnet",
-        factoryAddress: "0x1F98431c8aD98523631AE4a59f267346ea31F984",
-        quoterAddress: "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
-        rpcUrl: "https://mainnet.infura.io/v3/YOUR_INFURA_KEY",
-        stableTokenAddress: "0xA0b86a33E6441b8d6c6e4fC6F120d4d5A1b9A651", // USDT
-    },
-};
-// ==================== USAGE EXAMPLE ====================
-/*
-// Example usage:
-const calculator = new UniswapV3QuoteCalculator(DEX_CONFIGS.ZERODEX_TESTNET);
-
-// Get a quote
-const quote = await calculator.getQuote({
-    tokenIn: "0x...",
-    tokenOut: "0x...",
-    amountIn: 1000
-});
-
-// Get token price
-const price = await calculator.getTokenPrice("0x...");
-
-// Simulate transaction
-const amountOut = await calculator.simulateTransaction(
-    "0x...", // tokenIn
-    "0x...", // tokenOut
-    "1000000000000000000", // amountIn (1 token with 18 decimals)
-    3000 // fee tier
-);
-*/
 const wait = (time = 2) => {
     return new Promise((resolve) => setTimeout(resolve, time * 1000));
 };

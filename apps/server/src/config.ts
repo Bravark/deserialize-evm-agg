@@ -43,10 +43,10 @@ const hostToUse = host
 
 
 const env = parsedEnv.data;
-
+const redisUrl = `redis://${env.REDIS_USER}:${env.REDIS_PASSWORD}@${hostToUse}:${env.REDIS_PORT}`
 const config = {
 
-  REDIS_URL: `redis://${env.REDIS_USER}:${env.REDIS_PASSWORD}@${hostToUse}:${env.REDIS_PORT}`,
+  REDIS_URL: redisUrl,
 
 
 };

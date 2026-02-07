@@ -7,8 +7,11 @@ exports.setupApp = setupApp;
 // app.ts
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
+const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
+const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
 const errorMiddleware_1 = require("./middleware/errorMiddleware");
 const _1 = require(".");
+const swagger_config_1 = require("./swagger/swagger.config");
 async function setupApp(routes) {
     BigInt.prototype.toJSON = function () {
         const int = Number.parseInt(this.toString());
@@ -21,6 +24,18 @@ async function setupApp(routes) {
     // Middleware setup
     app.use((0, cors_1.default)());
     app.use(express_1.default.json());
+    // Swagger documentation setup
+    const swaggerSpec = (0, swagger_jsdoc_1.default)(swagger_config_1.swaggerOptions);
+    app.use('/api-docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swaggerSpec, {
+        explorer: true,
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'EVM Aggregator API Documentation',
+    }));
+    // Expose Swagger JSON
+    app.get('/api-docs.json', (req, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.send(swaggerSpec);
+    });
     // Route setup
     app.use(...routes);
     // 404 error route

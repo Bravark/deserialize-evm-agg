@@ -11,7 +11,7 @@ const test0g = async () => {
 
     const local = "http://localhost:3735"
     const prod = "http://evm-api.deserialize.xyz"
-    const baseUrl = prod
+    const baseUrl = local
     const provider = new ethers.JsonRpcProvider("https://evmrpc.0g.ai");
     const wallet = new ethers.Wallet(privateKey, provider);
 
@@ -57,7 +57,7 @@ const test0g = async () => {
 
     const swapData = await swapRes.json()
     console.log("swapData: ", swapData)
-
+    return
     for (const tx of swapData.transactions) {
         // const signedTx = await wallet.signTransaction(tx);
         //send transaction
@@ -82,13 +82,13 @@ const testBase = async () => {
 
     const local = "http://localhost:3735"
     const prod = "http://evm-api.deserialize.xyz/BASE"
-    const baseUrl = prod
+    const baseUrl = local
     const provider = new ethers.JsonRpcProvider(BaseChain.rpcUrl);
     const wallet = new ethers.Wallet(privateKey, provider);
 
     const userInput = {
         tokenA: WETH,
-        tokenB: "0x1bc0c42215582d5A085795f4baDbaC3ff36d1Bcb",
+        tokenB: "0xb7516ae464e6359cb0c709ea61e47e49ca013fae",
         amountIn: (0.00001 * (10 ** 18)).toString(),
         dexId: "ALL_BASE"
     }

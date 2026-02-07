@@ -1,27 +1,24 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRoutePlanFromTokenStringPath = exports.getBestRoutes = exports.initAndGetCache = exports.getRouteJsonRpcProvider = exports.dexIdList = exports.DEX_IDS = void 0;
+exports.getRoutePlanFromTokenStringPath = exports.getBestRoutes = exports.initAndGetCache = void 0;
 const cache_1 = require("@deserialize-evm-agg/cache");
 const graph_1 = require("@deserialize-evm-agg/graph");
 const routes_providers_1 = require("@deserialize-evm-agg/routes-providers");
 const redis_1 = require("redis");
 const config_1 = require("./config");
+const errors_api_1 = require("./errors/errors.api");
 BigInt.prototype.toJSON = function () {
     const int = Number.parseInt(this.toString());
     return int ?? this.toString();
 };
-exports.DEX_IDS = {
-    ZERO_G: "ZERO_G",
-    ALL: "ALL",
-};
-exports.dexIdList = Object.keys(exports.DEX_IDS);
-const getRouteJsonRpcProvider = (dexId) => {
-    if (dexId === exports.DEX_IDS.ZERO_G) {
-        return routes_providers_1.ZeroGRoute;
-    }
-    throw new Error(`No route provider for ${dexId}`);
-};
-exports.getRouteJsonRpcProvider = getRouteJsonRpcProvider;
+// export const getRouteJsonRpcProvider = (dexId: AllDexIdTypes) => {
+//     if (dexId === DEX_IDS.ZERO_G) {
+//         return ZeroGRoute;
+//     } else if (dexId === DEX_IDS.ALL) {
+//         return AllRoute;
+//     }
+//     throw new Error(`No route provider for ${dexId}`);
+// };
 let cache = undefined;
 const initAndGetCache = async () => {
     if (cache) {
@@ -40,47 +37,57 @@ const initAndGetCache = async () => {
     return cache;
 };
 exports.initAndGetCache = initAndGetCache;
-const getBestRoutes = async (dexId, fromTokenString, toTokenString, amount, _provider, options) => {
+const getBestRoutes = async (network, fromTokenString, toTokenString, amount, _provider, options) => {
     const provider = _provider;
-    const RouteJsonRpcProviderClass = (0, exports.getRouteJsonRpcProvider)(dexId);
+    const RouteJsonRpcProviderClass = (0, routes_providers_1.getChainAllRoute)(network);
     const cache = await (0, exports.initAndGetCache)();
     const RouteJsonRpcProvider = new RouteJsonRpcProviderClass(provider, cache);
-    const { tokenBiMap } = await RouteJsonRpcProvider.getTokenBiMap();
-    // console.log('tokenBiMap: ', tokenBiMap);
-    const graph = await RouteJsonRpcProvider.getGraph();
+    const config = RouteJsonRpcProvider.getDexConfig();
+    let { tokenBiMap } = await RouteJsonRpcProvider.getTokenBiMap();
+    let graph = await RouteJsonRpcProvider.getGraph();
     let path = [];
     let keyRate;
-    // let tokenAUsdRate = await RouteJsonRpcProvider.getTokenPairEdgeData(
-    //   new PublicKey(fromTokenString),
-    //   new PublicKey(toTokenString)
-    // );
-    // if (!tokenAUsdRate) {
-    keyRate = await RouteJsonRpcProvider.calculator.getSureTokenPrice((fromTokenString), provider);
+    keyRate = await RouteJsonRpcProvider.getSurePriceOfToken((fromTokenString));
     // } else {
     //   keyRate = tokenAUsdRate.edgeData.priceUsdc ?? 0;
     //   console.log("keyRate here here: ", keyRate);
     // }
-    const nativeAddress = RouteJsonRpcProviderClass.config.nativeTokenAddress;
+    const nativeAddress = config.nativeTokenAddress;
     if (fromTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
-        fromTokenString = RouteJsonRpcProviderClass.config.wrappedNativeTokenAddress;
+        fromTokenString = config.wrappedNativeTokenAddress;
     }
     if (toTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
-        toTokenString = RouteJsonRpcProviderClass.config.wrappedNativeTokenAddress;
+        toTokenString = config.wrappedNativeTokenAddress;
     }
-    const fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
-    console.log('fromTokenString: ', fromTokenString);
-    console.log('fromIndex: ', fromIndex);
-    const toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
-    console.log('toTokenString: ', toTokenString);
-    console.log('toIndex: ', toIndex);
+    let fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
+    let toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
     if (fromIndex === undefined || toIndex === undefined) {
         console.log("Token not found in the tokenBiMap: Token Not yet Supported by the Selected Dex");
-        throw new Error("DEX_ERRORS.PAIR_NOT_AVAILABLE_ON_DEX");
+        //TRYING TO ADD THE TOKEN PAIR TO THE GRAPH
+        const { newGraph, newTokenBiMap } = await RouteJsonRpcProvider.findUpdateTokenPairPools(fromTokenString, toTokenString);
+        tokenBiMap = newTokenBiMap;
+        graph = newGraph;
+        fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
+        toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
+        if (fromIndex === undefined || toIndex === undefined) {
+            throw new Error("Token Not yet Supported by the Selected Dex");
+        }
+    }
+    //sometimes the token might be in the token bi map but does not have any graph edges 
+    //verify that
+    const fromEdges = graph[fromIndex];
+    const toEdges = graph[toIndex];
+    if (fromEdges.length === 0 || toEdges.length === 0) {
+        const { newGraph, newTokenBiMap } = await RouteJsonRpcProvider.findUpdateTokenPairPools(fromTokenString, toTokenString);
+        tokenBiMap = newTokenBiMap;
+        graph = newGraph;
+        if (fromEdges.length === 0 || toEdges.length === 0) {
+            throw new errors_api_1.ApiError(400, "No Route found for this token Pair");
+        }
     }
     const func = RouteJsonRpcProvider.getFunctionToMutateEdgeCost();
-    const token = await RouteJsonRpcProvider.calculator.getTokenDetails((fromTokenString));
+    const token = await (0, routes_providers_1.getTokenDetails)((fromTokenString), provider);
     const { bestRoute: _path, edgeData, bestOutcome, } = (0, graph_1.findBestRouteIndex)(graph, fromIndex, toIndex, { key: amount, keyRate: keyRate ?? 0, keyDecimal: token.decimals }, options?.targetRouteNumber, func);
-    console.log('_path: ', _path);
     path = _path;
     if (path.length < 1) {
         console.log("No route found");
@@ -89,11 +96,11 @@ const getBestRoutes = async (dexId, fromTokenString, toTokenString, amount, _pro
     const tokenStringPath = convertEdgeListToTokenString(edgeData, tokenBiMap);
     // console.log("tokenStringPath: ", { tokenStringPath });
     // console.log("getting route plan from string...");
-    const routes = await (0, exports.getRoutePlanFromTokenStringPath)(tokenStringPath, dexId);
-    return { routes, RouteJsonRpcProvider, bestOutcome };
+    const routes = await (0, exports.getRoutePlanFromTokenStringPath)(tokenStringPath);
+    return { routes, RouteJsonRpcProvider: RouteJsonRpcProvider, bestOutcome };
 };
 exports.getBestRoutes = getBestRoutes;
-const getRoutePlanFromTokenStringPath = async (tokenStringPath, dexId) => {
+const getRoutePlanFromTokenStringPath = async (tokenStringPath) => {
     const routes = [];
     for (const plan of tokenStringPath) {
         const routePlan = {
