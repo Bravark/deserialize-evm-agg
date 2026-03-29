@@ -43,6 +43,22 @@ export async function setupApp(routes: Router[]): Promise<Express> {
     res.send(swaggerSpec);
   });
 
+  // Health check
+  app.get("/health", async (_req, res) => {
+    try {
+      const cacheHealth = await client.healthCheck();
+      const redisHealthy = cacheHealth.redis;
+      const isHealthy = cacheHealth.memory && (redisHealthy === undefined || redisHealthy);
+
+      res.status(isHealthy ? 200 : 503).json({
+        status: isHealthy ? "ok" : "degraded",
+        cache: cacheHealth,
+      });
+    } catch (error) {
+      res.status(503).json({ status: "error" });
+    }
+  });
+
   // Route setup
   app.use(...routes);
 
