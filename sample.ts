@@ -80,16 +80,17 @@ const testBase = async () => {
     const NATIVE = "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c"
     const WETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
 
-    const local = "http://localhost:3735"
+    const local = "http://localhost:3735/BASE"
     const prod = "http://evm-api.deserialize.xyz/BASE"
-    const baseUrl = local
+    const baseUrl = prod
     const provider = new ethers.JsonRpcProvider(BaseChain.rpcUrl);
     const wallet = new ethers.Wallet(privateKey, provider);
-
+    const balance = await provider.getBalance(wallet.address)
+    console.log('balance: ', balance);
     const userInput = {
         tokenA: WETH,
         tokenB: "0xb7516ae464e6359cb0c709ea61e47e49ca013fae",
-        amountIn: (0.00001 * (10 ** 18)).toString(),
+        amountIn: (0.000001 * (10 ** 18)).toString(),
         dexId: "ALL_BASE"
     }
 
