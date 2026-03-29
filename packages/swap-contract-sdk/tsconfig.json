@@ -3,6 +3,7 @@
     "target": "ES2019", // or your preferred target
     "module": "commonjs", // or "ESNext" if you prefer
     "declaration": true, // generate .d.ts files
+    "rootDir": "./src", // source directory for emitted file layout
     "outDir": "./dist", // output directory for compiled files
     "strict": true, // enable all strict type-checking options
     "esModuleInterop": true, // for compatibility with commonJS modules
