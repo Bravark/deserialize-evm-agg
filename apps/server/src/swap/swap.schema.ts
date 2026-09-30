@@ -12,6 +12,7 @@ export const SwapQuoteRequestSchema = z.object({
             return parseFloat(arg);
         }),
         dexId: z.string(),
+        chain: z.string().optional(),
         options: z
             .object({
                 targetRouteNumber: z.number(),
@@ -19,7 +20,7 @@ export const SwapQuoteRequestSchema = z.object({
             .optional(),
     }),
     params: z.object({
-        chain: z.string().default("0G"),
+        chain: z.string().optional(),
     }).optional(),
 });
 
@@ -72,7 +73,7 @@ export const SwapRequestSchema = z.object({
         }).optional()
     }),
     params: z.object({
-        chain: z.string().default("0G"),
+        chain: z.string().optional(),
     }).optional(),
 });
 

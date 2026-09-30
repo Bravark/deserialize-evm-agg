@@ -6,7 +6,7 @@ import { ApiError } from "../errors/errors.api";
 import { DESERIALIZE_FEE } from "../constants";
 import { getSwapRequestFeeRate } from "../utils";
 import { AllDexIdTypes, getChainAllRoute, getTokenDetails, UniswapV3QuoteCalculator, ZeroGRoute } from "@deserialize-evm-agg/routes-providers";
-import { NetworkType } from "@deserialize-evm-agg/routes-providers/dist/constants";
+import { NetworkType } from "@deserialize-evm-agg/routes-providers";
 
 
 

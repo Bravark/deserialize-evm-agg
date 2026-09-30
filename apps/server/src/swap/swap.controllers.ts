@@ -3,10 +3,16 @@
 import { NextFunction, Request, Response } from "express";
 import { SwapQuoteRequestSchema, SwapRequestSchema, TokenDetailsRequestSchema, TokenPriceRequestSchema } from "./swap.schema";
 import { getTokenDetailsService, getTokenPriceService, swapQuoteService, swapService, tokenList, tokenListWithDetailsService } from "./swap.service";
-import { JsonRpcProvider } from "ethers";
-import { NetworkType } from "@deserialize-evm-agg/routes-providers/dist/constants";
-import { BaseChain, getChainFromName, OgChain } from "@deserialize-evm-agg/routes-providers";
-import { get } from "lodash";
+import { createJsonRpcProvider, getChainFromName, normalizeNetworkType, NetworkType } from "@deserialize-evm-agg/routes-providers";
+
+const chainFromRequest = (paramChain?: string, bodyChain?: string): NetworkType => {
+    return normalizeNetworkType(paramChain || bodyChain || "0G");
+};
+
+const providerForChain = (chainName: NetworkType) => {
+    const chain = getChainFromName(chainName);
+    return createJsonRpcProvider(chain.rpcUrl, chain.chainId);
+};
 
 
 export const swapQuoteController = async (
@@ -20,14 +26,9 @@ export const swapQuoteController = async (
 
         //parse the data
         const { body, params } = SwapQuoteRequestSchema.parse(req);
-        let chain
-        if (!params?.chain) {
-            chain = getChainFromName("0G")
-        } else {
-            chain = getChainFromName(params.chain as NetworkType)
-        }
-        const provider = new JsonRpcProvider(chain.rpcUrl)
-        const swap = await swapQuoteService(body, provider, params?.chain as NetworkType ?? "0G");
+        const chainName = chainFromRequest(params?.chain, body.chain);
+        const provider = providerForChain(chainName);
+        const swap = await swapQuoteService(body, provider, chainName);
         console.log("Swap quote processed successfully", {
             amountOut: swap.amountOut.toString(),
         });
@@ -49,15 +50,9 @@ export const swapTransactionController = async (
         const data = req.body;
 
         const { body, params } = SwapRequestSchema.parse(req);
-        //parse the data
-        let chain
-        if (!params?.chain) {
-            chain = getChainFromName("0G")
-        } else {
-            chain = getChainFromName(params.chain as NetworkType)
-        }
-        const provider = new JsonRpcProvider(chain.rpcUrl)
-        const { transaction } = await swapService(body, provider, params?.chain as NetworkType ?? "0G");
+        const chainName = chainFromRequest(params?.chain);
+        const provider = providerForChain(chainName);
+        const { transaction } = await swapService(body, provider, chainName);
         console.log("Swap quote processed successfully", {
             amountOut: transaction.transactions,
         });
@@ -109,14 +104,9 @@ export const testnetSwapTransactionController = async (
 
         //parse the data
         const { body, params } = SwapRequestSchema.parse(req);
-        let chain
-        if (!params?.chain) {
-            chain = getChainFromName("0G")
-        } else {
-            chain = getChainFromName(params.chain as NetworkType)
-        }
-        const provider = new JsonRpcProvider(chain.rpcUrl)
-        const { transaction } = await swapService(body, provider, params?.chain as NetworkType ?? "0G");
+        const chainName = chainFromRequest(params?.chain);
+        const provider = providerForChain(chainName);
+        const { transaction } = await swapService(body, provider, chainName);
         console.log("Swap quote processed successfully", {
             amountOut: transaction.transactions,
         });
@@ -139,9 +129,9 @@ export const tokenListController = async (
 
         //parse the data
         const { params } = req
-        const chain = getChainFromName(params.chain as NetworkType ?? "0G")
-        const provider = new JsonRpcProvider(chain.rpcUrl)
-        const result = await tokenList(provider, params.chain as NetworkType ?? "0G");
+        const chainName = chainFromRequest(typeof params.chain === "string" ? params.chain : undefined);
+        const provider = providerForChain(chainName);
+        const result = await tokenList(provider, chainName);
 
         res.send({ result });
     } catch (error) {
@@ -160,10 +150,10 @@ export const tokenPriceController = async (
 
         //parse the data
         const { params } = TokenPriceRequestSchema.parse(req);
-        const chain = getChainFromName(params.chain as NetworkType ?? "0G")
-        const provider = new JsonRpcProvider(chain.rpcUrl)
+        const chainName = chainFromRequest(params.chain);
+        const provider = providerForChain(chainName);
 
-        const result = await getTokenPriceService(params.tokenAddress, provider, params.chain as NetworkType ?? "0G");
+        const result = await getTokenPriceService(params.tokenAddress, provider, chainName);
 
         res.send({ result });
     } catch (error) {
@@ -184,10 +174,10 @@ export const tokenDetailsController = async (
 
         //parse the data
         const { params } = TokenDetailsRequestSchema.parse(req);
-        const chain = getChainFromName(params.chain as NetworkType ?? "0G")
-        const provider = new JsonRpcProvider(chain.rpcUrl)
+        const chainName = chainFromRequest(params.chain);
+        const provider = providerForChain(chainName);
 
-        const result = await getTokenDetailsService(params.tokenAddress, provider, params.chain as NetworkType ?? "0G");
+        const result = await getTokenDetailsService(params.tokenAddress, provider, chainName);
 
         res.send({ result });
     } catch (error) {
@@ -209,9 +199,9 @@ export const tokenListWithDetailsController = async (
 
         //parse the data
         const { params } = req
-        const chain = getChainFromName(params.chain as NetworkType ?? "0G")
-        const provider = new JsonRpcProvider(chain.rpcUrl)
-        const result = await tokenListWithDetailsService(provider, params.chain as NetworkType ?? "0G");
+        const chainName = chainFromRequest(typeof params.chain === "string" ? params.chain : undefined);
+        const provider = providerForChain(chainName);
+        const result = await tokenListWithDetailsService(provider, chainName);
 
         res.send({ result });
     } catch (error) {

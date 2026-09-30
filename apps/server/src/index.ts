@@ -5,7 +5,7 @@ import { getChainDexIdList, DeserializeRoutePlan, getChainAllRoute, getChainDexI
 import { JsonRpcApiProvider, JsonRpcProvider } from "ethers";
 import { createClient, RedisClientType } from "redis"
 import { config } from "./config";
-import { NetworkType } from "@deserialize-evm-agg/routes-providers/dist/constants";
+import { NetworkType } from "@deserialize-evm-agg/routes-providers";
 import { ApiError } from "./errors/errors.api";
 
 
@@ -75,59 +75,63 @@ export const getBestRoutes = async (
     const RouteJsonRpcProvider = new RouteJsonRpcProviderClass(provider, cache);
     const config = RouteJsonRpcProvider.getDexConfig()
 
+    const nativeAddress = config.nativeTokenAddress
+
+    if (fromTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
+        fromTokenString = config.wrappedNativeTokenAddress
+    }
+
+    if (toTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
+        toTokenString = config.wrappedNativeTokenAddress
+    }
+
+    let keyRate = 0;
+    try {
+        keyRate = (await RouteJsonRpcProvider.getSurePriceOfToken(fromTokenString)) ?? 0;
+    } catch (error) {
+        console.log("Token price lookup failed, continuing quote with keyRate 0", error);
+    }
+
     let { tokenBiMap } = await RouteJsonRpcProvider.getTokenBiMap();
 
     let graph = await RouteJsonRpcProvider.getGraph();
 
     let path: number[][] = [];
-    let keyRate;
 
-    keyRate = await RouteJsonRpcProvider.getSurePriceOfToken((fromTokenString));
-
-    // } else {
-    //   keyRate = tokenAUsdRate.edgeData.priceUsdc ?? 0;
-    //   console.log("keyRate here here: ", keyRate);
-    // }
-
-    const nativeAddress = config.nativeTokenAddress
-
-    if (fromTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
-
-        fromTokenString = config.wrappedNativeTokenAddress
-    }
-
-    if (toTokenString.toLowerCase() === nativeAddress.toLowerCase()) {
-
-        toTokenString = config.wrappedNativeTokenAddress
-    }
     let fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
-
     let toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
+
+    const syncIndexes = () => {
+        fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
+        toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
+    };
 
     if (fromIndex === undefined || toIndex === undefined) {
         console.log(
             "Token not found in the tokenBiMap: Token Not yet Supported by the Selected Dex"
         );
-        //TRYING TO ADD THE TOKEN PAIR TO THE GRAPH
-        const { newGraph, newTokenBiMap } = await RouteJsonRpcProvider.findUpdateTokenPairPools(fromTokenString, toTokenString)
-        tokenBiMap = newTokenBiMap
-        graph = newGraph
-        fromIndex = tokenBiMap.getByValue(fromTokenString.toLowerCase());
-        toIndex = tokenBiMap.getByValue(toTokenString.toLowerCase());
+        const updated = await RouteJsonRpcProvider.findUpdateTokenPairPools(fromTokenString, toTokenString)
+        tokenBiMap = updated.newTokenBiMap
+        graph = updated.newGraph
+        syncIndexes();
         if (fromIndex === undefined || toIndex === undefined) {
             throw new Error("Token Not yet Supported by the Selected Dex");
         }
 
     }
-    //sometimes the token might be in the token bi map but does not have any graph edges 
-    //verify that
-    const fromEdges = graph[fromIndex];
-    const toEdges = graph[toIndex]
+    let fromEdges = graph[fromIndex] ?? [];
+    let toEdges = graph[toIndex] ?? [];
 
     if (fromEdges.length === 0 || toEdges.length === 0) {
-        const { newGraph, newTokenBiMap } = await RouteJsonRpcProvider.findUpdateTokenPairPools(fromTokenString, toTokenString)
-        tokenBiMap = newTokenBiMap
-        graph = newGraph
+        const updated = await RouteJsonRpcProvider.findUpdateTokenPairPools(fromTokenString, toTokenString)
+        tokenBiMap = updated.newTokenBiMap
+        graph = updated.newGraph
+        syncIndexes();
+        if (fromIndex === undefined || toIndex === undefined) {
+            throw new Error("Token Not yet Supported by the Selected Dex");
+        }
+        fromEdges = graph[fromIndex] ?? [];
+        toEdges = graph[toIndex] ?? [];
         if (fromEdges.length === 0 || toEdges.length === 0) {
             throw new ApiError(400, "No Route found for this token Pair")
         }
