@@ -14,12 +14,9 @@ import { NetworkType } from "@deserialize-evm-agg/routes-providers";
 export const swapQuoteService = async (params: SwapQuoteRequestType, provider: JsonRpcProvider, network: NetworkType) => {
 
     try {
-        console.log("Processing swap transaction request", {
-            ...params
-        });
+        console.log(`    [QUOTE_SVC:1/5] Initiating route search: Network=${network}, Pair=${params.tokenA} -> ${params.tokenB}, Amount=${params.amountIn}`);
 
         const { routes, bestOutcome, RouteJsonRpcProvider } = await getBestRoutes(
-            //TODO: THIS IS FOR BACKWARD COMPATIBILITY, REMOVE LATER
             network,
             params.tokenA,
             params.tokenB,
@@ -27,20 +24,22 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
             provider,
             {
                 targetRouteNumber: 5,
-            })
+            });
 
-        const isNativeIn = params.tokenA.toLowerCase() === RouteJsonRpcProvider.getDexConfig().nativeTokenAddress.toLowerCase()
-        const isNativeOut = params.tokenB.toLowerCase() === RouteJsonRpcProvider.getDexConfig().nativeTokenAddress.toLowerCase()
-        console.log('routes: ', routes);
+        const isNativeIn = params.tokenA.toLowerCase() === RouteJsonRpcProvider.getDexConfig().nativeTokenAddress.toLowerCase();
+        const isNativeOut = params.tokenB.toLowerCase() === RouteJsonRpcProvider.getDexConfig().nativeTokenAddress.toLowerCase();
+        console.log(`    [QUOTE_SVC:2/5] Best routes retrieved (${routes.length} hop(s)):`, routes.map(r => `${r.dexId} (${r.tokenA.slice(0, 8)}... -> ${r.tokenB.slice(0, 8)}...) via pool ${r.poolAddress}`));
 
+        console.log(`    [QUOTE_SVC:3/5] Simulating on-chain amountOut from route plan...`);
         const { amountOut, pools } =
             await RouteJsonRpcProvider.getAmountOutFromPlan(
                 new Decimal(params.amountIn),
                 routes,
                 0,
                 provider
-
             );
+        console.log(`    [QUOTE_SVC:4/5] amountOut result: ${amountOut.toString()}`);
+
         // Get token price
         let tokenPrice = new Decimal(0);
 
@@ -49,26 +48,23 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
                 ...r,
                 poolAddress: pools[i]
             }
-        })
+        });
 
         try {
-
             const p = await RouteJsonRpcProvider.calculateRoutePrice(finalRoutes);
-            tokenPrice = new Decimal(p)
-        } catch (error) {
-
+            tokenPrice = new Decimal(p);
+            console.log(`    [QUOTE_SVC:5/5] Token route price calculated: ${tokenPrice.toString()}`);
+        } catch (error: any) {
+            console.warn(`    [QUOTE_SVC:5/5] Route price lookup fallback (non-fatal):`, error?.message);
         }
 
-        const dexConfig = RouteJsonRpcProvider.getDexConfig()
+        const dexConfig = RouteJsonRpcProvider.getDexConfig();
         return {
             tokenA: params.tokenA,
             tokenB: params.tokenB,
             amountIn: params.amountIn.toString(),
             amountOut: amountOut,
             tokenPrice: tokenPrice.toString(),
-            // priceImpact: priceImpact.toFixed(2),
-            // priceImpactInUsd: priceImpactInUsd,
-            // feeRate: feeRate.toString(),
             routePlan: finalRoutes,
             dexId: params.dexId,
             dexFactory: dexConfig.factoryAddress,
@@ -76,35 +72,38 @@ export const swapQuoteService = async (params: SwapQuoteRequestType, provider: J
             isNativeOut
         };
     }
-    catch (error) {
-        console.log("Error in swapQuoteService", { error });
-        console.log("error: ", error);
+    catch (error: any) {
+        console.error("❌ [QUOTE_SVC:ERROR] swapQuoteService failed:", {
+            pair: `${params.tokenA} -> ${params.tokenB}`,
+            amountIn: params.amountIn,
+            network,
+            message: error?.message,
+            stack: error?.stack,
+        });
         if (error instanceof ApiError) {
             throw error;
         }
-        throw new ApiError(500, "Failed to process swap quote");
+        throw new ApiError(500, `Failed to process swap quote: ${error?.message || "Unknown error"}`);
     }
 
 }
 
 export const swapService = async (params: SwapRequestType, provider: JsonRpcProvider, network: NetworkType) => {
     try {
-        // Calculate fee rate
-        let defaultFeeRate = DESERIALIZE_FEE // Default fee rate
+        console.log(`    [SWAP_SVC:1/4] Preparing swap for wallet=${params.publicKey} on network=${network}, slippage=${params.slippage}%`);
+
+        let defaultFeeRate = DESERIALIZE_FEE;
         defaultFeeRate =
             getSwapRequestFeeRate(
                 params.quote.tokenA,
                 params.quote.tokenB
             )?.feeRate ?? defaultFeeRate;
 
+        const cache = await initAndGetCache();
+        console.log(`    [SWAP_SVC:2/4] Initialized route provider for ${network}...`);
+        const RouteJsonRpcProvider = new (getChainAllRoute(network))(provider, cache);
 
-        const cache = await initAndGetCache()
-
-
-        // const RouteJsonRpcProvider = new (getRouteJsonRpcProvider(params.quote.dexId))(provider, cache);
-        const RouteJsonRpcProvider = new (getChainAllRoute(network))(provider, cache); //TODO: THIS IS FOR BACKWARD COMPATIBILITY, REMOVE LATER
-        // console.log("RouteProvider: ", RouteProvider);
-
+        console.log(`    [SWAP_SVC:3/4] Requesting transaction instructions for ${params.quote.routePlan?.length || 0} hop(s)...`);
         const transaction = await RouteJsonRpcProvider.getTransactionInstructionFromRoutePlan(
             new Decimal(params.quote.amountIn),
             params.quote.routePlan,
@@ -113,19 +112,24 @@ export const swapService = async (params: SwapRequestType, provider: JsonRpcProv
             params.quote.isNativeIn,
             params.quote.isNativeOut,
             params.partnerFees
-
         );
 
+        console.log(`    [SWAP_SVC:4/4] Successfully constructed ${transaction.transactions.length} transaction payload(s)`);
 
         return {
             transaction
         };
-    } catch (error) {
-        console.log("Error in swapService", { error, params });
+    } catch (error: any) {
+        console.error("❌ [SWAP_SVC:ERROR] swapService failed:", {
+            wallet: params.publicKey,
+            network,
+            message: error?.message,
+            stack: error?.stack,
+        });
         if (error instanceof ApiError) {
             throw error;
         }
-        throw new ApiError(500, "Failed to process swap");
+        throw new ApiError(500, `Failed to process swap: ${error?.message || "Unknown error"}`);
     }
 };
 

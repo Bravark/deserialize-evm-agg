@@ -8,8 +8,8 @@ export const SwapQuoteRequestSchema = z.object({
     body: z.object({
         tokenA: z.string(),
         tokenB: z.string(),
-        amountIn: z.string().transform((arg) => {
-            return parseFloat(arg);
+        amountIn: z.union([z.string(), z.number()]).transform((arg) => {
+            return typeof arg === "number" ? arg : parseFloat(arg);
         }),
         dexId: z.string(),
         chain: z.string().optional(),
@@ -30,20 +30,21 @@ export type SwapQuoteRequestType = z.infer<typeof SwapQuoteRequestSchema>["body"
 export const SwapRequestSchema = z.object({
     body: z.object({
         publicKey: z.string(),
+        chain: z.string().optional(),
         quote: z.object({
             tokenA: z.string(),
             tokenB: z.string(),
-            amountIn: z.string().transform((arg) => {
-                return parseFloat(arg);
+            amountIn: z.union([z.string(), z.number()]).transform((arg) => {
+                return typeof arg === "number" ? arg : parseFloat(arg);
             }),
-            amountOut: z.string().transform((arg) => {
-                return parseFloat(arg);
+            amountOut: z.union([z.string(), z.number()]).transform((arg) => {
+                return typeof arg === "number" ? arg : parseFloat(arg);
             }),
-            tokenPrice: z.string().transform((arg) => {
-                return parseFloat(arg);
+            tokenPrice: z.union([z.string(), z.number()]).transform((arg) => {
+                return typeof arg === "number" ? arg : parseFloat(arg);
             }),
-            feeRate: z.string().transform((arg) => {
-                return parseFloat(arg);
+            feeRate: z.union([z.string(), z.number()]).transform((arg) => {
+                return typeof arg === "number" ? arg : parseFloat(arg);
             }).optional(),
             routePlan: z.array(
                 z.object({
@@ -55,8 +56,7 @@ export const SwapRequestSchema = z.object({
                     dexId: z.string(),
                 })
             ),
-            // dexFactory: z.string(),
-
+            dexFactory: z.string().optional(),
             dexId: z.string(),
             isNativeIn: z.boolean(),
             isNativeOut: z.boolean(),
