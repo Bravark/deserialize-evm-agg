@@ -861,13 +861,12 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
         }
         const paths = plan;
         const slippageMultiplier = new Decimal(1).minus(slippage / 100);
-        const minAmountOut = amountOut.mul(slippageMultiplier)
-        // console.log('minAmountOut: ', minAmountOut);
+        const minAmountOut = amountOut.mul(slippageMultiplier);
+        console.log(`      [TX_BUILD:1/4] Constructing swap path for wallet ${wallet} on ${this.network}...`);
+        console.log(`      [TX_BUILD:2/4] Total hops: ${paths.length}, isNativeIn=${isNativeIn}, isNativeOut=${isNativeOut}`);
+        console.log(`      [TX_BUILD:3/4] amountInRaw=${amountFormattedToTokenDecimal.toFixed(0)}, expectedOut=${amountOut.toFixed(0)}, minAmountOut=${minAmountOut.toFixed(0)} (slippage: ${slippage}%)`);
+        console.log(`      [TX_BUILD:4/4] Invoking createSwapTX with swapProxy and adapter tracker...`);
 
-        // console.log('amountIn: ', amountIn);
-        // console.log('amountIn.toFixed(0),: ', amountIn.toFixed(0),);
-        // console.log('minAmountOut.toFixed(0): ', minAmountOut.toFixed(0));
-        // console.log('paths: ', paths);
         const txs = await createSwapTX(
             {
                 path: paths,
@@ -881,8 +880,9 @@ export class AllRoute<DexIdTypes extends string> implements IRoute<any, DexIdTyp
             from: wallet,
             to: tx.to,
             data: tx.data,
-            value: tx.value, // make sure this is BigNumberish (string, number, or BigNumber)
+            value: tx.value,
         }));
+        console.log(`      [TX_BUILD:SUCCESS] createSwapTX returned ${transactions.length} transaction(s)`);
         return { transactions };
 
 
