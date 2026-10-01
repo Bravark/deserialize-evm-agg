@@ -2,7 +2,7 @@
 
 import { NextFunction, Request, Response } from "express";
 import { SwapQuoteRequestSchema, SwapRequestSchema, TokenDetailsRequestSchema, TokenPriceRequestSchema } from "./swap.schema";
-import { getTokenDetailsService, getTokenPriceService, swapQuoteService, swapService, tokenList, tokenListWithDetailsService } from "./swap.service";
+import { getTokenDetailsService, getTokenPriceService, swapQuoteService, swapService, tokenList, tokenListWithDetailsService, tokenSearchService } from "./swap.service";
 import { createJsonRpcProvider, getChainFromName, normalizeNetworkType, NetworkType } from "@deserialize-evm-agg/routes-providers";
 
 const chainFromRequest = (paramChain?: string, bodyChain?: string): NetworkType => {
@@ -188,6 +188,37 @@ export const tokenListWithDetailsController = async (
         res.send({ result });
     } catch (error: any) {
         console.error("❌ [TOKEN_LIST_DETAILS:ERROR]:", error?.message);
+        next(error);
+    }
+};
+
+export const tokenSearchController = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const chainName = chainFromRequest(
+            (typeof req.params.chain === "string" ? req.params.chain : undefined) ||
+            (typeof req.query.chain === "string" ? req.query.chain : undefined) ||
+            (typeof req.query.network === "string" ? req.query.network : undefined) ||
+            "BASE"
+        );
+        const searchQuery = (
+            (req.query.query as string) ||
+            (req.query.q as string) ||
+            (req.query.tick as string) ||
+            (req.query.symbol as string) ||
+            (req.params.query as string) ||
+            ""
+        );
+        console.log(`  [TOKEN_SEARCH] Searching tokens for query="${searchQuery}" on network=${chainName}...`);
+        const provider = providerForChain(chainName);
+        const result = await tokenSearchService(searchQuery, provider, chainName);
+        console.log(`  [TOKEN_SEARCH:SUCCESS] Found ${result.length} matching token(s) for query="${searchQuery}" on ${chainName}`);
+        res.send({ result, data: result });
+    } catch (error: any) {
+        console.error("❌ [TOKEN_SEARCH:ERROR]:", error?.message);
         next(error);
     }
 };

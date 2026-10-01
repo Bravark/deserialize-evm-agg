@@ -94,7 +94,55 @@ Fetches ERC-20 metadata (decimals, symbol, name) and liquidity status.
 
 ---
 
-### 3.3 Get Swap Quote
+### 3.3 Search Tokens (by Ticker, Symbol, Name, or Address)
+
+Allows frontend token pickers/search bars to search tokens by their ticker (e.g. `ETH`, `AERO`, `BRETT`, `DEGEN`, `USDC`, `CLANKER`), token name, or contract address (CA).
+
+- **Method:** `GET`
+- **Paths Supported:**
+  - `/:chain/tokens/search?q=:query` (e.g. `GET /base/tokens/search?q=aero`)
+  - `/:chain/tokens/search/:query` (e.g. `GET /base/tokens/search/aero`)
+  - `/:chain/tokenSearch?query=:query`
+  - `/tokens/search?q=:query` (defaults to Base chain)
+- **Supported Query Params:** `q`, `query`, `tick`, `symbol`
+- **Behavior:**
+  - Matches ticker symbols (exact matches ranked first, then prefix matches, then substring matches).
+  - Matches token names and contract address prefixes.
+  - Automatically fetches on-chain details if a valid 42-character contract address (`0x...`) is entered.
+  - Returns default top tokens if query is empty.
+
+#### Example Request:
+```http
+GET http://localhost:3735/base/tokens/search?q=aero
+```
+
+#### Response (`200 OK`):
+```json
+{
+  "result": [
+    {
+      "address": "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
+      "symbol": "AERO",
+      "name": "Aerodrome",
+      "decimals": 18,
+      "network": "BASE"
+    }
+  ],
+  "data": [
+    {
+      "address": "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
+      "symbol": "AERO",
+      "name": "Aerodrome",
+      "decimals": 18,
+      "network": "BASE"
+    }
+  ]
+}
+```
+
+---
+
+### 3.4 Get Swap Quote
 
 Calculates best execution route and expected output amount across all registered Base DEXes.
 
@@ -147,7 +195,7 @@ Calculates best execution route and expected output amount across all registered
 
 ---
 
-### 3.4 Build Swap Transaction
+### 3.5 Build Swap Transaction
 
 Constructs the raw EVM transaction array (`transactions`) for the user's wallet to execute.
 
@@ -214,7 +262,15 @@ Constructs the raw EVM transaction array (`transactions`) for the user's wallet 
 
 ## 4. Frontend Integration Workflow
 
-When developing the frontend swap widget or channel, follow this 3-step sequence:
+When developing the frontend swap widget or channel, follow this sequence:
+
+### Step 0: Search & Select Tokens (by ticker or CA)
+```typescript
+// Users can type "aero", "eth", "degen", or paste a contract address:
+const searchRes = await fetch(`http://localhost:3735/base/tokens/search?q=${encodeURIComponent(query)}`);
+const { result: tokens } = await searchRes.json();
+// tokens = [{ address: "0x940181...", symbol: "AERO", name: "Aerodrome", decimals: 18, network: "BASE" }]
+```
 
 ### Step 1: Request Quote
 ```typescript

@@ -199,4 +199,240 @@ export const getTokenDetailsService = async (tokenAddress: string, provider: Jso
     return cacheDetails;
 }
 
+export interface SearchTokenResult {
+    address: string;
+    symbol: string;
+    name: string;
+    decimals: number;
+    network?: string;
+}
+
+const KNOWN_BASE_TOKENS: SearchTokenResult[] = [
+    {
+        address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        symbol: "ETH",
+        name: "Ethereum",
+        decimals: 18,
+        network: "BASE",
+    },
+    {
+        address: "0x4200000000000000000000000000000000000006",
+        symbol: "WETH",
+        name: "Wrapped Ether",
+        decimals: 18,
+        network: "BASE",
+    },
+    {
+        address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        symbol: "USDC",
+        name: "USD Coin",
+        decimals: 6,
+        network: "BASE",
+    },
+    {
+        address: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+        symbol: "USDbC",
+        name: "USD Base Coin",
+        decimals: 6,
+        network: "BASE",
+    },
+    {
+        address: "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb",
+        symbol: "DAI",
+        name: "Dai Stablecoin",
+        decimals: 18,
+        network: "BASE",
+    },
+    {
+        address: "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
+        symbol: "cbBTC",
+        name: "Coinbase Wrapped BTC",
+        decimals: 8,
+        network: "BASE",
+    },
+    {
+        address: "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
+        symbol: "cbETH",
+        name: "Coinbase Wrapped Staked ETH",
+        decimals: 18,
+        network: "BASE",
+    },
+    {
+        address: "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
+        symbol: "AERO",
+        name: "Aerodrome",
+        decimals: 18,
+        network: "BASE",
+    },
+    {
+        address: "0x532f27101965dd16442E59d40670FaF5eBB142E4",
+        symbol: "BRETT",
+        name: "Brett",
+        decimals: 18,
+        network: "BASE",
+    },
+    {
+        address: "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed",
+        symbol: "DEGEN",
+        name: "Degen",
+        decimals: 18,
+        network: "BASE",
+    },
+    {
+        address: "0x1bc0c42215582d5A085795f4baDbaC3ff36d1Bcb",
+        symbol: "CLANKER",
+        name: "tokenbot",
+        decimals: 18,
+        network: "BASE",
+    },
+    {
+        address: "0xAC1Bd2486aAf3B5C0fc3Fd868558b082a531B2B4",
+        symbol: "TOSHI",
+        name: "Toshi",
+        decimals: 18,
+        network: "BASE",
+    },
+    {
+        address: "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b",
+        symbol: "VIRTUAL",
+        name: "Virtual Protocol",
+        decimals: 18,
+        network: "BASE",
+    },
+    {
+        address: "0x0578d8A44db98B23BF096A382e016e29a5Ce0ffe",
+        symbol: "HIGHER",
+        name: "higher",
+        decimals: 18,
+        network: "BASE",
+    },
+];
+
+const KNOWN_0G_TOKENS: SearchTokenResult[] = [
+    {
+        address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        symbol: "A0GI",
+        name: "0G Native Token",
+        decimals: 18,
+        network: "0G",
+    },
+    {
+        address: "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c",
+        symbol: "W0G",
+        name: "Wrapped 0G",
+        decimals: 18,
+        network: "0G",
+    },
+    {
+        address: "0x59ef6f3943bbdfe2fb19565037ac85071223e94c",
+        symbol: "USDT",
+        name: "Tether USD",
+        decimals: 18,
+        network: "0G",
+    },
+];
+
+export const tokenSearchService = async (
+    searchQuery: string | undefined,
+    provider: JsonRpcProvider,
+    network: NetworkType
+): Promise<SearchTokenResult[]> => {
+    const q = searchQuery ? searchQuery.trim().toLowerCase() : "";
+    const tokenMap = new Map<string, SearchTokenResult>();
+
+    // 1. Seed with known tokens for the requested network
+    const knownTokens = network === "BASE" ? KNOWN_BASE_TOKENS : KNOWN_0G_TOKENS;
+    for (const t of knownTokens) {
+        tokenMap.set(t.address.toLowerCase(), t);
+    }
+
+    // 2. Fetch and merge tokens from the live graph/cache
+    try {
+        const liveTokens: any = await tokenListWithDetailsService(provider, network);
+        if (Array.isArray(liveTokens)) {
+            for (const t of liveTokens) {
+                const addr = (t?.address || t?.contractAddress) as string | undefined;
+                if (addr && !tokenMap.has(addr.toLowerCase())) {
+                    tokenMap.set(addr.toLowerCase(), {
+                        address: addr,
+                        symbol: t.symbol,
+                        name: t.name,
+                        decimals: t.decimals,
+                        network,
+                    });
+                }
+            }
+        }
+    } catch (err: any) {
+        console.warn("  [TOKEN_SEARCH:WARN] Could not retrieve live graph tokens:", err?.message);
+    }
+
+    // 3. If query is a valid 42-character contract address not in list, fetch on-chain details directly
+    if (q.startsWith("0x") && q.length === 42 && !tokenMap.has(q)) {
+        try {
+            const onchain: any = await getTokenDetails(searchQuery!.trim(), provider);
+            if (onchain && onchain.symbol) {
+                const item: SearchTokenResult = {
+                    address: onchain.address || searchQuery!.trim(),
+                    symbol: onchain.symbol,
+                    name: onchain.name,
+                    decimals: onchain.decimals,
+                    network,
+                };
+                tokenMap.set((onchain.address || searchQuery!.trim()).toLowerCase(), item);
+            }
+        } catch (err: any) {
+            console.warn(`  [TOKEN_SEARCH:WARN] Could not resolve CA ${searchQuery} on-chain:`, err?.message);
+        }
+    }
+
+    const allTokens = Array.from(tokenMap.values());
+
+    // 4. If no query, return the known & indexed tokens
+    if (!q) {
+        return allTokens;
+    }
+
+    // 5. Score and filter tokens by ticker/symbol, name, and address
+    interface ScoredToken {
+        token: SearchTokenResult;
+        score: number;
+    }
+
+    const scored: ScoredToken[] = [];
+
+    for (const token of allTokens) {
+        const sym = (token.symbol || "").toLowerCase();
+        const name = (token.name || "").toLowerCase();
+        const addr = (token.address || "").toLowerCase();
+
+        let score = 0;
+
+        if (sym === q) {
+            score += 100; // Exact ticker match
+        } else if (addr === q) {
+            score += 95; // Exact CA match
+        } else if (sym.startsWith(q)) {
+            score += 80; // Ticker starts with search
+        } else if (sym.includes(q)) {
+            score += 60; // Ticker contains search
+        } else if (name.startsWith(q)) {
+            score += 40; // Name starts with search
+        } else if (name.includes(q)) {
+            score += 20; // Name contains search
+        } else if (addr.startsWith(q)) {
+            score += 15; // CA prefix match
+        }
+
+        if (score > 0) {
+            scored.push({ token, score });
+        }
+    }
+
+    // Sort descending by relevance score
+    scored.sort((a, b) => b.score - a.score);
+
+    return scored.map((s) => s.token);
+};
+
 

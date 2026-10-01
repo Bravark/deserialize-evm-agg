@@ -98,3 +98,18 @@ export const TokenDetailsRequestSchema = z.object({
 });
 
 export type TokenDetailsRequestType = z.infer<typeof TokenDetailsRequestSchema>["params"]
+
+export const TokenSearchRequestSchema = z.object({
+    params: z.object({
+        chain: z.string().optional(),
+        query: z.string().optional(),
+    }).optional(),
+    query: z.object({
+        query: z.string().optional(),
+        q: z.string().optional(),
+        tick: z.string().optional(),
+        symbol: z.string().optional(),
+    }).optional(),
+});
+
+export type TokenSearchRequestType = z.infer<typeof TokenSearchRequestSchema>;
